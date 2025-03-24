@@ -6,7 +6,10 @@
       "descripcion": "Camiseta negra con diseño retro de Baldur’s Gate.",
       "precio": 25.99,
       "imagen": "https://via.placeholder.com/400x400?text=Camiseta+BG",
-      "stock": 50
+      "stock": 50,
+      "usuario": "usuario_1",
+      "likes": 5,
+      "vendido": false
     },
     "producto_2": {
       "id": "producto_2",
@@ -14,7 +17,10 @@
       "descripcion": "Taza blanca con ilustración del juego Planescape: Torment.",
       "precio": 15.5,
       "imagen": "https://via.placeholder.com/400x400?text=Taza+Planescape",
-      "stock": 30
+      "stock": 30,
+      "usuario": "usuario_2",
+      "likes": 3,
+      "vendido": false
     }
   }
 }

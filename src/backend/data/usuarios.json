@@ -4,17 +4,30 @@
       "id": "usuario_1",
       "nombre": "Juan Pérez",
       "email": "juanperez@example.com",
-      "compras": [
-        "producto_1",
-        "producto_2"
+      "tipo": "usuario",
+      "favoritos_articulos": [
+        "articulo_1"
+      ],
+      "favoritos_productos": [
+        "producto_1"
+      ],
+      "juegos_subidos": [
+        "producto_1"
       ]
     },
     "usuario_2": {
       "id": "usuario_2",
       "nombre": "Ana López",
       "email": "analopez@example.com",
-      "compras": [
-        "producto_1"
+      "tipo": "admin",
+      "favoritos_articulos": [
+        "articulo_2"
+      ],
+      "favoritos_productos": [
+        "producto_2"
+      ],
+      "juegos_subidos": [
+        "producto_2"
       ]
     }
   }

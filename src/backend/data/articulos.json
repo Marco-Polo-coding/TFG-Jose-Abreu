@@ -3,15 +3,16 @@
     "articulo_1": {
       "id": "articulo_1",
       "titulo": "Los Orígenes de los CRPGs",
-      "contenido": "Los primeros CRPGs aparecieron en los años 80 con juegos como Ultima y Wizardry...",
+      "contenido": "Los primeros CRPGs aparecieron en los años 80 con juegos como Ultima y Wizardry. Su estética y mecánicas inspiraron muchos títulos modernos...",
       "imagen": "https://via.placeholder.com/800x400?text=CRPGs+Origenes",
       "fecha_publicacion": "2024-03-15",
       "autor": "admin",
+      "likes": 8,
       "comentarios": {
         "comentario_1": {
           "id": "comentario_1",
           "usuario": "usuario_1",
-          "texto": "¡Excelente artículo!",
+          "texto": "¡Excelente artículo! Muy nostálgico.",
           "fecha": "2024-03-16",
           "respuestas": {
             "respuesta_1": {
@@ -34,10 +35,11 @@
     "articulo_2": {
       "id": "articulo_2",
       "titulo": "La Edad de Oro de los CRPGs",
-      "contenido": "Entre los años 90 y 2000, los CRPGs alcanzaron su auge con títulos como Baldur’s Gate, Fallout y Arcanum...",
+      "contenido": "Entre los años 90 y 2000, los CRPGs alcanzaron su auge con títulos como Baldur’s Gate, Fallout y Arcanum. Su influencia sigue viva hoy en día...",
       "imagen": "https://via.placeholder.com/800x400?text=CRPGs+Edad+de+Oro",
       "fecha_publicacion": "2024-03-10",
       "autor": "admin",
+      "likes": 14,
       "comentarios": {
         "comentario_1": {
           "id": "comentario_1",

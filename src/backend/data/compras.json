@@ -2,15 +2,17 @@
   "compras": {
     "compra_1": {
       "id": "compra_1",
-      "usuario": "usuario_1",
+      "comprador": "usuario_1",
       "producto": "producto_1",
-      "fecha": "2024-03-20"
+      "vendedor": "usuario_3",
+      "fecha": "2024-03-20T10:15:00"
     },
     "compra_2": {
       "id": "compra_2",
-      "usuario": "usuario_2",
+      "comprador": "usuario_2",
       "producto": "producto_2",
-      "fecha": "2024-03-21"
+      "vendedor": "usuario_4",
+      "fecha": "2024-03-21T12:30:00"
     }
   }
 }
