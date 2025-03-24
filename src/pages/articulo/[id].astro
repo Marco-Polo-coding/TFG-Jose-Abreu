@@ -3,12 +3,29 @@ import Layout from '../../layouts/Layout.astro';
 import ArticuloDetalle from '../../components/ArticuloDetalle';
 
 export async function getStaticPaths() {
-  // Aquí podrías hacer un fetch a tu API para obtener todos los IDs de artículos
-  return [
-    { params: { id: 'articulo_1' } },
-    { params: { id: 'articulo_2' } },
-    // ... más IDs según necesites
-  ];
+  try {
+    const response = await fetch('http://localhost:8000/articulos');
+    const data = await response.json();
+    
+    console.log('Respuesta de la API de artículos:', data);
+    
+    // Verificar si data.articulos existe y es un objeto
+    if (!data || !data.articulos || typeof data.articulos !== 'object') {
+      console.error('La respuesta de la API no tiene el formato esperado:', data);
+      return [];
+    }
+    
+    // Obtener todos los IDs de artículos del objeto
+    const paths = Object.keys(data.articulos).map(id => ({
+      params: { id }
+    }));
+
+    console.log('Paths generados:', paths);
+    return paths;
+  } catch (error) {
+    console.error('Error al obtener los IDs de artículos:', error);
+    return [];
+  }
 }
 
 const { id } = Astro.params;

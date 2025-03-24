@@ -5,7 +5,6 @@ from firebase_admin import firestore
 from typing import List, Dict, Any
 from datetime import datetime
 
-
 app = FastAPI(title="API de la Aplicación")
 
 # Configuración de CORS
@@ -21,13 +20,25 @@ app.add_middleware(
 async def root():
     return {"message": "Bienvenido a la API"}
 
-# Endpoint para obtener productos
+# ✅ Endpoint para obtener productos
 @app.get("/productos", response_model=List[Dict[str, Any]])
 async def obtener_productos():
     try:
         productos_ref = db.collection("productos")
         productos = productos_ref.stream()
         return [{"id": producto.id, **producto.to_dict()} for producto in productos]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ✅ NUEVO: Endpoint para obtener un producto por ID
+@app.get("/productos/{producto_id}", response_model=Dict[str, Any])
+async def obtener_producto_por_id(producto_id: str):
+    try:
+        producto_ref = db.collection("productos").document(producto_id)
+        producto = producto_ref.get()
+        if not producto.exists:
+            raise HTTPException(status_code=404, detail="Producto no encontrado")
+        return {"id": producto.id, **producto.to_dict()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -54,7 +65,7 @@ async def comprar(producto_id: str, usuario_id: str):
     db.collection("compras").add(compra)
     return {"mensaje": f"Compra registrada de {producto_id} por {usuario_id}"}
 
-# 2. GET /usuarios → Devuelve todos los usuarios
+# GET /usuarios → Devuelve todos los usuarios
 @app.get("/usuarios", response_model=List[Dict[str, Any]])
 async def obtener_usuarios():
     try:
@@ -64,7 +75,7 @@ async def obtener_usuarios():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# 3. GET /articulos/{id} → Devuelve un artículo por ID
+# GET /articulos/{id} → Devuelve un artículo por ID
 @app.get("/articulos/{articulo_id}", response_model=Dict[str, Any])
 async def obtener_articulo(articulo_id: str):
     try:
@@ -76,7 +87,7 @@ async def obtener_articulo(articulo_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# 4. POST /articulos/{id}/comentarios → Añadir comentario a un artículo
+# POST /articulos/{id}/comentarios → Añadir comentario a un artículo
 @app.post("/articulos/{articulo_id}/comentarios", response_model=Dict[str, Any])
 async def agregar_comentario(articulo_id: str, comentario: Dict[str, Any]):
     try:
@@ -85,18 +96,15 @@ async def agregar_comentario(articulo_id: str, comentario: Dict[str, Any]):
         if not articulo.exists:
             raise HTTPException(status_code=404, detail="Artículo no encontrado")
         
-        # Crear el comentario con timestamp
         comentario["timestamp"] = datetime.now()
         comentario_id = articulo_ref.collection("comentarios").document().id
-        
-        # Guardar el comentario
         articulo_ref.collection("comentarios").document(comentario_id).set(comentario)
         
         return {"id": comentario_id, **comentario}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# 5. POST /articulos/{id}/comentarios/{comentario_id}/respuestas → Añadir respuesta a un comentario
+# POST /articulos/{id}/comentarios/{comentario_id}/respuestas → Añadir respuesta a un comentario
 @app.post("/articulos/{articulo_id}/comentarios/{comentario_id}/respuestas", response_model=Dict[str, Any])
 async def agregar_respuesta(articulo_id: str, comentario_id: str, respuesta: Dict[str, Any]):
     try:
@@ -105,11 +113,8 @@ async def agregar_respuesta(articulo_id: str, comentario_id: str, respuesta: Dic
         if not comentario.exists:
             raise HTTPException(status_code=404, detail="Comentario no encontrado")
         
-        # Crear la respuesta con timestamp
         respuesta["timestamp"] = datetime.now()
         respuesta_id = comentario_ref.collection("respuestas").document().id
-        
-        # Guardar la respuesta
         comentario_ref.collection("respuestas").document(respuesta_id).set(respuesta)
         
         return {"id": respuesta_id, **respuesta}

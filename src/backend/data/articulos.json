@@ -56,6 +56,31 @@
           }
         }
       }
+    },
+    "articulo_3": {
+      "id": "articulo_3",
+      "titulo": "La Edad de Oro de los CRPGs",
+      "contenido": "Entre los años 90 y 2000, los CRPGs alcanzaron su auge con títulos como Baldur’s Gate, Fallout y Arcanum. Su influencia sigue viva hoy en día...",
+      "imagen": "https://via.placeholder.com/800x400?text=CRPGs+Edad+de+Oro",
+      "fecha_publicacion": "2024-03-10",
+      "autor": "admin",
+      "likes": 14,
+      "comentarios": {
+        "comentario_1": {
+          "id": "comentario_1",
+          "usuario": "usuario_2",
+          "texto": "Baldur's Gate fue el juego que me hizo amar los CRPGs.",
+          "fecha": "2024-03-11",
+          "respuestas": {
+            "respuesta_1": {
+              "id": "respuesta_1",
+              "usuario": "usuario_4",
+              "texto": "¡Y su secuela fue aún mejor!",
+              "fecha": "2024-03-12"
+            }
+          }
+        }
+      }
     }
   }
 }

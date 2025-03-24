@@ -6,13 +6,11 @@ const ProductoDetalle = ({ id }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Extraer el número del ID (por ejemplo, "producto_1" -> "1")
-    const productoId = id.split('_')[1];
-    
-    fetch(`http://localhost:8000/productos/${productoId}`)
+    fetch("http://localhost:8000/productos")
       .then((res) => res.json())
       .then((data) => {
-        setProducto(data);
+        const productoEncontrado = data.find(p => p.id === id);
+        setProducto(productoEncontrado);
         setLoading(false);
       })
       .catch((error) => {
@@ -39,12 +37,13 @@ const ProductoDetalle = ({ id }) => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <button
-        onClick={() => window.history.back()}
-        className="flex items-center gap-2 text-purple-600 hover:text-purple-700 mb-8"
-      >
-        <FaArrowLeft /> Volver al inicio
-      </button>
+<a
+  href="/"
+  className="flex items-center gap-2 text-purple-600 hover:text-purple-700 mb-8"
+>
+  <FaArrowLeft /> Volver al inicio
+</a>
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -81,4 +80,4 @@ const ProductoDetalle = ({ id }) => {
   );
 };
 
-export default ProductoDetalle; 
+export default ProductoDetalle;

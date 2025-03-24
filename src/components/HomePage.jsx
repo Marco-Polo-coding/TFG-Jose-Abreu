@@ -10,7 +10,10 @@ const HomePage = () => {
     // Cargar productos destacados
     fetch("http://localhost:8000/productos")
       .then((res) => res.json())
-      .then((data) => setProductos(data))
+      .then((data) => {
+        // Los productos ya vienen en el formato correcto
+        setProductos(data);
+      })
       .catch((error) => console.error("Error al obtener productos:", error));
 
     // Cargar artículos recientes
@@ -54,9 +57,9 @@ const HomePage = () => {
             Productos Destacados
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {productos.map((producto) => (
+            {Object.values(productos).map((producto) => (
               <a
-                href={`/producto/producto_${producto.id}`}
+                href={`/producto/${producto.id}`}
                 key={producto.id}
                 className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
               >
