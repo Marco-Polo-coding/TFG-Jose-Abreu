@@ -9,6 +9,7 @@
     "astro": "astro"
   },
   "dependencies": {
+    "": "file:",
     "@astrojs/react": "^4.2.1",
     "@astrojs/tailwind": "^6.0.0",
     "@types/react": "^19.0.10",
@@ -16,6 +17,8 @@
     "astro": "^5.5.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-icons": "^5.5.0",
+    "react-router-dom": "^7.4.0",
     "tailwindcss": "^3.4.17"
   }
 }

@@ -1,0 +1,16 @@
+{
+  "compras": {
+    "compra_1": {
+      "id": "compra_1",
+      "usuario": "usuario_1",
+      "producto": "producto_1",
+      "fecha": "2024-03-20"
+    },
+    "compra_2": {
+      "id": "compra_2",
+      "usuario": "usuario_2",
+      "producto": "producto_2",
+      "fecha": "2024-03-21"
+    }
+  }
+}

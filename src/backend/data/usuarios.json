@@ -1,0 +1,21 @@
+{
+  "usuarios": {
+    "usuario_1": {
+      "id": "usuario_1",
+      "nombre": "Juan Pérez",
+      "email": "juanperez@example.com",
+      "compras": [
+        "producto_1",
+        "producto_2"
+      ]
+    },
+    "usuario_2": {
+      "id": "usuario_2",
+      "nombre": "Ana López",
+      "email": "analopez@example.com",
+      "compras": [
+        "producto_1"
+      ]
+    }
+  }
+}
