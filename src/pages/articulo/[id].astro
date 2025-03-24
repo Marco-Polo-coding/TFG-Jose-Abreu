@@ -1,0 +1,19 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ArticuloDetalle from '../../components/ArticuloDetalle';
+
+export async function getStaticPaths() {
+  // Aquí podrías hacer un fetch a tu API para obtener todos los IDs de artículos
+  return [
+    { params: { id: 'articulo_1' } },
+    { params: { id: 'articulo_2' } },
+    // ... más IDs según necesites
+  ];
+}
+
+const { id } = Astro.params;
+---
+
+<Layout>
+  <ArticuloDetalle client:load id={id} />
+</Layout> 

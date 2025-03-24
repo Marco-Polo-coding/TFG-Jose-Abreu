@@ -55,9 +55,10 @@ const HomePage = () => {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {productos.map((producto) => (
-              <div
+              <a
+                href={`/producto/producto_${producto.id}`}
                 key={producto.id}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
               >
                 <div className="h-48 bg-gray-200 flex items-center justify-center">
                   <img
@@ -74,20 +75,38 @@ const HomePage = () => {
                       ${producto.precio}
                     </p>
                     <div className="flex items-center gap-4">
-                      <button className="text-gray-500 hover:text-red-500 transition-colors">
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          // Aquí iría la lógica para dar like
+                        }}
+                        className="text-gray-500 hover:text-red-500 transition-colors"
+                      >
                         <FaHeart className="w-5 h-5" />
                       </button>
-                      <button className="text-gray-500 hover:text-yellow-500 transition-colors">
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          // Aquí iría la lógica para guardar
+                        }}
+                        className="text-gray-500 hover:text-yellow-500 transition-colors"
+                      >
                         <FaBookmark className="w-5 h-5" />
                       </button>
                     </div>
                   </div>
-                  <button className="w-full bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      // Aquí iría la lógica para añadir al carrito
+                    }}
+                    className="w-full bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
+                  >
                     <FaShoppingCart className="w-5 h-5" />
                     Añadir al Carrito
                   </button>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         </div>
@@ -101,9 +120,10 @@ const HomePage = () => {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {articulos.map((articulo) => (
-              <article
+              <a
+                href={`/articulo/${articulo.id}`}
                 key={articulo.id}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
               >
                 <div className="h-48 bg-gray-200 flex items-center justify-center">
                   <img
@@ -117,19 +137,31 @@ const HomePage = () => {
                   <p className="text-gray-600 mb-4 line-clamp-3">{articulo.descripcion}</p>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <button className="text-gray-500 hover:text-red-500 transition-colors">
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          // Aquí iría la lógica para dar like
+                        }}
+                        className="text-gray-500 hover:text-red-500 transition-colors"
+                      >
                         <FaHeart className="w-5 h-5" />
                       </button>
-                      <button className="text-gray-500 hover:text-yellow-500 transition-colors">
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          // Aquí iría la lógica para guardar
+                        }}
+                        className="text-gray-500 hover:text-yellow-500 transition-colors"
+                      >
                         <FaBookmark className="w-5 h-5" />
                       </button>
                     </div>
-                    <button className="text-purple-600 hover:text-purple-700 font-semibold">
+                    <span className="text-purple-600 hover:text-purple-700 font-semibold">
                       Leer más →
-                    </button>
+                    </span>
                   </div>
                 </div>
-              </article>
+              </a>
             ))}
           </div>
         </div>
