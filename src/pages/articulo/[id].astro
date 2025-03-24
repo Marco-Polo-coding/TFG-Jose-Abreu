@@ -5,25 +5,22 @@ import ArticuloDetalle from '../../components/ArticuloDetalle';
 export async function getStaticPaths() {
   try {
     const response = await fetch('http://localhost:8000/articulos');
-    const data = await response.json();
-    
-    console.log('Respuesta de la API de artículos:', data);
-    
-    // Verificar si data.articulos existe y es un objeto
-    if (!data || !data.articulos || typeof data.articulos !== 'object') {
-      console.error('La respuesta de la API no tiene el formato esperado:', data);
+    const articulos = await response.json();
+
+    // Validar que sea un array
+    if (!Array.isArray(articulos)) {
+      console.error('La API no devolvió una lista de artículos:', articulos);
       return [];
     }
-    
-    // Obtener todos los IDs de artículos del objeto
-    const paths = Object.keys(data.articulos).map(id => ({
-      params: { id }
+
+    // Generar paths con los IDs de los artículos
+    const paths = articulos.map(articulo => ({
+      params: { id: articulo.id }
     }));
 
-    console.log('Paths generados:', paths);
     return paths;
   } catch (error) {
-    console.error('Error al obtener los IDs de artículos:', error);
+    console.error('Error al obtener los artículos:', error);
     return [];
   }
 }
@@ -33,4 +30,4 @@ const { id } = Astro.params;
 
 <Layout>
   <ArticuloDetalle client:load id={id} />
-</Layout> 
+</Layout>
