@@ -1,48 +1,63 @@
-# Astro Starter Kit: Basics
+# 🎮 CRPGHub — Plataforma de Artículos y Tienda de Videojuegos de Segunda Mano
 
-```sh
-npm create astro@latest -- --template basics
-```
+**CRPGHub** es una plataforma web que combina un blog colaborativo sobre videojuegos clásicos con una tienda de compraventa de productos entre usuarios. Está desarrollada como parte de mi Trabajo de Fin de Grado, con enfoque en diseño web moderno, frontend con Astro + React, backend con FastAPI y base de datos en Firebase.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/basics)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/basics)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/basics/devcontainer.json)
+---
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## ✨ Características principales
 
-![just-the-basics](https://github.com/withastro/astro/assets/2244813/a0a5533c-a856-4198-8470-2d67b1d7c554)
+### 📰 Blog colaborativo
+- Artículos sobre historia y evolución de los CRPGs
+- Comentarios con respuestas anidadas
+- Likes y favoritos
+- Vista de detalle para cada post
 
-## 🚀 Project Structure
+### 🛒 Tienda entre usuarios
+- Publicación de productos de segunda mano
+- Likes, guardado, sistema mock de compra
+- Detalle de producto con imagen, precio, vendedor
+- Futuras funcionalidades: filtros, carrito, stock dinámico
 
-Inside of your Astro project, you'll see the following folders and files:
+### 👥 Gestión de usuarios
+- Firebase Auth con login por email y Google
+- Roles: usuario y administrador
+- Panel de usuario con historial de favoritos, compras y publicaciones (en desarrollo)
 
-```text
+### 🔐 Backend desacoplado (FastAPI)
+- API REST para productos, artículos, comentarios, usuarios y compras
+- Base de datos en Firebase Firestore
+- Comentarios y respuestas como subcolecciones
+
+---
+
+## 🛠️ Tecnologías usadas
+
+| Tecnología       | Función                            |
+|------------------|-------------------------------------|
+| **Astro**        | Framework base del frontend         |
+| **React**        | Componentes dinámicos (productos, artículos, login) |
+| **Tailwind CSS** | Diseño moderno y responsivo         |
+| **FastAPI**      | Backend y endpoints API REST        |
+| **Firebase**     | Autenticación y base de datos       |
+
+---
+
+## 📁 Estructura del proyecto
+
+```txt
 /
-├── public/
-│   └── favicon.svg
+├── public/                     # Archivos estáticos
+│   └── grid.svg (fondo decorativo)
 ├── src/
-│   ├── layouts/
-│   │   └── Layout.astro
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
-
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+│   ├── components/             # Componentes React
+│   ├── layouts/                # Layout base de páginas
+│   ├── pages/                 
+│   │   ├── index.astro         # Página de inicio
+│   │   ├── producto/[id].astro # Vista de detalle de producto
+│   │   ├── articulo/[id].astro # Vista de detalle de artículo
+│   │   ├── tienda.astro        # (En desarrollo)
+│   │   └── blog.astro          # (En desarrollo)
+├── firebase_config.py          # Configuración Firebase
+├── main.py                     # FastAPI backend
+├── .env                        # Variables de entorno
+└── README.md                   # Este archivo
