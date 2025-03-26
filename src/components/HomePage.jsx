@@ -43,9 +43,12 @@ const HomePage = () => {
             <p className="text-xl md:text-2xl mb-8">
               Descubre juegos clásicos, lee artículos y comparte tu pasión por los CRPGs
             </p>
-            <button className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg text-lg font-semibold transition-colors">
+            <a 
+              href="/tienda"
+              className="inline-block bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg text-lg font-semibold transition-colors"
+            >
               Explorar ahora
-            </button>
+            </a>
           </div>
         </div>
       </section>
@@ -53,9 +56,17 @@ const HomePage = () => {
       {/* Productos Destacados */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center">
-            Productos Destacados
-          </h2>
+          <div className="flex items-center justify-between mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-center">
+              Productos Destacados
+            </h2>
+            <a 
+              href="/tienda"
+              className="text-purple-600 hover:text-purple-700 font-semibold"
+            >
+              Ver todos →
+            </a>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {Object.values(productos).map((producto) => (
               <a
@@ -118,9 +129,17 @@ const HomePage = () => {
       {/* Artículos Recientes */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center">
-            Artículos Recientes
-          </h2>
+          <div className="flex items-center justify-between mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-center">
+              Artículos Recientes
+            </h2>
+            <a 
+              href="/blog"
+              className="text-purple-600 hover:text-purple-700 font-semibold"
+            >
+              Ver todos →
+            </a>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {articulos.map((articulo) => (
               <a
