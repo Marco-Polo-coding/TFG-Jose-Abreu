@@ -7,6 +7,7 @@ const HomePage = () => {
   const [articulos, setArticulos] = useState([]);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(true);
+  const [showContent, setShowContent] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -17,6 +18,10 @@ const HomePage = () => {
         setProductos(productosData);
         setArticulos(articulosData);
         setLoading(false);
+        // Pequeño delay para asegurar que el LoadingSpinner se desmonte
+        setTimeout(() => {
+          setShowContent(true);
+        }, 100);
       })
       .catch((error) => {
         console.error("Error al cargar datos:", error);
@@ -35,13 +40,13 @@ const HomePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen bg-gray-50 transition-all duration-1000 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
       {/* Hero Section */}
       <section className="relative h-[80vh] bg-gradient-to-r from-purple-900 to-indigo-900 overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-50"></div>
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
         <div className="relative container mx-auto px-4 h-full flex items-center">
-          <div className="text-white max-w-2xl">
+          <div className={`text-white max-w-2xl transition-all duration-1000 delay-300 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
               Tu Comunidad de CRPGs
             </h1>
@@ -68,28 +73,19 @@ const HomePage = () => {
       </section>
 
       {/* Productos Destacados */}
-      <section className="py-20 bg-white">
+      <section className={`py-20 bg-white transition-all duration-1000 delay-500 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-12">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-                Productos Destacados
-              </h2>
-              <p className="text-gray-600">Descubre nuestra selección de juegos clásicos</p>
-            </div>
-            <a 
-              href="/tienda"
-              className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-semibold group"
-            >
-              Ver todos
-              <FaArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-            </a>
+          <div className="mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+              Productos Destacados
+            </h2>
+            <p className="text-gray-600">Descubre nuestra selección de juegos clásicos</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {productos.slice(0, 3).map((producto) => (
+            {productos.slice(0, 3).map((producto, index) => (
               <div
                 key={producto.id}
-                className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+                className={`bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 transition-all duration-1000 delay-${(index + 1) * 200} ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
               >
                 <div className="relative h-48 bg-gray-200">
                   <img
@@ -148,28 +144,19 @@ const HomePage = () => {
       </section>
 
       {/* Artículos Recientes */}
-      <section className="py-20 bg-gray-50">
+      <section className={`py-20 bg-gray-50 transition-all duration-1000 delay-700 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-12">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-                Artículos Recientes
-              </h2>
-              <p className="text-gray-600">Las últimas novedades y análisis</p>
-            </div>
-            <a 
-              href="/blog"
-              className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-semibold group"
-            >
-              Ver todos
-              <FaArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-            </a>
+          <div className="mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+              Artículos Recientes
+            </h2>
+            <p className="text-gray-600">Las últimas novedades y análisis</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {articulos.slice(0, 3).map((articulo) => (
+            {articulos.slice(0, 3).map((articulo, index) => (
               <div
                 key={articulo.id}
-                className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+                className={`bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 transition-all duration-1000 delay-${(index + 1) * 200} ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
               >
                 <div className="relative h-48 bg-gray-200">
                   <img
@@ -218,7 +205,7 @@ const HomePage = () => {
       </section>
 
       {/* Newsletter */}
-      <section className="py-20 bg-purple-900 text-white relative overflow-hidden">
+      <section className={`py-20 bg-purple-900 text-white relative overflow-hidden transition-all duration-1000 delay-900 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
         <div className="container mx-auto px-4 text-center relative">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
