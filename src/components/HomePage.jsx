@@ -1,201 +1,230 @@
 import React, { useEffect, useState } from "react";
-import { FaHeart, FaShoppingCart, FaBookmark } from "react-icons/fa";
+import { FaHeart, FaShoppingCart, FaBookmark, FaArrowRight } from "react-icons/fa";
+import LoadingSpinner from './LoadingSpinner';
 
 const HomePage = () => {
   const [productos, setProductos] = useState([]);
   const [articulos, setArticulos] = useState([]);
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Cargar productos destacados
-    fetch("http://localhost:8000/productos")
-      .then((res) => res.json())
-      .then((data) => {
-        // Los productos ya vienen en el formato correcto
-        setProductos(data);
+    Promise.all([
+      fetch("http://localhost:8000/productos").then(res => res.json()),
+      fetch("http://localhost:8000/articulos").then(res => res.json())
+    ])
+      .then(([productosData, articulosData]) => {
+        setProductos(productosData);
+        setArticulos(articulosData);
+        setLoading(false);
       })
-      .catch((error) => console.error("Error al obtener productos:", error));
-
-    // Cargar artículos recientes
-    fetch("http://localhost:8000/articulos")
-      .then((res) => res.json())
-      .then((data) => setArticulos(data))
-      .catch((error) => console.error("Error al obtener artículos:", error));
+      .catch((error) => {
+        console.error("Error al cargar datos:", error);
+        setLoading(false);
+      });
   }, []);
 
   const handleNewsletterSubmit = (e) => {
     e.preventDefault();
-    // Aquí iría la lógica para manejar la suscripción
     console.log("Email suscrito:", email);
     setEmail("");
   };
 
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="relative h-[60vh] bg-gradient-to-r from-purple-900 to-indigo-900">
+      <section className="relative h-[80vh] bg-gradient-to-r from-purple-900 to-indigo-900 overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-50"></div>
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
         <div className="relative container mx-auto px-4 h-full flex items-center">
           <div className="text-white max-w-2xl">
-            <h1 className="text-4xl md:text-6xl font-bold mb-4">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
               Tu Comunidad de CRPGs
             </h1>
-            <p className="text-xl md:text-2xl mb-8">
+            <p className="text-xl md:text-2xl mb-8 text-gray-200">
               Descubre juegos clásicos, lee artículos y comparte tu pasión por los CRPGs
             </p>
-            <a 
-              href="/tienda"
-              className="inline-block bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg text-lg font-semibold transition-colors"
-            >
-              Explorar ahora
-            </a>
+            <div className="flex gap-4">
+              <a 
+                href="/tienda"
+                className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg text-lg font-semibold transition-all duration-300 hover:scale-105"
+              >
+                Explorar ahora
+                <FaArrowRight className="w-5 h-5" />
+              </a>
+              <a 
+                href="/blog"
+                className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-lg text-lg font-semibold transition-all duration-300 backdrop-blur-sm"
+              >
+                Leer artículos
+              </a>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Productos Destacados */}
-      <section className="py-16 bg-white">
+      <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-center">
-              Productos Destacados
-            </h2>
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+                Productos Destacados
+              </h2>
+              <p className="text-gray-600">Descubre nuestra selección de juegos clásicos</p>
+            </div>
             <a 
               href="/tienda"
-              className="text-purple-600 hover:text-purple-700 font-semibold"
+              className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-semibold group"
             >
-              Ver todos →
+              Ver todos
+              <FaArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </a>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {Object.values(productos).map((producto) => (
-              <a
-                href={`/producto/${producto.id}`}
+            {productos.slice(0, 3).map((producto) => (
+              <div
                 key={producto.id}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
               >
-                <div className="h-48 bg-gray-200 flex items-center justify-center">
+                <div className="relative h-48 bg-gray-200">
                   <img
                     src={producto.imagen}
                     alt={producto.nombre}
-                    className="object-cover h-full w-full"
+                    className="w-full h-full object-cover"
                   />
+                  <div className="absolute top-4 right-4 flex gap-2">
+                    <button 
+                      onClick={() => {
+                        // Lógica para dar like
+                      }}
+                      className="bg-white/90 p-2 rounded-full text-gray-500 hover:text-red-500 transition-colors"
+                    >
+                      <FaHeart className="w-5 h-5" />
+                    </button>
+                    <button 
+                      onClick={() => {
+                        // Lógica para guardar
+                      }}
+                      className="bg-white/90 p-2 rounded-full text-gray-500 hover:text-yellow-500 transition-colors"
+                    >
+                      <FaBookmark className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-semibold mb-2">{producto.nombre}</h3>
-                  <p className="text-gray-600 mb-4 line-clamp-3">{producto.descripcion}</p>
+                  <p className="text-gray-600 mb-4 line-clamp-2">{producto.descripcion}</p>
                   <div className="flex items-center justify-between mb-4">
                     <p className="text-2xl font-bold text-purple-600">
                       ${producto.precio}
                     </p>
-                    <div className="flex items-center gap-4">
-                      <button 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          // Aquí iría la lógica para dar like
-                        }}
-                        className="text-gray-500 hover:text-red-500 transition-colors"
-                      >
-                        <FaHeart className="w-5 h-5" />
-                      </button>
-                      <button 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          // Aquí iría la lógica para guardar
-                        }}
-                        className="text-gray-500 hover:text-yellow-500 transition-colors"
-                      >
-                        <FaBookmark className="w-5 h-5" />
-                      </button>
-                    </div>
                   </div>
-                  <button 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      // Aquí iría la lógica para añadir al carrito
-                    }}
-                    className="w-full bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <FaShoppingCart className="w-5 h-5" />
-                    Añadir al Carrito
-                  </button>
+                  <div className="flex gap-4">
+                    <a
+                      href={`/producto/${producto.id}`}
+                      className="flex-1 bg-purple-600 text-white text-center py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                    >
+                      Ver más
+                    </a>
+                    <button 
+                      onClick={() => {
+                        // Lógica para añadir al carrito
+                      }}
+                      className="bg-purple-100 text-purple-600 p-2 rounded-lg hover:bg-purple-200 transition-colors"
+                    >
+                      <FaShoppingCart className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
-              </a>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
       {/* Artículos Recientes */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-center">
-              Artículos Recientes
-            </h2>
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+                Artículos Recientes
+              </h2>
+              <p className="text-gray-600">Las últimas novedades y análisis</p>
+            </div>
             <a 
               href="/blog"
-              className="text-purple-600 hover:text-purple-700 font-semibold"
+              className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-semibold group"
             >
-              Ver todos →
+              Ver todos
+              <FaArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </a>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {articulos.map((articulo) => (
-              <a
-                href={`/articulo/${articulo.id}`}
+            {articulos.slice(0, 3).map((articulo) => (
+              <div
                 key={articulo.id}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
               >
-                <div className="h-48 bg-gray-200 flex items-center justify-center">
+                <div className="relative h-48 bg-gray-200">
                   <img
                     src={articulo.imagen}
                     alt={articulo.titulo}
-                    className="object-cover h-full w-full"
+                    className="w-full h-full object-cover"
                   />
+                  <div className="absolute top-4 right-4 flex gap-2">
+                    <button 
+                      onClick={() => {
+                        // Lógica para dar like
+                      }}
+                      className="bg-white/90 p-2 rounded-full text-gray-500 hover:text-red-500 transition-colors"
+                    >
+                      <FaHeart className="w-5 h-5" />
+                    </button>
+                    <button 
+                      onClick={() => {
+                        // Lógica para guardar
+                      }}
+                      className="bg-white/90 p-2 rounded-full text-gray-500 hover:text-yellow-500 transition-colors"
+                    >
+                      <FaBookmark className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-semibold mb-2">{articulo.titulo}</h3>
-                  <p className="text-gray-600 mb-4 line-clamp-3">{articulo.descripcion}</p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <button 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          // Aquí iría la lógica para dar like
-                        }}
-                        className="text-gray-500 hover:text-red-500 transition-colors"
-                      >
-                        <FaHeart className="w-5 h-5" />
-                      </button>
-                      <button 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          // Aquí iría la lógica para guardar
-                        }}
-                        className="text-gray-500 hover:text-yellow-500 transition-colors"
-                      >
-                        <FaBookmark className="w-5 h-5" />
-                      </button>
+                  <p className="text-gray-600 mb-4 line-clamp-2">{articulo.descripcion}</p>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="text-sm text-gray-500">
+                      Por {articulo.autor} • {new Date(articulo.fecha).toLocaleDateString()}
                     </div>
-                    <span className="text-purple-600 hover:text-purple-700 font-semibold">
-                      Leer más →
-                    </span>
                   </div>
+                  <a
+                    href={`/articulo/${articulo.id}`}
+                    className="block w-full bg-purple-600 text-white text-center py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    Leer más
+                  </a>
                 </div>
-              </a>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
       {/* Newsletter */}
-      <section className="py-16 bg-purple-900 text-white">
-        <div className="container mx-auto px-4 text-center">
+      <section className="py-20 bg-purple-900 text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
+        <div className="container mx-auto px-4 text-center relative">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             Mantente Informado
           </h2>
-          <p className="text-xl mb-8">
+          <p className="text-xl mb-8 text-gray-200">
             Suscríbete para recibir las últimas noticias y ofertas especiales
           </p>
           <form onSubmit={handleNewsletterSubmit} className="max-w-md mx-auto flex gap-4">
@@ -204,12 +233,12 @@ const HomePage = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Tu correo electrónico"
-              className="flex-1 px-4 py-2 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="flex-1 px-4 py-3 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
               required
             />
             <button
               type="submit"
-              className="bg-white text-purple-900 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+              className="bg-white text-purple-900 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-all duration-300 hover:scale-105"
             >
               Suscribirse
             </button>
