@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { FaHeart, FaShoppingCart, FaBookmark, FaArrowRight } from "react-icons/fa";
 import LoadingSpinner from './LoadingSpinner';
+import CartButton from './CartButton';
+import UserButton from './UserButton';
 
 const HomePage = () => {
   const [productos, setProductos] = useState([]);
@@ -41,6 +43,9 @@ const HomePage = () => {
 
   return (
     <div className={`min-h-screen bg-gray-50 transition-all duration-1000 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+      <CartButton />
+      <UserButton />
+      
       {/* Hero Section */}
       <section className="relative h-[80vh] bg-gradient-to-r from-purple-900 to-indigo-900 overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-50"></div>
@@ -48,7 +53,7 @@ const HomePage = () => {
         <div className="relative container mx-auto px-4 h-full flex items-center">
           <div className={`text-white max-w-2xl transition-all duration-1000 delay-300 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-              Tu Comunidad de CRPGs
+              Tu Comunidad de Videojuegos
             </h1>
             <p className="text-xl md:text-2xl mb-8 text-gray-200">
               Descubre juegos clásicos, lee artículos y comparte tu pasión por los CRPGs
