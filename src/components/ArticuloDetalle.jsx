@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { FaHeart, FaBookmark, FaArrowLeft, FaComment, FaHome } from "react-icons/fa";
 import LoadingSpinner from './LoadingSpinner';
+import CartButton from './CartButton';
+import UserButton from './UserButton';
 
 const ArticuloDetalle = ({ id }) => {
   const [articulo, setArticulo] = useState(null);
@@ -56,6 +58,11 @@ const ArticuloDetalle = ({ id }) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-8">
+        <CartButton />
+        <UserButton />
+      </div>
+      
       {/* Hero Section */}
       <section className="relative h-[40vh] bg-gradient-to-r from-purple-900 to-indigo-900">
         <div className="absolute inset-0 bg-black opacity-50"></div>
@@ -86,7 +93,7 @@ const ArticuloDetalle = ({ id }) => {
             <div className="flex items-center gap-4 text-purple-200">
               <span>Por {articulo.autor}</span>
               <span>•</span>
-              <span>{new Date(articulo.fecha).toLocaleDateString()}</span>
+              <span>{new Date(articulo.fecha_publicacion).toLocaleDateString()}</span>
             </div>
           </div>
         </div>
@@ -97,13 +104,13 @@ const ArticuloDetalle = ({ id }) => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Imagen del Artículo */}
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group">
               <img
                 src={articulo.imagen}
                 alt={articulo.titulo}
-                className="w-full h-[500px] object-cover transition-transform duration-300 hover:scale-[1.02]"
+                className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-[1.02]"
               />
-              <div className="absolute top-4 right-4 flex gap-2">
+              <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <button 
                   onClick={() => {
                     // Lógica para dar like

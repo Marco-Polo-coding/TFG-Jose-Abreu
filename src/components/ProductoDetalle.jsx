@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { FaHeart, FaShoppingCart, FaBookmark, FaArrowLeft, FaHome } from "react-icons/fa";
 import LoadingSpinner from './LoadingSpinner';
+import CartButton from './CartButton';
+import UserButton from './UserButton';
 
 const ProductoDetalle = ({ id }) => {
   const [producto, setProducto] = useState(null);
@@ -49,6 +51,11 @@ const ProductoDetalle = ({ id }) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-8">
+        <CartButton />
+        <UserButton />
+      </div>
+      
       {/* Hero Section */}
       <section className="relative h-[40vh] bg-gradient-to-r from-purple-900 to-indigo-900">
         <div className="absolute inset-0 bg-black opacity-50"></div>
@@ -77,7 +84,7 @@ const ProductoDetalle = ({ id }) => {
               {producto.nombre}
             </h1>
             <p className="text-2xl text-purple-200">
-              ${producto.precio}
+              {producto.precio}€
             </p>
           </div>
         </div>
@@ -88,13 +95,13 @@ const ProductoDetalle = ({ id }) => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Imagen del Producto */}
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group">
               <img
                 src={producto.imagen}
                 alt={producto.nombre}
-                className="w-full h-[500px] object-cover transition-transform duration-300 hover:scale-[1.02]"
+                className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-[1.02]"
               />
-              <div className="absolute top-4 right-4 flex gap-2">
+              <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <button 
                   onClick={() => {
                     // Lógica para dar like
@@ -129,7 +136,7 @@ const ProductoDetalle = ({ id }) => {
                 <div className="flex items-center justify-between mb-8">
                   <div>
                     <h3 className="text-3xl font-bold text-purple-600">
-                      ${producto.precio}
+                      {producto.precio}€
                     </h3>
                     <p className="text-gray-500">Precio final</p>
                   </div>

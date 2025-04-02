@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { FaHeart, FaBookmark, FaHome } from "react-icons/fa";
+import CartButton from './CartButton';
+import UserButton from './UserButton';
 
 const BlogPage = () => {
   const [articulos, setArticulos] = useState([]);
@@ -28,6 +30,11 @@ const BlogPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-8">
+        <CartButton />
+        <UserButton />
+      </div>
+      
       {/* Hero Section */}
       <section className="relative h-[40vh] bg-gradient-to-r from-purple-900 to-indigo-900">
         <div className="absolute inset-0 bg-black opacity-50"></div>
@@ -74,13 +81,13 @@ const BlogPage = () => {
                   key={articulo.id}
                   className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
                 >
-                  <div className="relative h-48 bg-gray-200">
+                  <div className="relative h-48 bg-gray-200 group">
                     <img
                       src={articulo.imagen}
                       alt={articulo.titulo}
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute top-4 right-4 flex gap-2">
+                    <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <button
                         onClick={() => {
                           // Lógica para dar like
@@ -106,7 +113,7 @@ const BlogPage = () => {
                     </p>
                     <div className="flex items-center justify-between mb-4">
                       <div className="text-sm text-gray-500">
-                        Por {articulo.autor} • {new Date(articulo.fecha).toLocaleDateString()}
+                        Por {articulo.autor} • {new Date(articulo.fecha_publicacion).toLocaleDateString()}
                       </div>
                     </div>
                     <a

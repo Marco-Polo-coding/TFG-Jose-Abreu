@@ -4,9 +4,9 @@
       "id": "articulo_1",
       "titulo": "Los Orígenes de los CRPGs",
       "contenido": "Los primeros CRPGs aparecieron en los años 80 con juegos como Ultima y Wizardry. Su estética y mecánicas inspiraron muchos títulos modernos...",
-      "imagen": "https://via.placeholder.com/800x400?text=CRPGs+Origenes",
+      "imagen": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgqbNj2J4_-WfpXsrE8rO91IETm_iQ0-x1p4xKE_kFwB5tlXzFZh1dhf8fbK5sM8kYIiSAxtfmHTe5PDo6D4fXuOHnk4-IfCRGCckKtrxLYeO-_K8kkbJgJknmVTcTdGLm0-xOVLE4AM1UT/s1600/rpgs+originales.jpg",
       "fecha_publicacion": "2024-03-15",
-      "autor": "admin",
+      "autor": "María Gutiérrez",
       "likes": 8,
       "comentarios": {
         "comentario_1": {
@@ -36,9 +36,9 @@
       "id": "articulo_2",
       "titulo": "La Edad de Oro de los CRPGs",
       "contenido": "Entre los años 90 y 2000, los CRPGs alcanzaron su auge con títulos como Baldur’s Gate, Fallout y Arcanum. Su influencia sigue viva hoy en día...",
-      "imagen": "https://via.placeholder.com/800x400?text=CRPGs+Edad+de+Oro",
+      "imagen": "https://screamsheet.wordpress.com/wp-content/uploads/2024/08/baldurs-gate-2.jpg",
       "fecha_publicacion": "2024-03-10",
-      "autor": "admin",
+      "autor": "Juan Pérez",
       "likes": 14,
       "comentarios": {
         "comentario_1": {
@@ -59,11 +59,11 @@
     },
     "articulo_3": {
       "id": "articulo_3",
-      "titulo": "La Edad de Oro de los CRPGs",
-      "contenido": "Entre los años 90 y 2000, los CRPGs alcanzaron su auge con títulos como Baldur’s Gate, Fallout y Arcanum. Su influencia sigue viva hoy en día...",
-      "imagen": "https://via.placeholder.com/800x400?text=CRPGs+Edad+de+Oro",
+      "titulo": "La Edad moderna de los CRPGs",
+      "contenido": "Entre la actualidad, los CRPGs han alcanzado su pico con títulos como Baldur’s Gate 3, Warhammer 40k Rogue Trader, Wasteland 3, Divinity Original Sin 2 y Pillars of Eternity 2.",
+      "imagen": "https://static0.gamerantimages.com/wordpress/wp-content/uploads/2023/08/best-modern-day-crpgs-ranked.jpg",
       "fecha_publicacion": "2024-03-10",
-      "autor": "admin",
+      "autor": "Lucía García",
       "likes": 14,
       "comentarios": {
         "comentario_1": {

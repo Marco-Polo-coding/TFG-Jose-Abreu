@@ -32,7 +32,7 @@ const UserButton = () => {
       <div className="relative" ref={popoverRef}>
         <button 
           onClick={() => setIsOpen(!isOpen)}
-          className="absolute top-4 right-4 z-50 bg-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 group"
+          className="bg-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 group"
         >
           <FaUser className="w-6 h-6 text-purple-600 group-hover:text-purple-700 transition-colors" />
         </button>

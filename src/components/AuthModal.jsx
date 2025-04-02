@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaTimes, FaUser, FaLock, FaEnvelope } from 'react-icons/fa';
 
 const AuthModal = ({ isOpen, onClose, mode }) => {
   const [isLoginMode, setIsLoginMode] = useState(mode === 'login');
+
+  useEffect(() => {
+    setIsLoginMode(mode === 'login');
+  }, [mode]);
 
   if (!isOpen) return null;
 

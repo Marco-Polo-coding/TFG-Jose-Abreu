@@ -3,6 +3,7 @@ import { FaHeart, FaShoppingCart, FaBookmark, FaArrowRight } from "react-icons/f
 import LoadingSpinner from './LoadingSpinner';
 import CartButton from './CartButton';
 import UserButton from './UserButton';
+import Slider from './Slider';
 
 const HomePage = () => {
   const [productos, setProductos] = useState([]);
@@ -20,7 +21,6 @@ const HomePage = () => {
         setProductos(productosData);
         setArticulos(articulosData);
         setLoading(false);
-        // Pequeño delay para asegurar que el LoadingSpinner se desmonte
         setTimeout(() => {
           setShowContent(true);
         }, 100);
@@ -37,14 +37,71 @@ const HomePage = () => {
     setEmail("");
   };
 
+  const renderProducto = (producto) => (
+    <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+      <div className="relative h-48 bg-gray-200 group">
+        <img
+          src={producto.imagen}
+          alt={producto.nombre}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <button 
+            onClick={() => {
+              // Lógica para dar like
+            }}
+            className="bg-white/90 p-2 rounded-full text-gray-500 hover:text-red-500 transition-colors"
+          >
+            <FaHeart className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={() => {
+              // Lógica para guardar
+            }}
+            className="bg-white/90 p-2 rounded-full text-gray-500 hover:text-yellow-500 transition-colors"
+          >
+            <FaBookmark className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+      <div className="p-6">
+        <h3 className="text-xl font-semibold mb-2">{producto.nombre}</h3>
+        <p className="text-gray-600 mb-4 line-clamp-2">{producto.descripcion}</p>
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-2xl font-bold text-purple-600">
+            {producto.precio}€
+          </p>
+        </div>
+        <div className="flex gap-4">
+          <a
+            href={`/producto/${producto.id}`}
+            className="flex-1 bg-purple-600 text-white text-center py-2 rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            Ver más
+          </a>
+          <button 
+            onClick={() => {
+              // Lógica para añadir al carrito
+            }}
+            className="bg-purple-100 text-purple-600 p-2 rounded-lg hover:bg-purple-200 transition-colors"
+          >
+            <FaShoppingCart className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   if (loading) {
     return <LoadingSpinner />;
   }
 
   return (
     <div className={`min-h-screen bg-gray-50 transition-all duration-1000 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-      <CartButton />
-      <UserButton />
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-8">
+        <CartButton />
+        <UserButton />
+      </div>
       
       {/* Hero Section */}
       <section className="relative h-[80vh] bg-gradient-to-r from-purple-900 to-indigo-900 overflow-hidden">
@@ -77,83 +134,20 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Productos Destacados */}
-      <section className={`py-20 bg-white transition-all duration-1000 delay-500 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-        <div className="container mx-auto px-4">
-          <div className="mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-              Productos Destacados
-            </h2>
-            <p className="text-gray-600">Descubre nuestra selección de juegos clásicos</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {productos.slice(0, 3).map((producto, index) => (
-              <div
-                key={producto.id}
-                className={`bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 transition-all duration-1000 delay-${(index + 1) * 200} ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-              >
-                <div className="relative h-48 bg-gray-200">
-                  <img
-                    src={producto.imagen}
-                    alt={producto.nombre}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-4 right-4 flex gap-2">
-                    <button 
-                      onClick={() => {
-                        // Lógica para dar like
-                      }}
-                      className="bg-white/90 p-2 rounded-full text-gray-500 hover:text-red-500 transition-colors"
-                    >
-                      <FaHeart className="w-5 h-5" />
-                    </button>
-                    <button 
-                      onClick={() => {
-                        // Lógica para guardar
-                      }}
-                      className="bg-white/90 p-2 rounded-full text-gray-500 hover:text-yellow-500 transition-colors"
-                    >
-                      <FaBookmark className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold mb-2">{producto.nombre}</h3>
-                  <p className="text-gray-600 mb-4 line-clamp-2">{producto.descripcion}</p>
-                  <div className="flex items-center justify-between mb-4">
-                    <p className="text-2xl font-bold text-purple-600">
-                      ${producto.precio}
-                    </p>
-                  </div>
-                  <div className="flex gap-4">
-                    <a
-                      href={`/producto/${producto.id}`}
-                      className="flex-1 bg-purple-600 text-white text-center py-2 rounded-lg hover:bg-purple-700 transition-colors"
-                    >
-                      Ver más
-                    </a>
-                    <button 
-                      onClick={() => {
-                        // Lógica para añadir al carrito
-                      }}
-                      className="bg-purple-100 text-purple-600 p-2 rounded-lg hover:bg-purple-200 transition-colors"
-                    >
-                      <FaShoppingCart className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Slider de Productos */}
+      <Slider
+        items={productos.slice(0, 5)}
+        renderItem={renderProducto}
+        title="Productos Destacados"
+        subtitle="Descubre nuestra selección de juegos clásicos"
+      />
 
-      {/* Artículos Recientes */}
+      {/* Artículos Destacados */}
       <section className={`py-20 bg-gray-50 transition-all duration-1000 delay-700 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         <div className="container mx-auto px-4">
           <div className="mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-              Artículos Recientes
+              Artículos Destacados
             </h2>
             <p className="text-gray-600">Las últimas novedades y análisis</p>
           </div>
@@ -163,13 +157,13 @@ const HomePage = () => {
                 key={articulo.id}
                 className={`bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 transition-all duration-1000 delay-${(index + 1) * 200} ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
               >
-                <div className="relative h-48 bg-gray-200">
+                <div className="relative h-48 bg-gray-200 group">
                   <img
                     src={articulo.imagen}
                     alt={articulo.titulo}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute top-4 right-4 flex gap-2">
+                  <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <button 
                       onClick={() => {
                         // Lógica para dar like
@@ -193,7 +187,7 @@ const HomePage = () => {
                   <p className="text-gray-600 mb-4 line-clamp-2">{articulo.descripcion}</p>
                   <div className="flex items-center justify-between mb-4">
                     <div className="text-sm text-gray-500">
-                      Por {articulo.autor} • {new Date(articulo.fecha).toLocaleDateString()}
+                      Por {articulo.autor} • {new Date(articulo.fecha_publicacion).toLocaleDateString()}
                     </div>
                   </div>
                   <a
