@@ -7,7 +7,7 @@ from firebase_admin import auth
 import httpx
 from dotenv import load_dotenv
 
-from .firebase_config import db
+from firebase_config import db
 
 load_dotenv()
 

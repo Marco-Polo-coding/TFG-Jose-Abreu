@@ -1,11 +1,15 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from firebase_config import db
+from auth import router as auth_router
 from firebase_admin import firestore
 from typing import List, Dict, Any
 from datetime import datetime
 
 app = FastAPI(title="API de la Aplicación")
+
+# Incluir el router de autenticación
+app.include_router(auth_router, prefix="/auth") 
 
 # Configuración de CORS
 app.add_middleware(
