@@ -33,6 +33,8 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
     localStorage.removeItem('userName');
     setIsAuthenticated(false);
     onClose();
+    // Recargar la página después de cerrar sesión
+    window.location.reload();
   };
 
   const handleSubmit = async (e) => {
@@ -71,12 +73,25 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
       onLoginSuccess?.(formData.email, data.name || formData.name || formData.email);
       alert(isLoginMode ? '¡Inicio de sesión exitoso!' : '¡Cuenta creada exitosamente!');
       onClose();
+      // Recargar la página después de login/registro exitoso
+      window.location.reload();
     } catch (err) {
       setError(err.message);
       alert(err.message);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleModeChange = () => {
+    // Reiniciar los campos del formulario
+    setFormData({
+      email: '',
+      password: '',
+      name: ''
+    });
+    // Cambiar el modo
+    setIsLoginMode(!isLoginMode);
   };
 
   if (!isOpen) return null;
@@ -245,7 +260,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                 <p className="text-sm text-gray-600">
                   {isLoginMode ? '¿No tienes una cuenta?' : '¿Ya tienes una cuenta?'}
                   <button
-                    onClick={() => setIsLoginMode(!isLoginMode)}
+                    onClick={handleModeChange}
                     className="ml-1 text-purple-600 hover:text-purple-500 font-medium"
                   >
                     {isLoginMode ? 'Regístrate' : 'Inicia sesión'}

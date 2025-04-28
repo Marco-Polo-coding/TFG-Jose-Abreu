@@ -1,10 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaUser, FaSignInAlt, FaUserPlus, FaSignOutAlt, FaBookmark, FaHeart } from 'react-icons/fa';
+import { FaUser, FaSignInAlt, FaUserPlus, FaSignOutAlt, FaBookmark, FaHeart, FaUserCircle } from 'react-icons/fa';
 import AuthModal from './AuthModal';
+import ProfileModal from './ProfileModal';
+import ConfirmModal from './ConfirmModal';
 
 const UserButton = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [authMode, setAuthMode] = useState('login');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState('');
@@ -41,13 +45,20 @@ const UserButton = () => {
   };
 
   const handleLogout = () => {
+    setShowConfirmModal(true);
+    setIsOpen(false);
+  };
+
+  const confirmLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userName');
     setIsAuthenticated(false);
     setUserEmail('');
     setUserName('');
-    setIsOpen(false);
+    setShowConfirmModal(false);
+    // Recargar la página después de cerrar sesión
+    window.location.reload();
   };
 
   const getInitials = (email) => {
@@ -108,6 +119,16 @@ const UserButton = () => {
                 <div className="border-t border-gray-100"></div>
                 <div className="space-y-2">
                   <button
+                    onClick={() => {
+                      setShowProfileModal(true);
+                      setIsOpen(false);
+                    }}
+                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-purple-50 rounded-lg transition-all duration-200 group"
+                  >
+                    <FaUserCircle className="w-4 h-4 text-purple-500 group-hover:text-purple-600 transition-colors" />
+                    <span>Ver mi Perfil</span>
+                  </button>
+                  <button
                     className="w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-purple-50 rounded-lg transition-all duration-200 group"
                   >
                     <FaBookmark className="w-4 h-4 text-purple-500 group-hover:text-purple-600 transition-colors" />
@@ -162,7 +183,26 @@ const UserButton = () => {
           setUserEmail(email);
           setUserName(name);
           setIsAuthenticated(true);
+          // Recargar la página después de iniciar sesión
+          window.location.reload();
         }}
+      />
+
+      <ProfileModal 
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        userData={{
+          email: userEmail,
+          name: userName || userEmail
+        }}
+      />
+
+      <ConfirmModal 
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={confirmLogout}
+        title="¿Cerrar sesión?"
+        message="¿Estás seguro de que quieres cerrar sesión? Tendrás que volver a iniciar sesión para acceder a tu cuenta."
       />
     </>
   );
