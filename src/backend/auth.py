@@ -1,6 +1,6 @@
 import os
 from typing import Dict
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Body
 from pydantic import BaseModel, EmailStr
 import firebase_admin
 from firebase_admin import auth
@@ -107,4 +107,62 @@ async def login_user(user: UserLogin) -> Dict[str, str]:
         raise HTTPException(
             status_code=500,
             detail="Error interno del servidor"
-        ) 
+        )
+
+@router.post("/google")
+async def login_with_google(id_token: str = Body(..., embed=True)):
+    try:
+        # Verificar que FIREBASE_API_KEY esté configurada
+        firebase_api_key = os.getenv('FIREBASE_API_KEY')
+        if not firebase_api_key:
+            logger.error("FIREBASE_API_KEY no está configurada en el archivo .env")
+            raise HTTPException(
+                status_code=500,
+                detail="Error de configuración del servidor"
+            )
+
+        # Intercambiar el token de Google por un token de Firebase
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={firebase_api_key}",
+                json={
+                    "postBody": f"id_token={id_token}&providerId=google.com",
+                    "requestUri": "http://localhost:4321",
+                    "returnIdpCredential": True,
+                    "returnSecureToken": True
+                }
+            )
+
+            if response.status_code != 200:
+                logger.error(f"Error al verificar token con Firebase: {response.text}")
+                raise HTTPException(
+                    status_code=401,
+                    detail="Token de Google inválido o expirado"
+                )
+
+            data = response.json()
+            
+            # Obtener datos del usuario
+            user_info = {
+                "uid": data.get("localId"),
+                "email": data.get("email"),
+                "nombre": data.get("displayName", ""),
+                "foto": data.get("photoUrl", "")
+            }
+
+            # Guardar o actualizar usuario en Firestore
+            user_ref = db.collection("usuarios").document(user_info["uid"])
+            user_ref.set(user_info, merge=True)
+
+            return {
+                "idToken": data.get("idToken"),
+                "refreshToken": data.get("refreshToken"),
+                "email": user_info["email"],
+                "nombre": user_info["nombre"],
+                "uid": user_info["uid"],
+                "foto": user_info["foto"]
+            }
+
+    except Exception as e:
+        logger.error(f"Error en login con Google: {str(e)}")
+        raise HTTPException(status_code=401, detail="Error al procesar el login con Google") 

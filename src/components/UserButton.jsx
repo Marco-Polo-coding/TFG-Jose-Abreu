@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FaUser, FaSignInAlt, FaUserPlus, FaSignOutAlt, FaBookmark, FaHeart, FaUserCircle } from 'react-icons/fa';
-import AuthModal from './AuthModal';
 import ProfileModal from './ProfileModal';
 import ConfirmModal from './ConfirmModal';
+import AuthModal from './AuthModal';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+const clientId = "1040096324756-vf83konj4f2794dpau2119934d5jbu0p.apps.googleusercontent.com";
 
 const UserButton = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -175,10 +177,11 @@ const UserButton = () => {
         )}
       </div>
 
-      <AuthModal 
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        mode={authMode}
+      <GoogleOAuthProvider clientId={clientId}>
+        <AuthModal 
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          mode={authMode}
         onLoginSuccess={(email, name) => {
           setUserEmail(email);
           setUserName(name);
@@ -187,7 +190,7 @@ const UserButton = () => {
           window.location.reload();
         }}
       />
-
+      </GoogleOAuthProvider>
       <ProfileModal 
         isOpen={showProfileModal}
         onClose={() => setShowProfileModal(false)}

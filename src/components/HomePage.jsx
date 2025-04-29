@@ -5,6 +5,8 @@ import CartButton from './CartButton';
 import UserButton from './UserButton';
 import Slider from './Slider';
 
+
+
 const HomePage = () => {
   const [productos, setProductos] = useState([]);
   const [articulos, setArticulos] = useState([]);
