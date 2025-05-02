@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { FaHeart, FaBookmark, FaHome } from "react-icons/fa";
 import CartButton from './CartButton';
 import UserButton from './UserButton';
+import LoadingSpinner from './LoadingSpinner';
 
 const BlogPage = () => {
   const [articulos, setArticulos] = useState([]);
@@ -21,11 +22,7 @@ const BlogPage = () => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (
@@ -34,6 +31,16 @@ const BlogPage = () => {
         <CartButton />
         <UserButton />
       </div>
+      {/* Botón flotante para crear artículo */}
+      <a
+        href="/post_article"
+        className="fixed bottom-8 right-8 z-50 bg-purple-600 hover:bg-purple-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 group overflow-hidden"
+        title="Crear nuevo artículo"
+        style={{ boxShadow: '0 4px 24px 0 rgba(80,0,180,0.25)', minWidth: '56px', height: '56px' }}
+      >
+        <span className="flex items-center justify-center w-14 h-14 text-3xl font-bold transition-all duration-300 group-hover:w-10 group-hover:mr-2">+</span>
+        <span className="whitespace-nowrap opacity-0 max-w-0 group-hover:opacity-100 group-hover:max-w-xs group-hover:pl-2 transition-all duration-300 text-base font-semibold">Publicar un artículo</span>
+      </a>
       
       {/* Hero Section */}
       <section className="relative h-[40vh] bg-gradient-to-r from-purple-900 to-indigo-900">
@@ -133,4 +140,4 @@ const BlogPage = () => {
   );
 };
 
-export default BlogPage; 
+export default BlogPage;

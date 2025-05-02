@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { FaHeart, FaBookmark, FaHome, FaShoppingCart } from "react-icons/fa";
 import CartButton from './CartButton';
 import UserButton from './UserButton';
+import LoadingSpinner from './LoadingSpinner';
 
 const TiendaPage = () => {
   const [productos, setProductos] = useState([]);
@@ -21,11 +22,7 @@ const TiendaPage = () => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (
@@ -34,6 +31,16 @@ const TiendaPage = () => {
         <CartButton />
         <UserButton />
       </div>
+      {/* Botón flotante para subir producto */}
+      <a
+        href="/upload_product"
+        className="fixed bottom-8 right-8 z-50 bg-purple-600 hover:bg-purple-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 group overflow-hidden px-6 py-4"
+        title="Subir nuevo producto"
+        style={{ boxShadow: '0 4px 24px 0 rgba(80,0,180,0.25)' }}
+      >
+        <span className="flex items-center justify-center w-8 h-8 text-3xl font-bold transition-all duration-300 group-hover:mr-2">+</span>
+        <span className="whitespace-nowrap opacity-0 max-w-0 group-hover:opacity-100 group-hover:max-w-xs group-hover:pl-2 transition-all duration-300 text-base font-semibold">Subir producto</span>
+      </a>
       
       {/* Hero Section */}
       <section className="relative h-[40vh] bg-gradient-to-r from-purple-900 to-indigo-900">

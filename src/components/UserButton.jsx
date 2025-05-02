@@ -120,16 +120,13 @@ const UserButton = () => {
                 </div>
                 <div className="border-t border-gray-100"></div>
                 <div className="space-y-2">
-                  <button
-                    onClick={() => {
-                      setShowProfileModal(true);
-                      setIsOpen(false);
-                    }}
+                  <a
+                    href="/profile"
                     className="w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-purple-50 rounded-lg transition-all duration-200 group"
                   >
                     <FaUserCircle className="w-4 h-4 text-purple-500 group-hover:text-purple-600 transition-colors" />
                     <span>Ver mi Perfil</span>
-                  </button>
+                  </a>
                   <button
                     className="w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-purple-50 rounded-lg transition-all duration-200 group"
                   >
