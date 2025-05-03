@@ -124,28 +124,29 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
       <div className="fixed inset-0 z-[100] overflow-y-auto">
         <div className="flex min-h-screen items-center justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+            className="fixed inset-0 bg-gradient-to-br from-purple-900/80 via-indigo-900/70 to-black/80 backdrop-blur-sm transition-opacity"
             onClick={onClose}
           />
 
-          <div className="inline-block transform overflow-hidden rounded-2xl bg-white text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:align-middle">
-            <div className="relative bg-white px-6 pt-5 pb-4 sm:p-6">
+          <div className="inline-block transform overflow-hidden rounded-3xl bg-white text-left align-bottom shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:align-middle animate-fade-in">
+            <div className="relative bg-white px-8 pt-8 pb-6 sm:p-10">
               <button
                 onClick={onClose}
-                className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute right-6 top-6 text-gray-400 hover:text-purple-600 transition-colors text-xl"
+                title="Cerrar"
               >
-                <FaTimes className="w-5 h-5" />
+                <FaTimes className="w-6 h-6" />
               </button>
 
-              <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">
+              <div className="text-center mb-8">
+                <h2 className="text-3xl font-extrabold text-gray-900 mb-2">
                   {showResetPassword
                     ? 'Restablecer Contraseña'
                     : isAuthenticated 
                       ? 'Tu Cuenta' 
                       : (isLoginMode ? 'Iniciar Sesión' : 'Crear Cuenta')}
                 </h2>
-                <p className="text-gray-600 mt-2">
+                <p className="text-gray-600 text-base">
                   {showResetPassword
                     ? 'Introduce tu correo electrónico y te enviaremos instrucciones para restablecer tu contraseña.'
                     : isAuthenticated 
@@ -170,20 +171,20 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                       <input
                         type="email"
                         name="resetEmail"
-                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base"
                         placeholder="tu@email.com"
                       />
                     </div>
                   </div>
                   <button
                     type="button"
-                    className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 hover:bg-purple-700"
+                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 px-4 rounded-full font-semibold shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 hover:scale-105"
                   >
                     Enviar instrucciones
                   </button>
                   <button
                     type="button"
-                    className="w-full mt-2 bg-gray-200 text-gray-700 py-2 px-4 rounded-lg transition-colors duration-200 hover:bg-gray-300"
+                    className="w-full mt-2 bg-gray-200 text-gray-700 py-3 px-4 rounded-full font-semibold hover:bg-gray-300 transition-all duration-200"
                     onClick={() => setShowResetPassword(false)}
                   >
                     Volver
@@ -194,19 +195,19 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                   <div className="space-y-4">
                     <div className="text-center">
                       <div className="flex items-center justify-center mb-4">
-                        <div className="w-16 h-16 rounded-full bg-purple-500 flex items-center justify-center text-white text-2xl">
+                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-3xl font-bold shadow-lg animate-avatar-glow">
                           {formData.email.charAt(0).toUpperCase()}
                         </div>
                       </div>
-                      <p className="text-gray-700 mb-2">
+                      <p className="text-gray-700 mb-2 text-lg">
                         <span className="font-semibold">{formData.name || formData.email}</span>
                       </p>
-                      <p className="text-sm text-gray-500 mb-4">
+                      <p className="text-base text-gray-500 mb-4">
                         {formData.email}
                       </p>
                       <button
                         onClick={handleLogout}
-                        className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200 flex items-center justify-center gap-2"
+                        className="w-full bg-gradient-to-r from-red-500 to-pink-500 text-white py-3 px-4 rounded-full font-semibold shadow hover:from-red-600 hover:to-pink-600 transition-all duration-200 flex items-center justify-center gap-2 text-lg"
                       >
                         <FaSignOutAlt />
                         Cerrar Sesión
@@ -215,7 +216,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                   </div>
                 ) : (
                   <>
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form onSubmit={handleSubmit} className="space-y-6">
                       {!isLoginMode && (
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -230,7 +231,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                               name="name"
                               value={formData.name}
                               onChange={handleInputChange}
-                              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                              className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base"
                               placeholder="Tu nombre"
                             />
                           </div>
@@ -251,7 +252,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                             value={formData.email}
                             onChange={handleInputChange}
                             required
-                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base"
                             placeholder="tu@email.com"
                           />
                         </div>
@@ -271,7 +272,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                             value={formData.password}
                             onChange={handleInputChange}
                             required
-                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base"
                             placeholder="••••••••"
                           />
                         </div>
@@ -301,8 +302,8 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                       <button
                         type="submit"
                         disabled={isLoading}
-                        className={`w-full bg-purple-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 ${
-                          isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-purple-700'
+                        className={`w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 px-4 rounded-full font-semibold shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 hover:scale-105 text-lg ${
+                          isLoading ? 'opacity-50 cursor-not-allowed' : ''
                         }`}
                       >
                         {isLoading 
@@ -314,9 +315,9 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                       </button>
                     </form>
 
-                    <div className="flex items-center my-6">
+                    <div className="flex items-center my-8">
                       <div className="flex-grow h-px bg-gray-300" />
-                      <span className="mx-3 text-gray-500 text-sm">O continúa con</span>
+                      <span className="mx-3 text-gray-500 text-base">O continúa con</span>
                       <div className="flex-grow h-px bg-gray-300" />
                     </div>
 
@@ -364,11 +365,11 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
 
               {!isAuthenticated && (
                 <div className="mt-4 text-center">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-base text-gray-600">
                     {isLoginMode ? '¿No tienes una cuenta?' : '¿Ya tienes una cuenta?'}
                     <button
                       onClick={handleModeChange}
-                      className="ml-1 text-purple-600 hover:text-purple-500 font-medium"
+                      className="ml-1 text-purple-600 hover:text-purple-500 font-semibold"
                     >
                       {isLoginMode ? 'Regístrate' : 'Inicia sesión'}
                     </button>

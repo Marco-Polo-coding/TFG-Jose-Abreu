@@ -64,7 +64,7 @@ const ArticuloDetalle = ({ id }) => {
       </div>
       
       {/* Hero Section */}
-      <section className="relative h-[40vh] bg-gradient-to-r from-purple-900 to-indigo-900">
+      <section className="relative h-[40vh] bg-gradient-to-r from-purple-900 to-indigo-900 overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-50"></div>
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
         <div className="relative container mx-auto px-4 h-full flex items-center">
@@ -87,9 +87,7 @@ const ArticuloDetalle = ({ id }) => {
               <span className="text-white/50">/</span>
               <span className="text-white/50">{articulo.titulo}</span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-4">
-              {articulo.titulo}
-            </h1>
+            <h1 className="text-4xl md:text-6xl font-extrabold mb-2 drop-shadow-xl">{articulo.titulo}</h1>
             <div className="flex items-center gap-4 text-purple-200">
               <span>Por {articulo.autor}</span>
               <span>•</span>
@@ -104,18 +102,19 @@ const ArticuloDetalle = ({ id }) => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Imagen del Artículo */}
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group">
+            <div className="bg-gradient-to-br from-white via-purple-50 to-indigo-100 rounded-2xl shadow-2xl overflow-hidden transition-all duration-500 hover:shadow-3xl hover:-translate-y-1 group animate-fade-in">
               <img
                 src={articulo.imagen}
                 alt={articulo.titulo}
-                className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-[1.03]"
               />
               <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <button 
                   onClick={() => {
                     // Lógica para dar like
                   }}
-                  className="bg-white/90 p-3 rounded-full text-gray-500 hover:text-red-500 transition-colors"
+                  className="bg-gradient-to-r from-purple-600 to-indigo-600 p-3 rounded-full text-white hover:text-red-200 transition-colors hover:scale-110 shadow-lg"
+                  title="Me gusta"
                 >
                   <FaHeart className="w-6 h-6" />
                 </button>
@@ -123,7 +122,8 @@ const ArticuloDetalle = ({ id }) => {
                   onClick={() => {
                     // Lógica para guardar
                   }}
-                  className="bg-white/90 p-3 rounded-full text-gray-500 hover:text-yellow-500 transition-colors"
+                  className="bg-gradient-to-r from-purple-600 to-indigo-600 p-3 rounded-full text-white hover:text-yellow-200 transition-colors hover:scale-110 shadow-lg"
+                  title="Guardar"
                 >
                   <FaBookmark className="w-6 h-6" />
                 </button>
@@ -131,7 +131,7 @@ const ArticuloDetalle = ({ id }) => {
             </div>
 
             {/* Contenido y Comentarios */}
-            <div className="bg-white rounded-xl shadow-lg p-8 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <div className="bg-white rounded-2xl shadow-2xl p-10 transition-all duration-500 hover:shadow-3xl hover:-translate-y-1 animate-fade-in">
               <div className="prose max-w-none mb-8">
                 {articulo.contenido}
               </div>
@@ -153,7 +153,7 @@ const ArticuloDetalle = ({ id }) => {
                   />
                   <button
                     type="submit"
-                    className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-all duration-300 hover:scale-105"
+                    className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-3 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105 font-semibold shadow-lg"
                   >
                     Publicar Comentario
                   </button>
@@ -161,7 +161,7 @@ const ArticuloDetalle = ({ id }) => {
 
                 <div className="space-y-6">
                   {articulo.comentarios?.map((comentario) => (
-                    <div key={comentario.id} className="bg-purple-50 rounded-lg p-6">
+                    <div key={comentario.id} className="bg-gradient-to-br from-purple-50 to-indigo-100 rounded-xl p-6">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="font-semibold text-purple-900">{comentario.usuario}</span>
                         <span className="text-gray-500">

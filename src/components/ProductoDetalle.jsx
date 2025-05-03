@@ -57,7 +57,7 @@ const ProductoDetalle = ({ id }) => {
       </div>
       
       {/* Hero Section */}
-      <section className="relative h-[40vh] bg-gradient-to-r from-purple-900 to-indigo-900">
+      <section className="relative h-[40vh] bg-gradient-to-r from-purple-900 to-indigo-900 overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-50"></div>
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
         <div className="relative container mx-auto px-4 h-full flex items-center">
@@ -80,12 +80,7 @@ const ProductoDetalle = ({ id }) => {
               <span className="text-white/50">/</span>
               <span className="text-white/50">{producto.nombre}</span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-4">
-              {producto.nombre}
-            </h1>
-            <p className="text-2xl text-purple-200">
-              {producto.precio}€
-            </p>
+            <h1 className="text-4xl md:text-6xl font-extrabold mb-2 drop-shadow-xl">{producto.nombre}</h1>
           </div>
         </div>
       </section>
@@ -95,18 +90,19 @@ const ProductoDetalle = ({ id }) => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Imagen del Producto */}
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group">
+            <div className="bg-gradient-to-br from-white via-purple-50 to-indigo-100 rounded-2xl shadow-2xl overflow-hidden transition-all duration-500 hover:shadow-3xl hover:-translate-y-1 group animate-fade-in">
               <img
                 src={producto.imagen}
                 alt={producto.nombre}
-                className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-[1.03]"
               />
               <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <button 
                   onClick={() => {
                     // Lógica para dar like
                   }}
-                  className="bg-white/90 p-3 rounded-full text-gray-500 hover:text-red-500 transition-colors"
+                  className="bg-gradient-to-r from-purple-600 to-indigo-600 p-3 rounded-full text-white hover:text-red-200 transition-colors hover:scale-110 shadow-lg"
+                  title="Me gusta"
                 >
                   <FaHeart className="w-6 h-6" />
                 </button>
@@ -114,7 +110,8 @@ const ProductoDetalle = ({ id }) => {
                   onClick={() => {
                     // Lógica para guardar
                   }}
-                  className="bg-white/90 p-3 rounded-full text-gray-500 hover:text-yellow-500 transition-colors"
+                  className="bg-gradient-to-r from-purple-600 to-indigo-600 p-3 rounded-full text-white hover:text-yellow-200 transition-colors hover:scale-110 shadow-lg"
+                  title="Guardar"
                 >
                   <FaBookmark className="w-6 h-6" />
                 </button>
@@ -122,7 +119,7 @@ const ProductoDetalle = ({ id }) => {
             </div>
 
             {/* Información del Producto */}
-            <div className="bg-white rounded-xl shadow-lg p-8 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <div className="bg-white rounded-2xl shadow-2xl p-10 transition-all duration-500 hover:shadow-3xl hover:-translate-y-1 animate-fade-in">
               <div className="mb-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">
                   Descripción
@@ -135,7 +132,7 @@ const ProductoDetalle = ({ id }) => {
               <div className="border-t border-gray-200 pt-8">
                 <div className="flex items-center justify-between mb-8">
                   <div>
-                    <h3 className="text-3xl font-bold text-purple-600">
+                    <h3 className="text-3xl font-extrabold text-purple-700 mb-1">
                       {producto.precio}€
                     </h3>
                     <p className="text-gray-500">Precio final</p>
@@ -145,7 +142,7 @@ const ProductoDetalle = ({ id }) => {
                       onClick={() => {
                         // Lógica para añadir al carrito
                       }}
-                      className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition-all duration-300 hover:scale-105 flex items-center gap-2"
+                      className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-3 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105 flex items-center gap-2 font-semibold shadow-lg"
                     >
                       <FaShoppingCart className="w-5 h-5" />
                       Añadir al Carrito
@@ -153,7 +150,7 @@ const ProductoDetalle = ({ id }) => {
                   </div>
                 </div>
 
-                <div className="bg-purple-50 rounded-lg p-6">
+                <div className="bg-gradient-to-br from-purple-50 to-indigo-100 rounded-xl p-6 mt-4 shadow">
                   <h4 className="font-semibold text-purple-900 mb-2">
                     Información adicional
                   </h4>

@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import CartButton from '../components/CartButton';
 import UserButton from '../components/UserButton';
+import UploadProductForm from '../components/UploadProductForm';
 import { FaHome } from 'react-icons/fa';
 ---
 
@@ -11,8 +12,9 @@ import { FaHome } from 'react-icons/fa';
       <CartButton client:load />
       <UserButton client:load />
     </div>
-    <section class="relative h-[40vh] bg-gradient-to-r from-purple-900 to-indigo-900">
+    <section class="relative h-[40vh] bg-gradient-to-r from-purple-900 to-indigo-900 overflow-hidden">
       <div class="absolute inset-0 bg-black opacity-50"></div>
+      <div class="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
       <div class="relative container mx-auto px-4 h-full flex items-center">
         <div class="text-white max-w-2xl">
           <div class="flex items-center gap-4 mb-6">
@@ -23,16 +25,14 @@ import { FaHome } from 'react-icons/fa';
             <span class="text-white/50">/</span>
             <span class="text-white/50">Subir producto</span>
           </div>
-          <h1 class="text-4xl md:text-6xl font-bold mb-4">Subir producto</h1>
-          <p class="text-xl md:text-2xl">Publica tu propio producto en la tienda</p>
+          <h1 class="text-4xl md:text-6xl font-extrabold mb-4 drop-shadow-xl">Subir producto</h1>
+          <p class="text-xl md:text-2xl font-medium text-gray-200 drop-shadow">Publica tu propio producto en la tienda</p>
         </div>
       </div>
     </section>
     <section class="py-16">
       <div class="container mx-auto px-4">
-        <div class="text-center py-12 text-gray-500">
-          <span>Próximamente: aquí podrás subir productos a la tienda.</span>
-        </div>
+        <UploadProductForm client:load />
       </div>
     </section>
   </div>

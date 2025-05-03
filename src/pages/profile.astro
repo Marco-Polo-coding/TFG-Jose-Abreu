@@ -12,7 +12,7 @@ import ProfileCard from '../components/ProfileCard.jsx';
       <CartButton client:load />
       <UserButton client:load />
     </div>
-    <section class="relative h-[40vh] bg-gradient-to-r from-purple-900 to-indigo-900">
+    <section class="relative h-[40vh] bg-gradient-to-r from-purple-900 to-indigo-900 overflow-hidden">
       <div class="absolute inset-0 bg-black opacity-50"></div>
       <div class="relative container mx-auto px-4 h-full flex items-center">
         <div class="text-white max-w-2xl">
@@ -24,12 +24,11 @@ import ProfileCard from '../components/ProfileCard.jsx';
             <span class="text-white/50">/</span>
             <span class="text-white/50">Mi Perfil</span>
           </div>
-          <h1 class="text-4xl md:text-6xl font-bold mb-4">Mi Perfil</h1>
-          <p class="text-xl md:text-2xl">Gestiona tu cuenta y contenido</p>
+          <h1 class="text-4xl md:text-6xl font-extrabold mb-4 drop-shadow-xl">Mi Perfil</h1>
+          <p class="text-xl md:text-2xl font-medium text-gray-200 drop-shadow">Gestiona tu cuenta y contenido</p>
         </div>
       </div>
     </section>
-
     <section class="py-16">
       <ProfileCard client:load />
     </section>

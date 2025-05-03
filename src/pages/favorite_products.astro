@@ -2,8 +2,8 @@
 import Layout from '../layouts/Layout.astro';
 import CartButton from '../components/CartButton';
 import UserButton from '../components/UserButton';
-import PostArticleForm from '../components/PostArticleForm';
-import { FaHome } from 'react-icons/fa';
+import { FaHome, FaHeart } from 'react-icons/fa';
+import FavoriteProductsList from '../components/FavoriteProductsList.jsx';
 ---
 
 <Layout>
@@ -12,9 +12,8 @@ import { FaHome } from 'react-icons/fa';
       <CartButton client:load />
       <UserButton client:load />
     </div>
-    <section class="relative h-[40vh] bg-gradient-to-r from-purple-900 to-indigo-900 overflow-hidden">
+    <section class="relative h-[30vh] bg-gradient-to-r from-purple-900 to-indigo-900 overflow-hidden">
       <div class="absolute inset-0 bg-black opacity-50"></div>
-      <div class="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
       <div class="relative container mx-auto px-4 h-full flex items-center">
         <div class="text-white max-w-2xl">
           <div class="flex items-center gap-4 mb-6">
@@ -23,17 +22,17 @@ import { FaHome } from 'react-icons/fa';
               <span>Inicio</span>
             </a>
             <span class="text-white/50">/</span>
-            <span class="text-white/50">Nuevo artículo</span>
+            <span class="text-white/50">Productos favoritos</span>
           </div>
-          <h1 class="text-4xl md:text-6xl font-extrabold mb-4 drop-shadow-xl">Nuevo artículo</h1>
-          <p class="text-xl md:text-2xl font-medium text-gray-200 drop-shadow">Publica tu propio artículo sobre CRPGs</p>
+          <h1 class="text-3xl md:text-5xl font-extrabold mb-2 flex items-center gap-2 drop-shadow-xl"><FaHeart className="w-8 h-8" /> Productos favoritos</h1>
+          <p class="text-lg md:text-xl font-medium text-gray-200 drop-shadow">Tus productos favoritos guardados para comprar más tarde</p>
         </div>
       </div>
     </section>
     <section class="py-16">
       <div class="container mx-auto px-4">
-        <PostArticleForm client:load />
+        <FavoriteProductsList client:load />
       </div>
     </section>
   </div>
-</Layout>
+</Layout> 

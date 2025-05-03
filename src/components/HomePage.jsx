@@ -40,7 +40,7 @@ const HomePage = () => {
   };
 
   const renderProducto = (producto) => (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+    <div className="bg-gradient-to-br from-white via-purple-50 to-indigo-100 rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-white/60">
       <div className="relative h-48 bg-gray-200 group">
         <img
           src={producto.imagen}
@@ -52,7 +52,7 @@ const HomePage = () => {
             onClick={() => {
               // Lógica para dar like
             }}
-            className="bg-white/90 p-2 rounded-full text-gray-500 hover:text-red-500 transition-colors"
+            className="bg-white/90 p-3 rounded-full text-gray-500 hover:text-red-500 transition-colors hover:scale-110 shadow"
           >
             <FaHeart className="w-5 h-5" />
           </button>
@@ -60,32 +60,32 @@ const HomePage = () => {
             onClick={() => {
               // Lógica para guardar
             }}
-            className="bg-white/90 p-2 rounded-full text-gray-500 hover:text-yellow-500 transition-colors"
+            className="bg-white/90 p-3 rounded-full text-gray-500 hover:text-yellow-500 transition-colors hover:scale-110 shadow"
           >
             <FaBookmark className="w-5 h-5" />
           </button>
         </div>
       </div>
       <div className="p-6">
-        <h3 className="text-xl font-semibold mb-2">{producto.nombre}</h3>
+        <h3 className="text-xl font-bold mb-2 text-gray-900">{producto.nombre}</h3>
         <p className="text-gray-600 mb-4 line-clamp-2">{producto.descripcion}</p>
         <div className="flex items-center justify-between mb-4">
-          <p className="text-2xl font-bold text-purple-600">
+          <p className="text-2xl font-extrabold text-purple-700">
             {producto.precio}€
           </p>
         </div>
         <div className="flex gap-4">
           <a
             href={`/producto/${producto.id}`}
-            className="flex-1 bg-purple-600 text-white text-center py-2 rounded-lg hover:bg-purple-700 transition-colors"
+            className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-center py-3 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 font-semibold shadow"
           >
-            Ver más
+            Ver más <FaArrowRight className="w-4 h-4" />
           </a>
           <button 
             onClick={() => {
               // Lógica para añadir al carrito
             }}
-            className="bg-purple-100 text-purple-600 p-2 rounded-lg hover:bg-purple-200 transition-colors"
+            className="bg-purple-100 text-purple-600 p-3 rounded-full hover:bg-purple-200 transition-all duration-300 hover:scale-110 shadow"
           >
             <FaShoppingCart className="w-5 h-5" />
           </button>
@@ -106,28 +106,28 @@ const HomePage = () => {
       </div>
       
       {/* Hero Section */}
-      <section className="relative h-[80vh] bg-gradient-to-r from-purple-900 to-indigo-900 overflow-hidden">
+      <section className="relative h-[80vh] bg-gradient-to-r from-purple-900 to-indigo-900 overflow-hidden flex items-center">
         <div className="absolute inset-0 bg-black opacity-50"></div>
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
         <div className="relative container mx-auto px-4 h-full flex items-center">
           <div className={`text-white max-w-2xl transition-all duration-1000 delay-300 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+            <h1 className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight drop-shadow-xl">
               Tu Comunidad de Videojuegos
             </h1>
-            <p className="text-xl md:text-2xl mb-8 text-gray-200">
+            <p className="text-2xl md:text-3xl mb-8 text-gray-200 font-medium drop-shadow">
               Descubre juegos clásicos, lee artículos y comparte tu pasión por los CRPGs
             </p>
             <div className="flex gap-4">
               <a 
                 href="/tienda"
-                className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg text-lg font-semibold transition-all duration-300 hover:scale-105"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-10 py-4 rounded-full text-xl font-bold transition-all duration-300 hover:scale-105 shadow-lg"
               >
                 Explorar ahora
                 <FaArrowRight className="w-5 h-5" />
               </a>
               <a 
                 href="/blog"
-                className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-lg text-lg font-semibold transition-all duration-300 backdrop-blur-sm"
+                className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-10 py-4 rounded-full text-xl font-bold transition-all duration-300 backdrop-blur-sm shadow-lg"
               >
                 Leer artículos
               </a>
@@ -148,16 +148,16 @@ const HomePage = () => {
       <section className={`py-20 bg-gray-50 transition-all duration-1000 delay-700 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         <div className="container mx-auto px-4">
           <div className="mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+            <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-2 drop-shadow-lg">
               Artículos Destacados
             </h2>
-            <p className="text-gray-600">Las últimas novedades y análisis</p>
+            <p className="text-gray-600 text-lg">Las últimas novedades y análisis</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             {articulos.slice(0, 3).map((articulo, index) => (
               <div
                 key={articulo.id}
-                className={`bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 transition-all duration-1000 delay-${(index + 1) * 200} ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+                className={`bg-gradient-to-br from-white via-purple-50 to-indigo-100 rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 transition-all duration-1000 delay-${(index + 1) * 200} ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
               >
                 <div className="relative h-48 bg-gray-200 group">
                   <img
@@ -170,7 +170,7 @@ const HomePage = () => {
                       onClick={() => {
                         // Lógica para dar like
                       }}
-                      className="bg-white/90 p-2 rounded-full text-gray-500 hover:text-red-500 transition-colors"
+                      className="bg-white/90 p-3 rounded-full text-gray-500 hover:text-red-500 transition-colors hover:scale-110 shadow"
                     >
                       <FaHeart className="w-5 h-5" />
                     </button>
@@ -178,14 +178,14 @@ const HomePage = () => {
                       onClick={() => {
                         // Lógica para guardar
                       }}
-                      className="bg-white/90 p-2 rounded-full text-gray-500 hover:text-yellow-500 transition-colors"
+                      className="bg-white/90 p-3 rounded-full text-gray-500 hover:text-yellow-500 transition-colors hover:scale-110 shadow"
                     >
                       <FaBookmark className="w-5 h-5" />
                     </button>
                   </div>
                 </div>
                 <div className="p-6">
-                  <h3 className="text-xl font-semibold mb-2">{articulo.titulo}</h3>
+                  <h3 className="text-xl font-bold mb-2 text-gray-900">{articulo.titulo}</h3>
                   <p className="text-gray-600 mb-4 line-clamp-2">{articulo.descripcion}</p>
                   <div className="flex items-center justify-between mb-4">
                     <div className="text-sm text-gray-500">
@@ -194,7 +194,7 @@ const HomePage = () => {
                   </div>
                   <a
                     href={`/articulo/${articulo.id}`}
-                    className="block w-full bg-purple-600 text-white text-center py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                    className="block w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-center py-3 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105 font-semibold shadow"
                   >
                     Leer más
                   </a>

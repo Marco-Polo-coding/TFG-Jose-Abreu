@@ -90,82 +90,81 @@ const UserButton = () => {
       <div className="relative" ref={popoverRef}>
         <button 
           onClick={() => setIsOpen(!isOpen)}
-          className="bg-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 group"
+          className="bg-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 group border-2 border-transparent hover:border-purple-300"
         >
           {isAuthenticated ? (
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white ${getRandomColor(userEmail)}`}>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-xl font-bold bg-gradient-to-br from-purple-500 to-indigo-500 border-4 border-white shadow ${getRandomColor(userEmail)}`}>
               {getInitials(userEmail)}
             </div>
           ) : (
-            <FaUser className="w-6 h-6 text-purple-600 group-hover:text-purple-700 transition-colors" />
+            <FaUser className="w-8 h-8 text-purple-600 group-hover:text-purple-700 transition-colors" />
           )}
         </button>
 
         {isOpen && (
-          <div className="absolute top-16 right-4 z-50 bg-white rounded-xl shadow-2xl p-4 w-64 transform transition-all duration-200 ease-in-out">
+          <div className="absolute top-16 right-4 z-50 bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl p-6 w-80 border border-purple-100 ring-1 ring-purple-100 animate-fade-in">
             {isAuthenticated ? (
-              <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white text-xl ${getRandomColor(userEmail)}`}>
+              <div className="space-y-5">
+                <div className="flex items-center space-x-4 pb-2">
+                  <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl font-bold bg-gradient-to-br from-purple-500 to-indigo-500 border-4 border-white shadow ${getRandomColor(userEmail)}`}>
                     {getInitials(userEmail)}
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-900">
-                      {userName || userEmail}
-                    </h3>
-                    <p className="text-xs text-gray-500 truncate">
-                      {userEmail}
-                    </p>
+                    <h3 className="text-base font-extrabold text-gray-900 leading-tight">{userName || userEmail}</h3>
+                    <p className="text-xs text-gray-500 truncate">{userEmail}</p>
                   </div>
                 </div>
-                <div className="border-t border-gray-100"></div>
+                <div className="border-t border-purple-100"></div>
                 <div className="space-y-2">
                   <a
                     href="/profile"
-                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-purple-50 rounded-lg transition-all duration-200 group"
+                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-base text-gray-700 hover:bg-purple-100/60 rounded-lg transition-all duration-200 group font-medium"
                   >
-                    <FaUserCircle className="w-4 h-4 text-purple-500 group-hover:text-purple-600 transition-colors" />
+                    <FaUserCircle className="w-5 h-5 text-purple-500 group-hover:text-purple-700 transition-colors" />
                     <span>Ver mi Perfil</span>
                   </a>
-                  <button
-                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-purple-50 rounded-lg transition-all duration-200 group"
+                  <a
+                    href="/saved_articles"
+                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-base text-gray-700 hover:bg-purple-100/60 rounded-lg transition-all duration-200 group font-medium"
                   >
-                    <FaBookmark className="w-4 h-4 text-purple-500 group-hover:text-purple-600 transition-colors" />
+                    <FaBookmark className="w-5 h-5 text-purple-500 group-hover:text-purple-700 transition-colors" />
                     <span>Artículos guardados</span>
-                  </button>
-                  <button
-                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-purple-50 rounded-lg transition-all duration-200 group"
+                  </a>
+                  <a
+                    href="/favorite_products"
+                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-base text-gray-700 hover:bg-purple-100/60 rounded-lg transition-all duration-200 group font-medium"
                   >
-                    <FaHeart className="w-4 h-4 text-purple-500 group-hover:text-purple-600 transition-colors" />
+                    <FaHeart className="w-5 h-5 text-purple-500 group-hover:text-purple-700 transition-colors" />
                     <span>Productos favoritos</span>
-                  </button>
+                  </a>
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 group"
+                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-base text-red-600 hover:bg-red-100/60 rounded-lg transition-all duration-200 group font-semibold mt-2"
                   >
-                    <FaSignOutAlt className="w-4 h-4 text-red-500 group-hover:text-red-600 transition-colors" />
+                    <FaSignOutAlt className="w-5 h-5 text-red-500 group-hover:text-red-700 transition-colors animate-pulse" />
                     <span>Cerrar Sesión</span>
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="px-2 py-1">
-                  <h3 className="text-sm font-semibold text-gray-700">Mi Cuenta</h3>
+                  <h3 className="text-lg font-extrabold text-gray-800 mb-1">Mi Cuenta</h3>
+                  <div className="border-t border-gray-200 mb-2" />
                 </div>
-                <div className="border-t border-gray-100"></div>
                 <button
                   onClick={() => handleAuthClick('login')}
-                  className="w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-purple-50 rounded-lg transition-all duration-200 group"
+                  className="w-full flex items-center gap-3 px-4 py-3 text-base text-gray-700 hover:bg-purple-50 rounded-xl transition-all duration-200 group font-medium"
                 >
-                  <FaSignInAlt className="w-4 h-4 text-purple-500 group-hover:text-purple-600 transition-colors" />
+                  <FaSignInAlt className="w-5 h-5 text-purple-500 group-hover:text-purple-700 transition-colors" />
                   <span>Iniciar Sesión</span>
                 </button>
                 <button
                   onClick={() => handleAuthClick('register')}
-                  className="w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-purple-50 rounded-lg transition-all duration-200 group"
+                  className="w-full flex items-center gap-3 px-4 py-3 text-base text-purple-700 bg-gradient-to-r from-purple-100 via-purple-50 to-white hover:from-purple-200 hover:to-purple-100 rounded-xl transition-all duration-200 group font-semibold shadow hover:shadow-lg hover:scale-105 border border-purple-100"
+                  style={{ boxShadow: '0 2px 12px 0 rgba(168, 85, 247, 0.10)' }}
                 >
-                  <FaUserPlus className="w-4 h-4 text-purple-500 group-hover:text-purple-600 transition-colors" />
+                  <FaUserPlus className="w-5 h-5 text-purple-500 group-hover:text-purple-700 transition-colors" />
                   <span>Registrarse</span>
                 </button>
               </div>
