@@ -104,9 +104,10 @@ const ArticuloDetalle = ({ id }) => {
             {/* Imagen del Artículo */}
             <div className="bg-gradient-to-br from-white via-purple-50 to-indigo-100 rounded-2xl shadow-2xl overflow-hidden transition-all duration-500 hover:shadow-3xl hover:-translate-y-1 group animate-fade-in">
               <img
-                src={articulo.imagen}
+                src={articulo.imagen && articulo.imagen.startsWith('http') ? articulo.imagen : '/default-article.jpg'}
                 alt={articulo.titulo}
                 className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                onError={(e) => { e.target.src = '/default-article.jpg'; }}
               />
               <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <button 
@@ -132,7 +133,10 @@ const ArticuloDetalle = ({ id }) => {
 
             {/* Contenido y Comentarios */}
             <div className="bg-white rounded-2xl shadow-2xl p-10 transition-all duration-500 hover:shadow-3xl hover:-translate-y-1 animate-fade-in">
-              <div className="prose max-w-none mb-8">
+              <div className="prose max-w-none mb-4">
+                <p className="text-lg text-gray-700 mb-2 font-semibold">{articulo.descripcion}</p>
+                <span className="inline-block bg-purple-100 text-purple-700 text-xs font-semibold px-3 py-1 rounded-full mb-4">{articulo.categoria || 'Sin categoría'}</span>
+                <div className="my-4" />
                 {articulo.contenido}
               </div>
 

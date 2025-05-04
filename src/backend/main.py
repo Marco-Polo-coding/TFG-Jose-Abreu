@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Form, File, UploadFile
 from firebase_config import db
 from auth import router as auth_router
 from firebase_admin import firestore
@@ -172,10 +173,31 @@ async def agregar_respuesta(articulo_id: str, comentario_id: str, respuesta: Dic
 
 # ✅ NUEVO: Endpoint para crear un artículo
 @app.post("/articulos", response_model=Dict[str, Any])
-async def crear_articulo(articulo: Dict[str, Any]):
+async def crear_articulo(
+    titulo: str = Form(...),
+    descripcion: str = Form(...),
+    contenido: str = Form(...),
+    categoria: str = Form(...),
+    imagen: UploadFile = File(...)
+):
     try:
+        # Guardar la imagen en una carpeta local (opcional, aquí solo se guarda el nombre)
+        # Si quieres guardar la imagen físicamente, descomenta lo siguiente:
+        # with open(f"uploaded_images/{imagen.filename}", "wb") as f:
+        #     f.write(await imagen.read())
+
         articulo_ref = db.collection("articulos").document()
-        articulo["id"] = articulo_ref.id
+        articulo = {
+            "id": articulo_ref.id,
+            "titulo": titulo,
+            "descripcion": descripcion,
+            "contenido": contenido,
+            "categoria": categoria,
+            "imagen": imagen.filename,  # Aquí podrías poner la URL si la subes a un bucket
+            "fecha_publicacion": datetime.now().isoformat(),
+            "autor": "Autor",  # Puedes obtenerlo del usuario autenticado si lo tienes
+            "likes": 0,
+        }
         articulo_ref.set(articulo)
         return {"id": articulo_ref.id, **articulo}
     except Exception as e:

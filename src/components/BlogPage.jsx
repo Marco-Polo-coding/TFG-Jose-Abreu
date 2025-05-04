@@ -95,9 +95,10 @@ const BlogPage = () => {
                 >
                   <div className="relative h-48 bg-gray-200 group">
                     <img
-                      src={articulo.imagen}
+                      src={articulo.imagen && articulo.imagen.startsWith('http') ? articulo.imagen : '/default-article.jpg'}
                       alt={articulo.titulo}
                       className="w-full h-full object-cover"
+                      onError={(e) => { e.target.src = '/default-article.jpg'; }}
                     />
                     <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <button
@@ -122,9 +123,10 @@ const BlogPage = () => {
                   </div>
                   <div className="p-6">
                     <h3 className="text-xl font-bold mb-2 text-gray-900">{articulo.titulo}</h3>
-                    <p className="text-gray-600 mb-4 line-clamp-2">
-                      {articulo.descripcion}
-                    </p>
+                    <p className="text-gray-600 mb-2 line-clamp-2">{articulo.descripcion}</p>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="inline-block bg-purple-100 text-purple-700 text-xs font-semibold px-3 py-1 rounded-full">{articulo.categoria || 'Sin categoría'}</span>
+                    </div>
                     <div className="flex items-center justify-between mb-4">
                       <div className="text-sm text-gray-500">
                         Por {articulo.autor} • {new Date(articulo.fecha_publicacion).toLocaleDateString()}
