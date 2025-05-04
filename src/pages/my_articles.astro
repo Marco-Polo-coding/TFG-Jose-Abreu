@@ -1,0 +1,17 @@
+---
+import Layout from '../layouts/Layout.astro';
+import MyArticlesComponent from '../components/MyArticles.jsx';
+---
+
+<Layout title="Mis Artículos">
+  <main>
+    <MyArticlesComponent client:load />
+  </main>
+</Layout>
+
+<style>
+  main {
+    min-height: calc(100vh - 4rem);
+    background-color: #f9fafb;
+  }
+</style> 

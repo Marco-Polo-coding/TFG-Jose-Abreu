@@ -96,9 +96,14 @@ async def login_user(user: UserLogin) -> Dict[str, str]:
                     )
             
             data = response.json()
+            # Obtener el usuario de Firebase
+            user_record = auth.get_user_by_email(user.email)
             return {
                 "idToken": data["idToken"],
-                "refreshToken": data["refreshToken"]
+                "refreshToken": data["refreshToken"],
+                "email": user.email,
+                "nombre": user_record.display_name or "",
+                "uid": user_record.uid
             }
     except HTTPException:
         raise

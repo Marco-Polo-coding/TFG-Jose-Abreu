@@ -34,6 +34,16 @@ async def obtener_productos():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# ✅ NUEVO: Endpoint para obtener productos de un usuario específico
+@app.get("/usuarios/{usuario_id}/productos", response_model=List[Dict[str, Any]])
+async def obtener_productos_usuario(usuario_id: str):
+    try:
+        productos_ref = db.collection("productos").where("usuario", "==", usuario_id)
+        productos = productos_ref.stream()
+        return [{"id": producto.id, **producto.to_dict()} for producto in productos]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ✅ NUEVO: Endpoint para obtener un producto por ID
 @app.get("/productos/{producto_id}", response_model=Dict[str, Any])
 async def obtener_producto_por_id(producto_id: str):
@@ -43,6 +53,41 @@ async def obtener_producto_por_id(producto_id: str):
         if not producto.exists:
             raise HTTPException(status_code=404, detail="Producto no encontrado")
         return {"id": producto.id, **producto.to_dict()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ✅ NUEVO: Endpoint para crear un producto
+@app.post("/productos", response_model=Dict[str, Any])
+async def crear_producto(producto: Dict[str, Any]):
+    try:
+        producto_ref = db.collection("productos").document()
+        producto["id"] = producto_ref.id
+        producto_ref.set(producto)
+        return {"id": producto_ref.id, **producto}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ✅ NUEVO: Endpoint para actualizar un producto
+@app.put("/productos/{producto_id}", response_model=Dict[str, Any])
+async def actualizar_producto(producto_id: str, producto: Dict[str, Any]):
+    try:
+        producto_ref = db.collection("productos").document(producto_id)
+        if not producto_ref.get().exists:
+            raise HTTPException(status_code=404, detail="Producto no encontrado")
+        producto_ref.update(producto)
+        return {"id": producto_id, **producto}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ✅ NUEVO: Endpoint para eliminar un producto
+@app.delete("/productos/{producto_id}")
+async def eliminar_producto(producto_id: str):
+    try:
+        producto_ref = db.collection("productos").document(producto_id)
+        if not producto_ref.get().exists:
+            raise HTTPException(status_code=404, detail="Producto no encontrado")
+        producto_ref.delete()
+        return {"message": "Producto eliminado con éxito"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -122,5 +167,16 @@ async def agregar_respuesta(articulo_id: str, comentario_id: str, respuesta: Dic
         comentario_ref.collection("respuestas").document(respuesta_id).set(respuesta)
         
         return {"id": respuesta_id, **respuesta}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ✅ NUEVO: Endpoint para crear un artículo
+@app.post("/articulos", response_model=Dict[str, Any])
+async def crear_articulo(articulo: Dict[str, Any]):
+    try:
+        articulo_ref = db.collection("articulos").document()
+        articulo["id"] = articulo_ref.id
+        articulo_ref.set(articulo)
+        return {"id": articulo_ref.id, **articulo}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -81,8 +81,11 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
       localStorage.setItem('token', data.idToken);
       localStorage.setItem('userEmail', formData.email);
       localStorage.setItem('userName', data.name || formData.name || formData.email);
+      if (data.uid) {
+        localStorage.setItem('uid', data.uid);
+      }
       setIsAuthenticated(true);
-      onLoginSuccess?.(formData.email, data.name || formData.name || formData.email);
+      onLoginSuccess?.(formData.email, data.name || formData.name || formData.email, data.uid);
       
       showNotification(
         isLoginMode ? '¡Inicio de sesión exitoso!' : '¡Cuenta creada exitosamente!',
@@ -340,8 +343,11 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                               localStorage.setItem('token', data.idToken);
                               localStorage.setItem('userEmail', data.email);
                               localStorage.setItem('userName', data.nombre || data.email);
+                              if (data.uid) {
+                                localStorage.setItem('uid', data.uid);
+                              }
                               setIsAuthenticated(true);
-                              onLoginSuccess?.(data.email, data.nombre || data.email);
+                              onLoginSuccess?.(data.email, data.nombre || data.email, data.uid);
                               showNotification('¡Inicio de sesión con Google exitoso!', 'success');
                               onClose();
                               setTimeout(() => {

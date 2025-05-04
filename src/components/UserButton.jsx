@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaUser, FaSignInAlt, FaUserPlus, FaSignOutAlt, FaBookmark, FaHeart, FaUserCircle } from 'react-icons/fa';
+import { FaUser, FaSignInAlt, FaUserPlus, FaSignOutAlt, FaBookmark, FaHeart, FaUserCircle, FaNewspaper, FaBox } from 'react-icons/fa';
 import ProfileModal from './ProfileModal';
 import ConfirmModal from './ConfirmModal';
 import AuthModal from './AuthModal';
@@ -136,6 +136,20 @@ const UserButton = () => {
                   >
                     <FaHeart className="w-5 h-5 text-purple-500 group-hover:text-purple-700 transition-colors" />
                     <span>Productos favoritos</span>
+                  </a>
+                  <a
+                    href="/my_articles"
+                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-base text-gray-700 hover:bg-purple-100/60 rounded-lg transition-all duration-200 group font-medium"
+                  >
+                    <FaNewspaper className="w-5 h-5 text-purple-500 group-hover:text-purple-700 transition-colors" />
+                    <span>Mis Artículos</span>
+                  </a>
+                  <a
+                    href="/my_products"
+                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-base text-gray-700 hover:bg-purple-100/60 rounded-lg transition-all duration-200 group font-medium"
+                  >
+                    <FaBox className="w-5 h-5 text-purple-500 group-hover:text-purple-700 transition-colors" />
+                    <span>Mis Productos</span>
                   </a>
                   <button
                     onClick={handleLogout}
