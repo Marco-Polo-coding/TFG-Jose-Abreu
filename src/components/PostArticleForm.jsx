@@ -40,10 +40,22 @@ const PostArticleForm = () => {
     setLoading(true);
 
     try {
+      const userEmail = localStorage.getItem('userEmail');
+      const userName = localStorage.getItem('userName');
       const formDataToSend = new FormData();
       Object.keys(formData).forEach(key => {
-        formDataToSend.append(key, formData[key]);
+        if (key === 'imagen') {
+          if (formData[key]) {
+            formDataToSend.append('imagen', formData[key]);
+          }
+          // Si no hay imagen, no añadas nada
+        } else {
+          formDataToSend.append(key, formData[key]);
+        }
       });
+      // Añade el email y el nombre del usuario
+      formDataToSend.append('autor_email', userEmail || '');
+      formDataToSend.append('autor', userName || userEmail || 'Autor');
 
       const response = await fetch('http://localhost:8000/articulos', {
         method: 'POST',

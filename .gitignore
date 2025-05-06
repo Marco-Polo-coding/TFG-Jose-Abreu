@@ -25,3 +25,6 @@ pnpm-debug.log*
 
 # Firebase credentials
 src/backend/serviceAccountKey.json
+
+# Cloudinary configuration
+src/backend/cloudinary_config.py

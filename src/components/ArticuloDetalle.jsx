@@ -104,10 +104,9 @@ const ArticuloDetalle = ({ id }) => {
             {/* Imagen del Artículo */}
             <div className="bg-gradient-to-br from-white via-purple-50 to-indigo-100 rounded-2xl shadow-2xl overflow-hidden transition-all duration-500 hover:shadow-3xl hover:-translate-y-1 group animate-fade-in">
               <img
-                src={articulo.imagen && articulo.imagen.startsWith('http') ? articulo.imagen : '/default-article.jpg'}
+                src={articulo.imagen && articulo.imagen.startsWith('http') && articulo.imagen !== '/default-article.jpg' ? articulo.imagen : 'https://cataas.com/cat'}
                 alt={articulo.titulo}
                 className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                onError={(e) => { e.target.src = '/default-article.jpg'; }}
               />
               <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <button 

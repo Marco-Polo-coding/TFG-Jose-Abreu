@@ -4,8 +4,10 @@ from fastapi import Form, File, UploadFile
 from firebase_config import db
 from auth import router as auth_router
 from firebase_admin import firestore
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime
+from cloudinary_config import *  # Importar la configuración
+import cloudinary.uploader
 
 app = FastAPI(title="API de la Aplicación")
 
@@ -178,13 +180,26 @@ async def crear_articulo(
     descripcion: str = Form(...),
     contenido: str = Form(...),
     categoria: str = Form(...),
-    imagen: UploadFile = File(...)
+    imagen: Optional[UploadFile] = File(None),
+    autor: Optional[str] = Form("Autor"),
+    autor_email: Optional[str] = Form("")
 ):
     try:
-        # Guardar la imagen en una carpeta local (opcional, aquí solo se guarda el nombre)
-        # Si quieres guardar la imagen físicamente, descomenta lo siguiente:
-        # with open(f"uploaded_images/{imagen.filename}", "wb") as f:
-        #     f.write(await imagen.read())
+        gatito_url = "https://cataas.com/cat"
+        url_imagen = gatito_url
+        if imagen is not None:
+            try:
+                if hasattr(imagen, 'filename') and imagen.filename and hasattr(imagen, 'content_type') and imagen.content_type and imagen.content_type.startswith("image/"):
+                    contents = await imagen.read()
+                    result = cloudinary.uploader.upload(
+                        contents,
+                        folder="blog_images",
+                        resource_type="auto"
+                    )
+                    url_imagen = result["secure_url"]
+            except Exception as img_err:
+                print("Error subiendo imagen a Cloudinary:", img_err)
+                url_imagen = gatito_url
 
         articulo_ref = db.collection("articulos").document()
         articulo = {
@@ -193,12 +208,126 @@ async def crear_articulo(
             "descripcion": descripcion,
             "contenido": contenido,
             "categoria": categoria,
-            "imagen": imagen.filename,  # Aquí podrías poner la URL si la subes a un bucket
+            "imagen": url_imagen,
             "fecha_publicacion": datetime.now().isoformat(),
-            "autor": "Autor",  # Puedes obtenerlo del usuario autenticado si lo tienes
+            "autor": autor,
+            "autor_email": autor_email,
             "likes": 0,
         }
         articulo_ref.set(articulo)
         return {"id": articulo_ref.id, **articulo}
     except Exception as e:
+        print("Error en crear_articulo:", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/upload-image/")
+async def upload_image(file: UploadFile = File(...)):
+    try:
+        # Leer el contenido del archivo
+        contents = await file.read()
+        
+        # Subir a Cloudinary
+        result = cloudinary.uploader.upload(
+            contents,
+            folder="blog_images",  # Opcional: organizar imágenes en carpetas
+            resource_type="auto"   # Detecta automáticamente el tipo de archivo
+        )
+        
+        # Devolver la URL pública
+        return {
+            "url": result["secure_url"],
+            "public_id": result["public_id"]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        await file.close()
+
+@app.delete("/articulos/{articulo_id}")
+async def eliminar_articulo(articulo_id: str):
+    try:
+        # Obtener el artículo antes de eliminarlo
+        articulo_ref = db.collection("articulos").document(articulo_id)
+        articulo = articulo_ref.get()
+        
+        if not articulo.exists:
+            raise HTTPException(status_code=404, detail="Artículo no encontrado")
+        
+        articulo_data = articulo.to_dict()
+        print(f"\n[ELIMINACIÓN] Iniciando eliminación del artículo: {articulo_data.get('titulo', 'Sin título')} (ID: {articulo_id})")
+        
+        # Si el artículo tiene una imagen de Cloudinary, eliminarla
+        if articulo_data.get("imagen") and "cloudinary.com" in articulo_data["imagen"]:
+            try:
+                print(f"[ELIMINACIÓN] Imagen encontrada en Cloudinary: {articulo_data['imagen']}")
+                # Extraer el public_id de la URL de Cloudinary
+                # La URL de Cloudinary tiene el formato: https://res.cloudinary.com/cloud_name/image/upload/v1234567890/folder/image_name.jpg
+                url_parts = articulo_data["imagen"].split("/")
+                # El public_id es la parte después de "upload/" pero sin la versión
+                upload_index = url_parts.index("upload") + 1
+                # Saltamos la versión (v1234567890) y tomamos el resto
+                public_id = "/".join(url_parts[upload_index + 1:]).split(".")[0]  # Eliminar la extensión
+                
+                print(f"[ELIMINACIÓN] Intentando eliminar imagen con public_id: {public_id}")
+                # Eliminar la imagen de Cloudinary
+                result = cloudinary.uploader.destroy(public_id)
+                print(f"[ELIMINACIÓN] Resultado de eliminación de imagen: {result}")
+            except Exception as img_err:
+                print(f"[ERROR] Error eliminando imagen de Cloudinary: {str(img_err)}")
+                # Continuar con la eliminación del artículo incluso si falla la eliminación de la imagen
+        else:
+            print("[ELIMINACIÓN] El artículo no tiene imagen en Cloudinary o usa imagen por defecto")
+        
+        # Eliminar el artículo de la base de datos
+        articulo_ref.delete()
+        print(f"[ELIMINACIÓN] Artículo eliminado correctamente de la base de datos")
+        return {"message": "Artículo eliminado correctamente"}
+    except Exception as e:
+        print(f"[ERROR] Error en eliminar_articulo: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/articulos/{articulo_id}", response_model=Dict[str, Any])
+async def actualizar_articulo(
+    articulo_id: str,
+    titulo: Optional[str] = Form(None),
+    descripcion: Optional[str] = Form(None),
+    contenido: Optional[str] = Form(None),
+    categoria: Optional[str] = Form(None),
+    imagen: Optional[UploadFile] = File(None),
+    autor: Optional[str] = Form(None),
+    autor_email: Optional[str] = Form(None)
+):
+    try:
+        articulo_ref = db.collection("articulos").document(articulo_id)
+        articulo = articulo_ref.get()
+        if not articulo.exists:
+            raise HTTPException(status_code=404, detail="Artículo no encontrado")
+
+        data = {}
+        if titulo is not None: data["titulo"] = titulo
+        if descripcion is not None: data["descripcion"] = descripcion
+        if contenido is not None: data["contenido"] = contenido
+        if categoria is not None: data["categoria"] = categoria
+        if autor is not None: data["autor"] = autor
+        if autor_email is not None: data["autor_email"] = autor_email
+
+        # Si hay imagen nueva, súbela a Cloudinary
+        if imagen is not None and hasattr(imagen, 'filename') and imagen.filename and hasattr(imagen, 'content_type') and imagen.content_type and imagen.content_type.startswith("image/"):
+            contents = await imagen.read();
+            result = cloudinary.uploader.upload(
+                contents,
+                folder="blog_images",
+                resource_type="auto"
+            )
+            data["imagen"] = result["secure_url"]
+
+        if not data:
+            raise HTTPException(status_code=400, detail="No se proporcionaron datos para actualizar")
+
+        articulo_ref.update(data)
+        articulo_actualizado = articulo_ref.get().to_dict()
+        articulo_actualizado["id"] = articulo_id
+        return articulo_actualizado
+    except Exception as e:
+        print("Error en actualizar_articulo:", e)
         raise HTTPException(status_code=500, detail=str(e))

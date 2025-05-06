@@ -95,10 +95,9 @@ const BlogPage = () => {
                 >
                   <div className="relative h-48 bg-gray-200 group">
                     <img
-                      src={articulo.imagen && articulo.imagen.startsWith('http') ? articulo.imagen : '/default-article.jpg'}
+                      src={articulo.imagen && articulo.imagen.startsWith('http') && articulo.imagen !== '/default-article.jpg' ? articulo.imagen : 'https://cataas.com/cat'}
                       alt={articulo.titulo}
                       className="w-full h-full object-cover"
-                      onError={(e) => { e.target.src = '/default-article.jpg'; }}
                     />
                     <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <button

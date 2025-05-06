@@ -3,39 +3,39 @@ import { FaNewspaper, FaEdit, FaTrash, FaPlus, FaSpinner, FaHome } from 'react-i
 import axios from 'axios';
 import CartButton from './CartButton';
 import UserButton from './UserButton';
+import ConfirmDeleteModal from './ConfirmDeleteModal';
+import EditArticleModal from './EditArticleModal';
+import Notification from './Notification';
 
 const MyArticles = () => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [editingArticle, setEditingArticle] = useState(null);
-  const [formData, setFormData] = useState({
-    titulo: '',
-    contenido: '',
-    imagen: ''
-  });
+  const [modalOpen, setModalOpen] = useState(false);
+  const [articleToDelete, setArticleToDelete] = useState(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [articleToEdit, setArticleToEdit] = useState(null);
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
-    const userId = localStorage.getItem('uid');
-    if (!userId) {
-      setError('No se ha encontrado el ID del usuario. Por favor, inicia sesión.');
+    const userEmail = localStorage.getItem('userEmail');
+    if (!userEmail) {
+      setError('No se ha encontrado el email del usuario. Por favor, inicia sesión.');
       setLoading(false);
       return;
     }
-    fetchArticles();
+    fetchArticles(userEmail);
   }, []);
 
-  const fetchArticles = async () => {
+  const fetchArticles = async (userEmail) => {
     try {
       setLoading(true);
-      const userId = localStorage.getItem('uid');
-      if (!userId) {
-        throw new Error('No se ha encontrado el ID del usuario');
+      if (!userEmail) {
+        throw new Error('No se ha encontrado el email del usuario');
       }
       const response = await axios.get(`http://localhost:8000/articulos`);
-      // Filtrar artículos por autor (uid)
-      const filtered = response.data.filter(a => a.autor_id === userId);
+      // Filtrar artículos por autor_email
+      const filtered = response.data.filter(a => a.autor_email === userEmail);
       setArticles(filtered);
       setError(null);
     } catch (err) {
@@ -46,52 +46,63 @@ const MyArticles = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Eliminar artículo
+  const handleDelete = async () => {
+    if (!articleToDelete) return;
     try {
-      const userId = localStorage.getItem('uid');
-      if (!userId) {
-        throw new Error('No se ha encontrado el ID del usuario');
-      }
-      const articleData = {
-        ...formData,
-        autor_id: userId,
-        fecha_publicacion: new Date().toISOString().slice(0, 10)
-      };
-      if (editingArticle) {
-        await axios.put(`http://localhost:8000/articulos/${editingArticle.id}`, articleData);
-      } else {
-        await axios.post('http://localhost:8000/articulos', articleData);
-      }
-      setShowModal(false);
-      setEditingArticle(null);
-      setFormData({ titulo: '', contenido: '', imagen: '' });
-      fetchArticles();
+      await axios.delete(`http://localhost:8000/articulos/${articleToDelete.id}`);
+      setArticles(prev => prev.filter(a => a.id !== articleToDelete.id));
+      setModalOpen(false);
+      setArticleToDelete(null);
+      setNotification({
+        type: 'success',
+        message: 'Artículo eliminado correctamente'
+      });
     } catch (err) {
-      setError(err.response?.data?.detail || 'Error al guardar el artículo. Por favor, intenta de nuevo.');
-      console.error('Error saving article:', err);
+      setNotification({
+        type: 'error',
+        message: 'Error al eliminar el artículo. Por favor, intenta de nuevo.'
+      });
+      console.error('Error deleting article:', err);
     }
   };
 
-  const handleEdit = (article) => {
-    setEditingArticle(article);
-    setFormData({
-      titulo: article.titulo,
-      contenido: article.contenido,
-      imagen: article.imagen
-    });
-    setShowModal(true);
-  };
-
-  const handleDelete = async (articleId) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar este artículo?')) {
-      try {
-        await axios.delete(`http://localhost:8000/articulos/${articleId}`);
-        fetchArticles();
-      } catch (err) {
-        setError(err.response?.data?.detail || 'Error al eliminar el artículo. Por favor, intenta de nuevo.');
-        console.error('Error deleting article:', err);
+  // Guardar cambios de edición
+  const handleEditSave = async (formData, stopLoading) => {
+    try {
+      let updatedArticle = { ...formData };
+      // Siempre usa FormData, aunque no haya imagen
+      const data = new FormData();
+      data.append('titulo', formData.titulo);
+      data.append('descripcion', formData.descripcion || '');
+      data.append('contenido', formData.contenido);
+      data.append('categoria', formData.categoria || 'reseña');
+      data.append('autor', formData.autor || '');
+      data.append('autor_email', formData.autor_email || '');
+      if (formData.imagen instanceof File) {
+        data.append('imagen', formData.imagen);
       }
+      const response = await axios.put(
+        `http://localhost:8000/articulos/${formData.id}`,
+        data,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+      updatedArticle = response.data;
+      setArticles(prev => prev.map(a => a.id === updatedArticle.id ? updatedArticle : a));
+      setEditModalOpen(false);
+      setArticleToEdit(null);
+      setNotification({
+        type: 'success',
+        message: 'Artículo actualizado correctamente'
+      });
+    } catch (err) {
+      setNotification({
+        type: 'error',
+        message: 'Error al guardar los cambios. Por favor, intenta de nuevo.'
+      });
+      console.error('Error editing article:', err);
+    } finally {
+      stopLoading();
     }
   };
 
@@ -130,17 +141,13 @@ const MyArticles = () => {
             <FaNewspaper className="text-purple-500" />
             Tus artículos
           </h2>
-          <button 
-            onClick={() => {
-              setEditingArticle(null);
-              setFormData({ titulo: '', contenido: '', imagen: '' });
-              setShowModal(true);
-            }}
+          <a
+            href="/post_article"
             className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 flex items-center gap-2 font-semibold shadow-lg hover:scale-105"
           >
             <FaPlus />
             Nuevo Artículo
-          </button>
+          </a>
         </div>
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
@@ -155,12 +162,12 @@ const MyArticles = () => {
           <div className="text-center py-12 bg-white rounded-2xl shadow-xl">
             <FaNewspaper className="mx-auto text-6xl text-gray-300 mb-4" />
             <p className="text-gray-500 text-lg">No tienes artículos publicados aún.</p>
-            <button 
-              onClick={() => setShowModal(true)}
+            <a 
+              href="/post_article"
               className="mt-4 text-purple-600 hover:text-purple-700 font-medium"
             >
               ¡Publica tu primer artículo!
-            </button>
+            </a>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
@@ -168,7 +175,7 @@ const MyArticles = () => {
               <div key={article.id} className="bg-gradient-to-br from-white via-purple-50 to-indigo-100 rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-white/60 animate-fade-in">
                 <div className="aspect-w-16 aspect-h-9 mb-4">
                   <img 
-                    src={article.imagen} 
+                    src={article.imagen && article.imagen !== '/default-article.jpg' ? article.imagen : 'https://cataas.com/cat'} 
                     alt={article.titulo}
                     className="object-cover rounded-xl w-full h-48"
                   />
@@ -176,85 +183,48 @@ const MyArticles = () => {
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{article.titulo}</h3>
                 <p className="text-gray-600 mb-2 line-clamp-2">{article.contenido?.slice(0, 100)}...</p>
                 <p className="text-purple-700 font-extrabold mb-4 text-lg">{article.fecha_publicacion}</p>
-                <div className="flex justify-between items-center">
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => handleEdit(article)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    >
-                      <FaEdit />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(article.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <FaTrash />
-                    </button>
-                  </div>
+                <div className="flex justify-end gap-2 mt-2">
+                  <button
+                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Editar artículo"
+                    onClick={() => { setArticleToEdit(article); setEditModalOpen(true); }}
+                  >
+                    <FaEdit />
+                  </button>
+                  <button
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Eliminar artículo"
+                    onClick={() => { setArticleToDelete(article); setModalOpen(true); }}
+                  >
+                    <FaTrash />
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl animate-fade-in">
-            <h2 className="text-2xl font-bold mb-4">
-              {editingArticle ? 'Editar Artículo' : 'Nuevo Artículo'}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Título</label>
-                <input
-                  type="text"
-                  value={formData.titulo}
-                  onChange={(e) => setFormData({...formData, titulo: e.target.value})}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Contenido</label>
-                <textarea
-                  value={formData.contenido}
-                  onChange={(e) => setFormData({...formData, contenido: e.target.value})}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
-                  rows="5"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">URL de la imagen</label>
-                <input
-                  type="url"
-                  value={formData.imagen}
-                  onChange={(e) => setFormData({...formData, imagen: e.target.value})}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
-                  required
-                />
-              </div>
-              <div className="flex justify-end gap-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowModal(false);
-                    setEditingArticle(null);
-                  }}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 font-semibold shadow hover:scale-105"
-                >
-                  {editingArticle ? 'Guardar cambios' : 'Crear artículo'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {/* Modal de confirmación de borrado */}
+      <ConfirmDeleteModal
+        open={modalOpen}
+        onClose={() => { setModalOpen(false); setArticleToDelete(null); }}
+        onConfirm={handleDelete}
+        articleTitle={articleToDelete?.titulo || ''}
+      />
+      {/* Modal de edición de artículo */}
+      <EditArticleModal
+        open={editModalOpen}
+        onClose={() => { setEditModalOpen(false); setArticleToEdit(null); }}
+        onSave={handleEditSave}
+        initialData={articleToEdit || {}}
+      />
+      {/* Notificación */}
+      {notification && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onClose={() => setNotification(null)}
+        />
       )}
     </div>
   );
