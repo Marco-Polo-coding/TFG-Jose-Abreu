@@ -1,17 +1,17 @@
 # 🎮 CRPG Game Hub — Plataforma de Artículos y Tienda de Videojuegos de Segunda Mano
 
 ## 📝 Descripción
-CRPGHub es una plataforma web moderna que combina un blog colaborativo especializado en videojuegos CRPG (Computer Role-Playing Games) con una tienda de compraventa de productos de segunda mano entre usuarios. La plataforma está diseñada para crear una comunidad activa de entusiastas de los videojuegos clásicos, permitiendo tanto la compraventa de juegos como el intercambio de conocimiento y experiencias.
+CRPG Game Hub es una plataforma web moderna que combina un blog colaborativo especializado en videojuegos CRPG (Computer Role-Playing Games) con una tienda de compraventa de productos de segunda mano entre usuarios. La plataforma está diseñada para crear una comunidad activa de entusiastas de los videojuegos clásicos, permitiendo tanto la compraventa de juegos como el intercambio de conocimiento y experiencias.
 
 ## 🎯 Motivación
-La motivación principal detrás de CRPGHub es crear un espacio dedicado para los amantes de los CRPGs, un género que ha sido fundamental en la historia de los videojuegos pero que a menudo no recibe la atención que merece en las plataformas actuales. La plataforma busca:
+La motivación principal detrás de CRPG Game Hub es crear un espacio dedicado para los amantes de los CRPGs, un género que ha sido fundamental en la historia de los videojuegos pero que a menudo no recibe la atención que merece en las plataformas actuales. La plataforma busca:
 - Preservar y celebrar la historia de los CRPGs
 - Facilitar el acceso a juegos clásicos difíciles de encontrar
 - Crear una comunidad activa de entusiastas
 - Proporcionar un espacio para el intercambio de conocimiento y experiencias
 
 ## 💡 Justificación
-La creación de CRPGHub se justifica por varias razones:
+La creación de CRPG Game Hub se justifica por varias razones:
 1. **Necesidad de un espacio especializado**: No existe una plataforma dedicada exclusivamente a los CRPGs que combine contenido editorial y comercio.
 2. **Preservación del patrimonio**: Los CRPGs son parte fundamental de la historia de los videojuegos y merecen un espacio dedicado.
 3. **Comunidad activa**: Existe una comunidad activa de entusiastas que necesita un espacio para interactuar y compartir.
@@ -159,8 +159,8 @@ La creación de CRPGHub se justifica por varias razones:
 │   │   ├── index.astro         # Página de inicio
 │   │   ├── producto/[id].astro # Vista de detalle de producto
 │   │   ├── articulo/[id].astro # Vista de detalle de artículo
-│   │   ├── tienda.astro        # (En desarrollo)
-│   │   └── blog.astro          # (En desarrollo)
+│   │   ├── tienda.astro        # Página de la tienda
+│   │   └── blog.astro          # Página de los artículos
 ├── firebase_config.py          # Configuración Firebase
 ├── main.py                     # FastAPI backend
 ├── .env                        # Variables de entorno
