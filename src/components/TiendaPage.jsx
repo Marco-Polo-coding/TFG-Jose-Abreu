@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaHeart, FaBookmark, FaHome, FaShoppingCart, FaArrowRight, FaBoxOpen } from "react-icons/fa";
+import { FaHeart, FaBookmark, FaHome, FaShoppingCart, FaArrowRight, FaBoxOpen, FaSearch, FaSortAlphaDown, FaFilter } from "react-icons/fa";
 import CartButton from './CartButton';
 import UserButton from './UserButton';
 import LoadingSpinner from './LoadingSpinner';
@@ -7,6 +7,11 @@ import LoadingSpinner from './LoadingSpinner';
 const TiendaPage = () => {
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [order, setOrder] = useState("az"); // az, za
+  const [category, setCategory] = useState("");
+  const [priceOrder, setPriceOrder] = useState(""); // asc, desc
+  const [estado, setEstado] = useState(""); // nuevo, usado, etc.
 
   useEffect(() => {
     fetch("http://localhost:8000/productos")
@@ -20,6 +25,39 @@ const TiendaPage = () => {
         setLoading(false);
       });
   }, []);
+
+  // Obtener categorías únicas
+  const categoriasSet = new Set(productos.map(p => p.categoria || 'Sin categoría'));
+  const categoriasUnicas = Array.from(categoriasSet);
+
+  // Filtrado
+  let productosFiltrados = productos
+    .filter(p => {
+      const texto = (p.nombre).toLowerCase();
+      return texto.includes(search.toLowerCase());
+    })
+    .filter(p => (category ? (category === 'Sin categoría' ? !p.categoria : p.categoria === category) : true))
+    .filter(p => (estado ? p.estado === estado : true));
+
+  // Ordenado
+  if (order === "az") {
+    productosFiltrados = productosFiltrados.sort((a, b) => a.nombre.localeCompare(b.nombre));
+  } else if (order === "za") {
+    productosFiltrados = productosFiltrados.sort((a, b) => b.nombre.localeCompare(a.nombre));
+  } else if (priceOrder === "asc") {
+    productosFiltrados = productosFiltrados.sort((a, b) => a.precio - b.precio);
+  } else if (priceOrder === "desc") {
+    productosFiltrados = productosFiltrados.sort((a, b) => b.precio - a.precio);
+  }
+
+  // Reset filtros
+  const resetFiltros = () => {
+    setSearch("");
+    setOrder("az");
+    setCategory("");
+    setPriceOrder("");
+    setEstado("");
+  };
 
   if (loading) {
     return <LoadingSpinner />;
@@ -72,10 +110,80 @@ const TiendaPage = () => {
         </div>
       </section>
 
-      {/* Productos Section */}
+      {/* Barra de búsqueda y filtros */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
-          {productos.length === 0 ? (
+          <div className="mb-10 flex flex-col md:flex-row md:items-end gap-4 md:gap-8 bg-white/80 rounded-2xl shadow p-6 border border-white/60">
+            <div className="flex-1 flex flex-col gap-2">
+              <label className="text-sm font-semibold text-gray-700 flex items-center gap-2"><FaSearch /> Buscar por nombre</label>
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Buscar..."
+                className="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold text-gray-700 flex items-center gap-2"><FaSortAlphaDown /> Orden alfabético</label>
+              <select
+                value={order}
+                onChange={e => { setOrder(e.target.value); setPriceOrder(""); }}
+                className="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white"
+              >
+                <option value="az">A-Z</option>
+                <option value="za">Z-A</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold text-gray-700 flex items-center gap-2"><FaFilter /> Categoría</label>
+              <select
+                value={category}
+                onChange={e => setCategory(e.target.value)}
+                className="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white"
+              >
+                <option value="">Todas</option>
+                {categoriasUnicas.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold text-gray-700 flex items-center gap-2"><FaShoppingCart /> Precio</label>
+              <select
+                value={priceOrder}
+                onChange={e => { setPriceOrder(e.target.value); setOrder(""); }}
+                className="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white"
+              >
+                <option value="">Sin ordenar</option>
+                <option value="asc">Menor precio</option>
+                <option value="desc">Mayor precio</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold text-gray-700 flex items-center gap-2"><FaFilter /> Estado</label>
+              <select
+                value={estado}
+                onChange={e => setEstado(e.target.value)}
+                className="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white"
+              >
+                <option value="">Todos</option>
+                <option value="nuevo">Nuevo</option>
+                <option value="como nuevo">Como nuevo</option>
+                <option value="bueno">Bueno</option>
+                <option value="aceptable">Aceptable</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-2 justify-end">
+              <button
+                onClick={resetFiltros}
+                className="mt-6 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-semibold shadow hover:scale-105 transition-all duration-300"
+              >
+                Resetear filtros
+              </button>
+            </div>
+          </div>
+          {productosFiltrados.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-gray-400 text-6xl mb-4">🎮</div>
               <h2 className="text-2xl font-bold text-gray-800 mb-2">
@@ -87,7 +195,7 @@ const TiendaPage = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-              {productos.map((producto) => (
+              {productosFiltrados.map((producto) => (
                 <div
                   key={producto.id}
                   className="bg-gradient-to-br from-white via-purple-50 to-indigo-100 rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-white/60"
