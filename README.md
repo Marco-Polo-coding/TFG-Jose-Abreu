@@ -1,4 +1,4 @@
-# 🎮 CRPGHub — Plataforma de Artículos y Tienda de Videojuegos de Segunda Mano
+# 🎮 CRPG Game Hub — Plataforma de Artículos y Tienda de Videojuegos de Segunda Mano
 
 ## 📝 Descripción
 CRPGHub es una plataforma web moderna que combina un blog colaborativo especializado en videojuegos CRPG (Computer Role-Playing Games) con una tienda de compraventa de productos de segunda mano entre usuarios. La plataforma está diseñada para crear una comunidad activa de entusiastas de los videojuegos clásicos, permitiendo tanto la compraventa de juegos como el intercambio de conocimiento y experiencias.
