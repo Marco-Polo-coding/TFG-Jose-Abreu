@@ -29,19 +29,147 @@ async def root():
 
 # ✅ Endpoint para obtener productos
 @app.get("/productos", response_model=List[Dict[str, Any]])
-async def obtener_productos():
+async def get_productos():
+    productos_ref = db.collection("productos").stream()
+    return [{"id": doc.id, **doc.to_dict()} for doc in productos_ref]
+
+@app.get("/productos/{producto_id}", response_model=Dict[str, Any])
+async def obtener_producto(producto_id: str):
     try:
-        productos_ref = db.collection("productos")
-        productos = productos_ref.stream()
-        return [{"id": producto.id, **producto.to_dict()} for producto in productos]
+        producto_ref = db.collection("productos").document(producto_id)
+        producto = producto_ref.get()
+        if not producto.exists:
+            raise HTTPException(status_code=404, detail="Producto no encontrado")
+        return {"id": producto.id, **producto.to_dict()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ✅ NUEVO: Endpoint para obtener productos de un usuario específico
+@app.post("/productos", response_model=Dict[str, Any])
+async def crear_producto(
+    nombre: str = Form(...),
+    descripcion: str = Form(...),
+    precio: float = Form(...),
+    stock: int = Form(...),
+    categoria: str = Form(...),
+    estado: str = Form(...),
+    imagen: Optional[UploadFile] = File(None),
+    usuario_email: Optional[str] = Form(None)
+):
+
+    try:
+        url_imagen = "https://cataas.com/cat"  # Imagen por defecto
+        if imagen is not None:
+            try:
+                if hasattr(imagen, 'filename') and imagen.filename and hasattr(imagen, 'content_type') and imagen.content_type and imagen.content_type.startswith("image/"):
+                    contents = await imagen.read()
+                    result = cloudinary.uploader.upload(
+                        contents,
+                        folder="product_images",
+                        resource_type="auto"
+                    )
+                    url_imagen = result["secure_url"]
+            except Exception as img_err:
+                print("Error subiendo imagen a Cloudinary:", img_err)
+
+        producto_ref = db.collection("productos").document()
+        producto = {
+            "id": producto_ref.id,
+            "nombre": nombre,
+            "descripcion": descripcion,
+            "precio": precio,
+            "stock": stock,
+            "categoria": categoria,
+            "estado": estado,
+            "imagen": url_imagen,
+            "fecha_creacion": datetime.now().isoformat()
+        }
+        if usuario_email:
+            producto["usuario_email"] = usuario_email
+        producto_ref.set(producto)
+        return {"id": producto_ref.id, **producto}
+    except Exception as e:
+        print("Error en crear_producto:", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/productos/{producto_id}", response_model=Dict[str, Any])
+async def actualizar_producto(
+    producto_id: str,
+    nombre: Optional[str] = Form(None),
+    descripcion: Optional[str] = Form(None),
+    precio: Optional[float] = Form(None),
+    stock: Optional[int] = Form(None),
+    categoria: Optional[str] = Form(None),
+    estado: Optional[str] = Form(None),
+    imagen: Optional[UploadFile] = File(None)
+):
+    try:
+        producto_ref = db.collection("productos").document(producto_id)
+        producto = producto_ref.get()
+        if not producto.exists:
+            raise HTTPException(status_code=404, detail="Producto no encontrado")
+
+        data = {}
+        if nombre is not None: data["nombre"] = nombre
+        if descripcion is not None: data["descripcion"] = descripcion
+        if precio is not None: data["precio"] = precio
+        if stock is not None: data["stock"] = stock
+        if categoria is not None: data["categoria"] = categoria
+        if estado is not None: data["estado"] = estado
+
+        if imagen is not None and hasattr(imagen, 'filename') and imagen.filename and hasattr(imagen, 'content_type') and imagen.content_type and imagen.content_type.startswith("image/"):
+            contents = await imagen.read()
+            result = cloudinary.uploader.upload(
+                contents,
+                folder="product_images",
+                resource_type="auto"
+            )
+            data["imagen"] = result["secure_url"]
+
+        if not data:
+            raise HTTPException(status_code=400, detail="No se proporcionaron datos para actualizar")
+
+        producto_ref.update(data)
+        producto_actualizado = producto_ref.get().to_dict()
+        producto_actualizado["id"] = producto_id
+        return producto_actualizado
+    except Exception as e:
+        print("Error en actualizar_producto:", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/productos/{producto_id}")
+async def eliminar_producto(producto_id: str):
+    try:
+        producto_ref = db.collection("productos").document(producto_id)
+        producto = producto_ref.get()
+        
+        if not producto.exists:
+            raise HTTPException(status_code=404, detail="Producto no encontrado")
+        
+        producto_data = producto.to_dict()
+        print(f"\n[ELIMINACIÓN] Iniciando eliminación del producto: {producto_data.get('nombre', 'Sin nombre')} (ID: {producto_id})")
+        
+        if producto_data.get("imagen") and "cloudinary.com" in producto_data["imagen"]:
+            try:
+                url_parts = producto_data["imagen"].split("/")
+                upload_index = url_parts.index("upload") + 1
+                public_id = "/".join(url_parts[upload_index + 1:]).split(".")[0]
+                result = cloudinary.uploader.destroy(public_id)
+                print(f"[ELIMINACIÓN] Resultado de eliminación de imagen: {result}")
+            except Exception as img_err:
+                print(f"[ERROR] Error eliminando imagen de Cloudinary: {str(img_err)}")
+        
+        producto_ref.delete()
+        print(f"[ELIMINACIÓN] Producto eliminado correctamente de la base de datos")
+        return {"message": "Producto eliminado correctamente"}
+    except Exception as e:
+        print(f"[ERROR] Error en eliminar_producto: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ✅ Endpoint para obtener productos de un usuario específico
 @app.get("/usuarios/{usuario_id}/productos", response_model=List[Dict[str, Any]])
 async def obtener_productos_usuario(usuario_id: str):
     try:
-        productos_ref = db.collection("productos").where("usuario", "==", usuario_id)
+        productos_ref = db.collection("productos").where("usuario_email", "==", usuario_id)
         productos = productos_ref.stream()
         return [{"id": producto.id, **producto.to_dict()} for producto in productos]
     except Exception as e:
@@ -56,41 +184,6 @@ async def obtener_producto_por_id(producto_id: str):
         if not producto.exists:
             raise HTTPException(status_code=404, detail="Producto no encontrado")
         return {"id": producto.id, **producto.to_dict()}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# ✅ NUEVO: Endpoint para crear un producto
-@app.post("/productos", response_model=Dict[str, Any])
-async def crear_producto(producto: Dict[str, Any]):
-    try:
-        producto_ref = db.collection("productos").document()
-        producto["id"] = producto_ref.id
-        producto_ref.set(producto)
-        return {"id": producto_ref.id, **producto}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# ✅ NUEVO: Endpoint para actualizar un producto
-@app.put("/productos/{producto_id}", response_model=Dict[str, Any])
-async def actualizar_producto(producto_id: str, producto: Dict[str, Any]):
-    try:
-        producto_ref = db.collection("productos").document(producto_id)
-        if not producto_ref.get().exists:
-            raise HTTPException(status_code=404, detail="Producto no encontrado")
-        producto_ref.update(producto)
-        return {"id": producto_id, **producto}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# ✅ NUEVO: Endpoint para eliminar un producto
-@app.delete("/productos/{producto_id}")
-async def eliminar_producto(producto_id: str):
-    try:
-        producto_ref = db.collection("productos").document(producto_id)
-        if not producto_ref.get().exists:
-            raise HTTPException(status_code=404, detail="Producto no encontrado")
-        producto_ref.delete()
-        return {"message": "Producto eliminado con éxito"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

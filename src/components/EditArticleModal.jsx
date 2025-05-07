@@ -9,6 +9,10 @@ const EditArticleModal = ({ open, onClose, onSave, initialData }) => {
   const [notification, setNotification] = useState(null);
   const modalRef = useRef(null);
 
+  const TITLE_LIMIT = 100;
+  const DESC_LIMIT = 300;
+  const CONTENT_LIMIT = 500;
+
   // Sincroniza los datos del artículo cada vez que cambia initialData o se abre el modal
   useEffect(() => {
     if (open) {
@@ -103,56 +107,115 @@ const EditArticleModal = ({ open, onClose, onSave, initialData }) => {
         <div className="overflow-y-auto pr-1" style={{ maxHeight: 'calc(95vh - 10rem)' }}>
           <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1 flex justify-between items-center">
+                Título
+                <span className="text-xs text-gray-500">{(formData.titulo || '').length}/{TITLE_LIMIT}</span>
+              </label>
               <input
                 type="text"
                 name="titulo"
-                value={formData.titulo}
-                onChange={handleChange}
+                value={formData.titulo || ''}
+                onChange={e => {
+                  if (e.target.value.length <= TITLE_LIMIT) handleChange(e);
+                }}
                 required
+                maxLength={TITLE_LIMIT}
                 className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1 flex justify-between items-center">
+                Descripción
+                <span className="text-xs text-gray-500">{(formData.descripcion || '').length}/{DESC_LIMIT}</span>
+              </label>
               <textarea
                 name="descripcion"
-                value={formData.descripcion}
-                onChange={handleChange}
+                value={formData.descripcion || ''}
+                onChange={e => {
+                  if (e.target.value.length <= DESC_LIMIT) handleChange(e);
+                }}
                 required
+                maxLength={DESC_LIMIT}
                 rows={3}
                 className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Imagen</label>
-              <div className="flex items-center gap-4">
+              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
                 {previewImage ? (
-                  <img src={previewImage} alt="Preview" className="h-16 w-16 object-cover rounded-lg border" />
+                  <div className="space-y-1 text-center">
+                    <img
+                      src={previewImage}
+                      alt="Preview"
+                      className="mx-auto h-32 w-32 object-cover rounded-lg"
+                    />
+                    <div className="flex text-sm text-gray-600 justify-center">
+                      <label
+                        htmlFor="imagen-articulo"
+                        className="relative cursor-pointer bg-white rounded-md font-medium text-purple-600 hover:text-purple-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500"
+                      >
+                        <span>Cambiar imagen</span>
+                        <input
+                          id="imagen-articulo"
+                          name="imagen"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="sr-only"
+                        />
+                      </label>
+                    </div>
+                  </div>
                 ) : (
-                  <FaImage className="h-12 w-12 text-gray-300" />
+                  <>
+                    <FaImage className="mx-auto h-12 w-12 text-gray-400" />
+                    <div className="flex text-sm text-gray-600 justify-center">
+                      <label
+                        htmlFor="imagen-articulo"
+                        className="relative cursor-pointer bg-white rounded-md font-medium text-purple-600 hover:text-purple-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500"
+                      >
+                        <span>Subir una imagen</span>
+                        <input
+                          id="imagen-articulo"
+                          name="imagen"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="sr-only"
+                        />
+                      </label>
+                    </div>
+                  </>
                 )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="block"
-                />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contenido</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1 flex justify-between items-center">
+                Contenido
+                <span className="text-xs text-gray-500">{(formData.contenido || '').length}/{CONTENT_LIMIT}</span>
+              </label>
               <textarea
                 name="contenido"
-                value={formData.contenido}
-                onChange={handleChange}
+                value={formData.contenido || ''}
+                onChange={e => {
+                  if (e.target.value.length <= CONTENT_LIMIT) handleChange(e);
+                }}
                 required
-                rows={6}
+                maxLength={CONTENT_LIMIT}
+                rows={8}
                 className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
             {/* Footer fijo */}
-            <div className="flex justify-end pt-2">
+            <div className="flex justify-end gap-4 pt-2">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="px-6 py-2 rounded-full bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition"
+              >
+                Cancelar
+              </button>
               <button
                 type="submit"
                 disabled={loading}

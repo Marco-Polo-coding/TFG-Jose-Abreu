@@ -120,7 +120,10 @@ const TiendaPage = () => {
                     </div>
                   </div>
                   <div className="p-6">
-                    <h3 className="text-xl font-bold mb-2 text-gray-900">{producto.nombre}</h3>
+                    <h3 className="text-xl font-bold mb-2 text-gray-900 truncate" title={producto.nombre}>{producto.nombre}</h3>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="inline-block bg-purple-100 text-purple-700 text-xs font-semibold px-3 py-1 rounded-full">{producto.categoria || 'Sin categoría'}</span>
+                    </div>
                     <p className="text-gray-600 mb-4 line-clamp-2">
                       {producto.descripcion}
                     </p>

@@ -180,9 +180,9 @@ const MyArticles = () => {
                     className="object-cover rounded-xl w-full h-48"
                   />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{article.titulo}</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-2 truncate max-w-[180px]">{article.titulo}</h3>
                 <p className="text-gray-600 mb-2 line-clamp-2">{article.contenido?.slice(0, 100)}...</p>
-                <p className="text-purple-700 font-extrabold mb-4 text-lg">{article.fecha_publicacion}</p>
+                <p className="text-purple-700 font-extrabold mb-4 text-lg">{new Date(article.fecha_publicacion).toLocaleDateString()}</p>
                 <div className="flex justify-end gap-2 mt-2">
                   <button
                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

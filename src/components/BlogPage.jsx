@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaHeart, FaBookmark, FaHome, FaArrowRight, FaPen } from "react-icons/fa";
+import { FaHeart, FaBookmark, FaHome, FaArrowRight, FaPen, FaSearch, FaSortAlphaDown, FaSortAlphaUp, FaCalendarAlt, FaFilter } from "react-icons/fa";
 import CartButton from './CartButton';
 import UserButton from './UserButton';
 import LoadingSpinner from './LoadingSpinner';
@@ -7,6 +7,10 @@ import LoadingSpinner from './LoadingSpinner';
 const BlogPage = () => {
   const [articulos, setArticulos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [order, setOrder] = useState("az"); // az, za
+  const [category, setCategory] = useState("");
+  const [dateOrder, setDateOrder] = useState("desc"); // desc, asc
 
   useEffect(() => {
     fetch("http://localhost:8000/articulos")
@@ -20,6 +24,45 @@ const BlogPage = () => {
         setLoading(false);
       });
   }, []);
+
+  // Obtener categorías únicas (incluyendo 'Sin categoría' si aplica)
+  const categoriasSet = new Set(articulos.map(a => a.categoria || 'Sin categoría'));
+  const categoriasUnicas = Array.from(categoriasSet);
+
+  // Filtrado
+  let articulosFiltrados = articulos
+    .filter(a => {
+      const texto = (a.titulo + " " + a.autor).toLowerCase();
+      return texto.includes(search.toLowerCase());
+    })
+    .filter(a => (category ? (category === 'Sin categoría' ? !a.categoria : a.categoria === category) : true));
+
+  // Ordenado
+  if (order === "az") {
+    articulosFiltrados = articulosFiltrados.sort((a, b) => a.titulo.localeCompare(b.titulo));
+  } else if (order === "za") {
+    articulosFiltrados = articulosFiltrados.sort((a, b) => b.titulo.localeCompare(a.titulo));
+  } else if (dateOrder === "desc") {
+    articulosFiltrados = articulosFiltrados.sort((a, b) => {
+      const da = new Date(a.fecha_publicacion);
+      const db = new Date(b.fecha_publicacion);
+      return db - da;
+    });
+  } else if (dateOrder === "asc") {
+    articulosFiltrados = articulosFiltrados.sort((a, b) => {
+      const da = new Date(a.fecha_publicacion);
+      const db = new Date(b.fecha_publicacion);
+      return da - db;
+    });
+  }
+
+  // Reset filtros
+  const resetFiltros = () => {
+    setSearch("");
+    setOrder("az");
+    setCategory("");
+    setDateOrder("desc");
+  };
 
   if (loading) {
     return <LoadingSpinner />;
@@ -76,19 +119,75 @@ const BlogPage = () => {
       {/* Artículos Section */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
-          {articulos.length === 0 ? (
+          {/* Barra de búsqueda y filtros */}
+          <div className="mb-10 flex flex-col md:flex-row md:items-end gap-4 md:gap-8 bg-white/80 rounded-2xl shadow p-6 border border-white/60">
+            <div className="flex-1 flex flex-col gap-2">
+              <label className="text-sm font-semibold text-gray-700 flex items-center gap-2"><FaSearch /> Buscar por título o autor</label>
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Buscar..."
+                className="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold text-gray-700 flex items-center gap-2"><FaSortAlphaDown /> Orden alfabético</label>
+              <select
+                value={order}
+                onChange={e => { setOrder(e.target.value); setDateOrder(""); }}
+                className="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white"
+              >
+                <option value="az">A-Z</option>
+                <option value="za">Z-A</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold text-gray-700 flex items-center gap-2"><FaFilter /> Categoría</label>
+              <select
+                value={category}
+                onChange={e => setCategory(e.target.value)}
+                className="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white"
+              >
+                <option value="">Todas</option>
+                {categoriasUnicas.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold text-gray-700 flex items-center gap-2"><FaCalendarAlt /> Fecha</label>
+              <select
+                value={dateOrder}
+                onChange={e => { setDateOrder(e.target.value); setOrder(""); }}
+                className="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white"
+              >
+                <option value="desc">Más reciente</option>
+                <option value="asc">Más antiguo</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-2 justify-end">
+              <button
+                onClick={resetFiltros}
+                className="mt-6 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-semibold shadow hover:scale-105 transition-all duration-300"
+              >
+                Resetear filtros
+              </button>
+            </div>
+          </div>
+          {articulosFiltrados.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-gray-400 text-6xl mb-4">📚</div>
+              <div className="text-gray-400 text-6xl mb-4">🔍</div>
               <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                No hay artículos disponibles
+                No se encontraron artículos con los filtros o búsqueda seleccionados
               </h2>
               <p className="text-gray-600">
-                Por ahora no tenemos artículos publicados. ¡Vuelve pronto!
+                Prueba a cambiar los filtros o a resetearlos para ver más resultados.
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-              {articulos.map((articulo) => (
+              {articulosFiltrados.map((articulo) => (
                 <div
                   key={articulo.id}
                   className="bg-gradient-to-br from-white via-purple-50 to-indigo-100 rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-white/60"
@@ -121,7 +220,7 @@ const BlogPage = () => {
                     </div>
                   </div>
                   <div className="p-6">
-                    <h3 className="text-xl font-bold mb-2 text-gray-900">{articulo.titulo}</h3>
+                    <h3 className="text-xl font-bold mb-2 text-gray-900 truncate" title={articulo.titulo}>{articulo.titulo}</h3>
                     <p className="text-gray-600 mb-2 line-clamp-2">{articulo.descripcion}</p>
                     <div className="flex items-center gap-2 mb-2">
                       <span className="inline-block bg-purple-100 text-purple-700 text-xs font-semibold px-3 py-1 rounded-full">{articulo.categoria || 'Sin categoría'}</span>

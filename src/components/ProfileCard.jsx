@@ -27,6 +27,9 @@ const ProfileCard = () => {
   const [articles, setArticles] = React.useState([]);
   const [loadingArticles, setLoadingArticles] = React.useState(true);
   const [errorArticles, setErrorArticles] = React.useState(null);
+  const [ventas, setVentas] = React.useState([]);
+  const [loadingVentas, setLoadingVentas] = React.useState(true);
+  const [errorVentas, setErrorVentas] = React.useState(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -65,6 +68,30 @@ const ProfileCard = () => {
     fetchArticles();
   }, []);
 
+  React.useEffect(() => {
+    const fetchVentas = async () => {
+      try {
+        setLoadingVentas(true);
+        const userEmail = localStorage.getItem('userEmail');
+        if (!userEmail) {
+          setErrorVentas('No se ha encontrado el email del usuario');
+          setLoadingVentas(false);
+          return;
+        }
+        const response = await axios.get('http://localhost:8000/productos');
+        // Filtrar productos donde el usuario es el vendedor (por email)
+        const ventasUsuario = response.data.filter(p => p.usuario_email === userEmail);
+        setVentas(ventasUsuario);
+        setErrorVentas(null);
+      } catch (err) {
+        setErrorVentas('Error al cargar las ventas.');
+      } finally {
+        setLoadingVentas(false);
+      }
+    };
+    fetchVentas();
+  }, [userEmail]);
+
   if (!token) return null;
 
   return (
@@ -82,9 +109,9 @@ const ProfileCard = () => {
         <div className="text-center md:text-left w-full">
           <h2 className="text-4xl font-extrabold text-gray-900 mb-2 drop-shadow-lg">{userName || userEmail}</h2>
           <p className="text-lg text-gray-500 mb-2">{userEmail}</p>
-          <button className="mt-2 inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow hover:scale-105 hover:from-purple-700 hover:to-indigo-700 transition-all duration-300">
+          <a href="/edit_profile" className="mt-2 inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow hover:scale-105 hover:from-purple-700 hover:to-indigo-700 transition-all duration-300">
             <FaPlus className="w-4 h-4" /> Editar perfil
-          </button>
+          </a>
         </div>
       </div>
 
@@ -119,8 +146,8 @@ const ProfileCard = () => {
                   <div key={article.id} className="flex items-center gap-4 bg-white/80 rounded-xl shadow p-4 border border-white/60 hover:shadow-lg transition-all">
                     <img src={article.imagen && article.imagen !== '/default-article.jpg' ? article.imagen : 'https://cataas.com/cat'} alt={article.titulo} className="w-16 h-16 object-cover rounded-lg border border-purple-100" />
                     <div className="flex-1">
-                      <h4 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-1">{article.titulo}</h4>
-                      <p className="text-xs text-gray-500 mb-1">{article.fecha_publicacion}</p>
+                      <h4 className="text-lg font-semibold text-gray-900 mb-1 truncate max-w-[180px]">{article.titulo}</h4>
+                      <p className="text-xs text-gray-500 mb-1">{new Date(article.fecha_publicacion).toLocaleDateString()}</p>
                     </div>
                     <a href={`/articulo/${article.id}`} className="text-purple-600 hover:text-indigo-700 font-bold text-sm">Ver</a>
                   </div>
@@ -142,10 +169,41 @@ const ProfileCard = () => {
             </span>
             <h3 className="text-xl font-bold text-gray-900">Ventas en curso</h3>
           </div>
-          <p className="text-gray-500 text-base mb-4">No tienes ventas en curso todavía</p>
-          <a href="/upload_product" className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow hover:scale-105 hover:from-purple-700 hover:to-indigo-700 transition-all duration-300">
-            <FaPlus className="w-4 h-4" /> Subir producto
-          </a>
+          {loadingVentas ? (
+            <div className="flex justify-center items-center w-full py-8">
+              <span className="animate-spin text-2xl text-purple-500 mr-2">⏳</span>
+              <span className="text-gray-500">Cargando ventas...</span>
+            </div>
+          ) : errorVentas ? (
+            <div className="text-red-600 py-4">{errorVentas}</div>
+          ) : ventas.length === 0 ? (
+            <>
+              <p className="text-gray-500 text-base mb-4">No tienes ventas en curso todavía</p>
+              <a href="/upload_product" className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow hover:scale-105 hover:from-purple-700 hover:to-indigo-700 transition-all duration-300">
+                <FaPlus className="w-4 h-4" /> Subir producto
+              </a>
+            </>
+          ) : (
+            <div className="w-full">
+              <div className="grid grid-cols-1 gap-4 w-full">
+                {ventas.slice(0, 3).map(producto => (
+                  <div key={producto.id} className="flex items-center gap-4 bg-white/80 rounded-xl shadow p-4 border border-white/60 hover:shadow-lg transition-all">
+                    <img src={producto.imagen || 'https://cataas.com/cat'} alt={producto.nombre} className="w-16 h-16 object-cover rounded-lg border border-purple-100" />
+                    <div className="flex-1">
+                      <h4 className="text-lg font-semibold text-gray-900 mb-1 truncate max-w-[180px]">{producto.nombre}</h4>
+                      <p className="text-xs text-gray-500 mb-1">Precio: {producto.precio}€</p>
+                    </div>
+                    <a href={`/producto/${producto.id}`} className="text-purple-600 hover:text-indigo-700 font-bold text-sm">Ver</a>
+                  </div>
+                ))}
+              </div>
+              {ventas.length > 3 && (
+                <a href="/my_products" className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow hover:scale-105 hover:from-purple-700 hover:to-indigo-700 transition-all duration-300">
+                  Ver todos <FaArrowRight className="w-4 h-4" />
+                </a>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -159,11 +217,11 @@ const ProfileCard = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="bg-gradient-to-br from-purple-100 to-indigo-100 rounded-xl p-8 text-center shadow-lg border border-white/40 hover:scale-105 transition-transform duration-300">
-            <p className="text-4xl font-extrabold text-purple-700 mb-2">0</p>
+            <p className="text-4xl font-extrabold text-purple-700 mb-2">{articles.length}</p>
             <p className="text-base text-gray-600 flex items-center justify-center gap-2"><FaBook className="w-5 h-5" /> Artículos</p>
           </div>
           <div className="bg-gradient-to-br from-purple-100 to-indigo-100 rounded-xl p-8 text-center shadow-lg border border-white/40 hover:scale-105 transition-transform duration-300">
-            <p className="text-4xl font-extrabold text-purple-700 mb-2">0</p>
+            <p className="text-4xl font-extrabold text-purple-700 mb-2">{ventas.length}</p>
             <p className="text-base text-gray-600 flex items-center justify-center gap-2"><FaShoppingBag className="w-5 h-5" /> Ventas</p>
           </div>
           <div className="bg-gradient-to-br from-purple-100 to-indigo-100 rounded-xl p-8 text-center shadow-lg border border-white/40 hover:scale-105 transition-transform duration-300">

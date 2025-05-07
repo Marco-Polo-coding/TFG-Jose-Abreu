@@ -43,7 +43,10 @@ const Notification = ({ message, type = 'success', onClose, duration = 3000 }) =
 
   return (
     <div className={`fixed bottom-4 right-4 z-50 animate-slide-up`}>
-      <div className={`flex items-center p-4 rounded-lg shadow-lg border ${getBackgroundColor()} max-w-md`}>
+      <div
+        className={`flex items-center p-4 rounded-lg shadow-lg border ${getBackgroundColor()} max-w-md cursor-pointer`}
+        onClick={onClose}
+      >
         <div className="flex-shrink-0 mr-3">
           {getIcon()}
         </div>
@@ -51,7 +54,7 @@ const Notification = ({ message, type = 'success', onClose, duration = 3000 }) =
           {message}
         </div>
         <button
-          onClick={onClose}
+          onClick={e => { e.stopPropagation(); onClose(); }}
           className="ml-4 text-gray-400 hover:text-gray-600 focus:outline-none"
         >
           <FaTimesCircle />

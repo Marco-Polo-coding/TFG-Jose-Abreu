@@ -67,7 +67,7 @@ const HomePage = () => {
         </div>
       </div>
       <div className="p-6">
-        <h3 className="text-xl font-bold mb-2 text-gray-900">{producto.nombre}</h3>
+        <h3 className="text-xl font-bold mb-2 text-gray-900 truncate line-clamp-1 max-w-full" title={producto.nombre}>{producto.nombre}</h3>
         <p className="text-gray-600 mb-4 line-clamp-2">{producto.descripcion}</p>
         <div className="flex items-center justify-between mb-4">
           <p className="text-2xl font-extrabold text-purple-700">
@@ -185,7 +185,7 @@ const HomePage = () => {
                   </div>
                 </div>
                 <div className="p-6">
-                  <h3 className="text-xl font-bold mb-2 text-gray-900">{articulo.titulo}</h3>
+                  <h3 className="text-xl font-bold mb-2 text-gray-900 truncate" title={articulo.titulo}>{articulo.titulo}</h3>
                   <p className="text-gray-600 mb-4 line-clamp-2">{articulo.descripcion}</p>
                   <div className="flex items-center justify-between mb-4">
                     <div className="text-sm text-gray-500">

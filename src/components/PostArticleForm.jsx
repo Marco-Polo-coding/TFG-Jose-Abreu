@@ -12,6 +12,10 @@ const PostArticleForm = () => {
   const [loading, setLoading] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
 
+  const TITLE_LIMIT = 100;
+  const DESC_LIMIT = 300;
+  const CONTENT_LIMIT = 500;
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -88,11 +92,15 @@ const PostArticleForm = () => {
             id="titulo"
             name="titulo"
             value={formData.titulo}
-            onChange={handleChange}
+            onChange={e => {
+              if (e.target.value.length <= TITLE_LIMIT) handleChange(e);
+            }}
             required
+            maxLength={TITLE_LIMIT}
             className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
             placeholder="Escribe un título atractivo..."
           />
+          <div className="text-xs text-gray-500 text-right mt-1">{formData.titulo.length}/{TITLE_LIMIT}</div>
         </div>
 
         {/* Descripción */}
@@ -104,12 +112,16 @@ const PostArticleForm = () => {
             id="descripcion"
             name="descripcion"
             value={formData.descripcion}
-            onChange={handleChange}
+            onChange={e => {
+              if (e.target.value.length <= DESC_LIMIT) handleChange(e);
+            }}
             required
+            maxLength={DESC_LIMIT}
             rows="3"
             className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
             placeholder="Una breve descripción de tu artículo..."
           />
+          <div className="text-xs text-gray-500 text-right mt-1">{formData.descripcion.length}/{DESC_LIMIT}</div>
         </div>
 
         {/* Categoría */}
@@ -195,12 +207,16 @@ const PostArticleForm = () => {
             id="contenido"
             name="contenido"
             value={formData.contenido}
-            onChange={handleChange}
+            onChange={e => {
+              if (e.target.value.length <= CONTENT_LIMIT) handleChange(e);
+            }}
             required
+            maxLength={CONTENT_LIMIT}
             rows="12"
             className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
             placeholder="Escribe tu artículo aquí..."
           />
+          <div className="text-xs text-gray-500 text-right mt-1">{formData.contenido.length}/{CONTENT_LIMIT}</div>
         </div>
 
         {/* Botón de envío */}
