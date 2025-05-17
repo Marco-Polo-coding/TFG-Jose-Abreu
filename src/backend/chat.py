@@ -35,11 +35,17 @@ Mantén un tono profesional pero amigable. Si no sabes la respuesta a algo, sé 
 async def chat(message: ChatMessage):
     try:
         response = ollama.chat(
-            model='mistral',  # Usamos el modelo Mistral que es muy bueno y gratuito
+            model='phi',  # Cambiamos a phi que es más rápido
             messages=[
                 {"role": "system", "content": ASSISTANT_CONTEXT},
                 {"role": "user", "content": message.message}
-            ]
+            ],
+            options={
+                "num_predict": 100,  # Limitamos la longitud de la respuesta
+                "temperature": 0.7,  # Controlamos la creatividad
+                "top_k": 40,        # Optimización de rendimiento
+                "top_p": 0.9        # Optimización de rendimiento
+            }
         )
         assistant_response = response['message']['content']
         return {"response": assistant_response}
