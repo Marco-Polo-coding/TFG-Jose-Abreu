@@ -385,8 +385,12 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                   <div className="space-y-4">
                     <div className="text-center">
                       <div className="flex items-center justify-center mb-4">
-                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-3xl font-bold shadow-lg animate-avatar-glow">
-                          {formData.email.charAt(0).toUpperCase()}
+                        <div className={`w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-3xl font-bold shadow-lg animate-avatar-glow overflow-hidden`}>
+                          {localStorage.getItem('userPhoto') ? (
+                            <img src={localStorage.getItem('userPhoto')} alt={formData.name} className="w-full h-full object-cover" />
+                          ) : (
+                            formData.email.charAt(0).toUpperCase()
+                          )}
                         </div>
                       </div>
                       <p className="text-gray-700 mb-2 text-lg">

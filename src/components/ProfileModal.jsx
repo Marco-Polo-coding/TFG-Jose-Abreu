@@ -51,8 +51,12 @@ const ProfileModal = ({ isOpen, onClose, userData }) => {
               {/* Información del usuario */}
               <div className="text-center">
                 <div className="flex justify-center mb-4">
-                  <div className={`w-24 h-24 rounded-full flex items-center justify-center text-white text-3xl ${getRandomColor(userData.email)}`}>
-                    {getInitials(userData.email)}
+                  <div className={`w-24 h-24 rounded-full flex items-center justify-center text-white text-3xl ${getRandomColor(userData.email)} overflow-hidden`}>
+                    {localStorage.getItem('userPhoto') ? (
+                      <img src={localStorage.getItem('userPhoto')} alt={userData.name} className="w-full h-full object-cover" />
+                    ) : (
+                      getInitials(userData.email)
+                    )}
                   </div>
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-1">

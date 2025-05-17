@@ -1,12 +1,13 @@
 import os
-from typing import Dict
-from fastapi import APIRouter, HTTPException, Depends, Body
+from typing import Dict, Optional
+from fastapi import APIRouter, HTTPException, Depends, Body, File, UploadFile, Form
 from pydantic import BaseModel, EmailStr
 import firebase_admin
 from firebase_admin import auth
 import httpx
 from dotenv import load_dotenv
 import logging
+import base64
 
 from firebase_config import db
 
@@ -36,6 +37,12 @@ class ConfirmPasswordReset(BaseModel):
 class DirectPasswordReset(BaseModel):
     email: EmailStr
     newPassword: str
+
+class UserProfileUpdate(BaseModel):
+    uid: str
+    nombre: Optional[str] = None
+    email: Optional[EmailStr] = None
+    foto: Optional[str] = None  # base64 o url
 
 @router.post("/register")
 async def register_user(user: UserRegister):
@@ -246,4 +253,42 @@ async def direct_reset_password(reset_data: DirectPasswordReset):
         raise HTTPException(
             status_code=400,
             detail="Error al actualizar la contraseña"
-        ) 
+        )
+
+@router.put("/update-profile")
+async def update_profile(
+    uid: str = Form(...),
+    nombre: Optional[str] = Form(None),
+    email: Optional[EmailStr] = Form(None),
+    foto: Optional[UploadFile] = File(None)
+):
+    try:
+        user = auth.get_user(uid)
+        update_data = {}
+        firestore_data = {}
+        if nombre:
+            update_data["display_name"] = nombre
+            firestore_data["nombre"] = nombre
+        if email and email != user.email:
+            update_data["email"] = email
+            firestore_data["email"] = email
+        if foto:
+            # Validar tipo y tamaño
+            if foto.content_type not in ["image/png", "image/jpeg", "image/jpg", "image/gif"]:
+                raise HTTPException(status_code=400, detail="Tipo de imagen no soportado")
+            contents = await foto.read()
+            if len(contents) > 10 * 1024 * 1024:
+                raise HTTPException(status_code=400, detail="La imagen supera los 10MB")
+            # Guardar como base64 (o podrías subir a Cloudinary y guardar la URL)
+            foto_b64 = base64.b64encode(contents).decode("utf-8")
+            firestore_data["foto"] = foto_b64
+        # Actualizar en Firebase Auth
+        if update_data:
+            auth.update_user(uid, **update_data)
+        # Actualizar en Firestore
+        if firestore_data:
+            db.collection("usuarios").document(uid).set(firestore_data, merge=True)
+        return {"message": "Perfil actualizado con éxito", "data": firestore_data}
+    except Exception as e:
+        logger.error(f"Error al actualizar perfil: {str(e)}")
+        raise HTTPException(status_code=400, detail="Error al actualizar el perfil") 

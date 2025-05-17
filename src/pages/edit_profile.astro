@@ -2,7 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import CartButton from '../components/CartButton';
 import UserButton from '../components/UserButton';
-import { useState } from 'react';
+import EditProfileForm from '../components/EditProfileForm.jsx';
 ---
 <Layout>
   <div class="min-h-screen bg-gray-50">
@@ -29,62 +29,7 @@ import { useState } from 'react';
     </section>
     <section class="py-16">
       <div class="container mx-auto px-4 max-w-xl">
-        <form class="bg-white rounded-2xl shadow-xl p-8 space-y-6 border border-gray-100" id="edit-profile-form">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-            <input type="text" name="nombre" class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Tu nombre" required />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input type="email" name="email" class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Tu email" required />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Foto de perfil</label>
-            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
-              <div id="profile-image-preview" class="space-y-2 text-center w-full flex flex-col items-center justify-center">
-                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                  <path d="M28 8H20a2 2 0 00-2 2v2H8a2 2 0 00-2 2v24a2 2 0 002 2h32a2 2 0 002-2V14a2 2 0 00-2-2h-10v-2a2 2 0 00-2-2z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                  <circle cx="24" cy="24" r="6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                <img id="profile-image" src="" alt="Preview" class="mx-auto h-32 w-32 object-cover rounded-lg" style="display:none;" />
-                <label for="foto" class="relative cursor-pointer bg-white rounded-md font-medium text-purple-600 hover:text-purple-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500 block">
-                  <span>Subir una imagen</span>
-                  <input id="foto" name="foto" type="file" accept="image/*" class="sr-only" onchange="previewProfileImage(event)" />
-                </label>
-                <span class="text-gray-500">o arrastra y suelta</span>
-                <span class="text-xs text-gray-500">PNG, JPG, GIF hasta 10MB</span>
-              </div>
-            </div>
-          </div>
-          <div class="flex justify-end gap-4 pt-4">
-            <a href="/profile" class="px-6 py-2 rounded-full bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition">Cancelar</a>
-            <button type="submit" class="inline-flex items-center px-6 py-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105">Guardar cambios</button>
-          </div>
-        </form>
-        <script>
-          // @ts-ignore
-          function previewProfileImage(event) {
-            /** @type {HTMLInputElement} */
-            const input = event.target;
-            const img = document.getElementById('profile-image');
-            if (!img) return;
-            const image = img instanceof HTMLImageElement ? img : null;
-            if (!image) return;
-            if (input.files && input.files[0]) {
-              const reader = new FileReader();
-              reader.onload = function(e) {
-                if (e.target && typeof e.target.result === 'string') {
-                  image.src = e.target.result;
-                  image.style.display = 'block';
-                }
-              };
-              reader.readAsDataURL(input.files[0]);
-            } else {
-              image.src = '';
-              image.style.display = 'none';
-            }
-          }
-        </script>
+        <EditProfileForm client:load />
       </div>
     </section>
   </div>
