@@ -187,4 +187,4 @@ const VirtualAssistant = () => {
   );
 };
 
-export default VirtualAssistant; 
+export default VirtualAssistant;
