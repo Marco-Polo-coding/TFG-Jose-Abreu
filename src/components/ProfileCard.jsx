@@ -25,6 +25,7 @@ function getRandomColor(email) {
 const ProfileCard = () => {
   const [userEmail, setUserEmail] = React.useState('');
   const [userName, setUserName] = React.useState('');
+  const [userPhoto, setUserPhoto] = React.useState('');
   const [token, setToken] = React.useState('');
   const [articles, setArticles] = React.useState([]);
   const [loadingArticles, setLoadingArticles] = React.useState(true);
@@ -39,14 +40,30 @@ const ProfileCard = () => {
       const t = localStorage.getItem('token');
       const email = localStorage.getItem('userEmail');
       const name = localStorage.getItem('userName');
+      const photo = localStorage.getItem('userPhoto');
       setToken(t);
       setUserEmail(email);
       setUserName(name);
+      setUserPhoto(photo);
       if (!t) {
         window.location.href = '/';
       }
       setLoading(false);
     }
+    // Escuchar cambios en localStorage
+    const handleStorage = (e) => {
+      if (e.key === 'userPhoto') {
+        setUserPhoto(e.newValue);
+      }
+      if (e.key === 'userName') {
+        setUserName(e.newValue);
+      }
+      if (e.key === 'userEmail') {
+        setUserEmail(e.newValue);
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
   React.useEffect(() => {
@@ -109,8 +126,16 @@ const ProfileCard = () => {
         {/* Avatar con borde animado y gradiente */}
         <div className="flex-shrink-0 flex justify-center w-full md:w-auto">
           <div className={`w-36 h-36 rounded-full flex items-center justify-center text-white text-6xl font-extrabold shadow-xl border-4 border-white bg-gradient-to-br ${getRandomColor(userEmail)} animate-avatar-glow relative`}>
-            {getInitials(userEmail)}
-            <span className="absolute -bottom-2 right-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-full px-3 py-1 text-xs font-semibold shadow-lg animate-bounce">Tú</span>
+            {userPhoto ? (
+              <img
+                src={userPhoto}
+                alt={userName || userEmail}
+                className="w-full h-full object-cover rounded-full"
+              />
+            ) : (
+              getInitials(userEmail)
+            )}
+            <span className="absolute -bottom-2 right-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-full px-3 py-1 text-xs font-semibold shadow-lg animate-bounce z-10">Tú</span>
           </div>
         </div>
         {/* Info usuario */}

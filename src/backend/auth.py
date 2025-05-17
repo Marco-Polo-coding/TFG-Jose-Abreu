@@ -8,6 +8,7 @@ import httpx
 from dotenv import load_dotenv
 import logging
 import base64
+import cloudinary
 
 from firebase_config import db
 
@@ -279,9 +280,17 @@ async def update_profile(
             contents = await foto.read()
             if len(contents) > 10 * 1024 * 1024:
                 raise HTTPException(status_code=400, detail="La imagen supera los 10MB")
-            # Guardar como base64 (o podrías subir a Cloudinary y guardar la URL)
-            foto_b64 = base64.b64encode(contents).decode("utf-8")
-            firestore_data["foto"] = foto_b64
+            # Subir a Cloudinary
+            try:
+                result = cloudinary.uploader.upload(
+                    contents,
+                    folder="profile_images",
+                    resource_type="auto"
+                )
+                firestore_data["foto"] = result["secure_url"]
+            except Exception as img_err:
+                logger.error(f"Error subiendo imagen a Cloudinary: {str(img_err)}")
+                raise HTTPException(status_code=400, detail="Error al subir la imagen")
         # Actualizar en Firebase Auth
         if update_data:
             auth.update_user(uid, **update_data)

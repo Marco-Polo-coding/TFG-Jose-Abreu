@@ -24,7 +24,8 @@ const EditProfileForm = () => {
     // Cargar datos actuales del usuario
     const nombre = localStorage.getItem('userName') || '';
     const email = localStorage.getItem('userEmail') || '';
-    setForm(f => ({ ...f, nombre, email }));
+    const foto = localStorage.getItem('userPhoto') || '';
+    setForm(f => ({ ...f, nombre, email, fotoPreview: foto }));
   }, []);
 
   const validate = () => {
@@ -80,8 +81,8 @@ const EditProfileForm = () => {
       // Actualizar localStorage
       localStorage.setItem('userName', form.nombre);
       localStorage.setItem('userEmail', form.email);
-      if (form.fotoPreview) {
-        localStorage.setItem('userPhoto', form.fotoPreview);
+      if (data.data && data.data.foto) {
+        localStorage.setItem('userPhoto', data.data.foto);
       }
       setToast({ open: true, message: 'Perfil actualizado con éxito', type: 'success' });
       setTimeout(() => window.location.href = '/profile', 1200);
