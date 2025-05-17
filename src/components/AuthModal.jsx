@@ -20,11 +20,19 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
   const [resetForm, setResetForm] = useState({ email: '', password: '', confirmPassword: '' });
   const [resetErrors, setResetErrors] = useState({});
   const [resetLoading, setResetLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   useEffect(() => {
     setIsLoginMode(mode === 'login');
     const token = localStorage.getItem('token');
     setIsAuthenticated(!!token);
+    // Recuperar email y contraseña guardados
+    const savedEmail = localStorage.getItem('rememberedEmail') || '';
+    const savedPassword = localStorage.getItem('rememberedPassword') || '';
+    if (savedEmail && savedPassword) {
+      setFormData({ email: savedEmail, password: savedPassword, name: '' });
+      setRememberMe(true);
+    }
   }, [mode]);
 
   const showNotification = (message, type = 'success') => {
@@ -41,10 +49,22 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
     }));
   };
 
+  const handleRememberMe = (e) => {
+    setRememberMe(e.target.checked);
+    if (!e.target.checked) {
+      localStorage.removeItem('rememberedEmail');
+      localStorage.removeItem('rememberedPassword');
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userName');
+    localStorage.removeItem('uid');
+    // Eliminar datos recordados al cerrar sesión
+    localStorage.removeItem('rememberedEmail');
+    localStorage.removeItem('rememberedPassword');
     setIsAuthenticated(false);
     showNotification('Has cerrado sesión correctamente', 'info');
     onClose();
@@ -79,6 +99,15 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
 
       if (!response.ok) {
         throw new Error(data.detail || 'Error en la autenticación');
+      }
+
+      // Guardar email y contraseña si el usuario marcó 'Recordarme'
+      if (rememberMe) {
+        localStorage.setItem('rememberedEmail', formData.email);
+        localStorage.setItem('rememberedPassword', formData.password);
+      } else {
+        localStorage.removeItem('rememberedEmail');
+        localStorage.removeItem('rememberedPassword');
       }
 
       localStorage.setItem('token', data.idToken);
@@ -414,6 +443,8 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                             <input
                               type="checkbox"
                               className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                              checked={rememberMe}
+                              onChange={handleRememberMe}
                             />
                             <label className="ml-2 block text-sm text-gray-700">
                               Recordarme
