@@ -15,6 +15,7 @@ const UserButton = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const [userName, setUserName] = useState('');
+  const [userPhoto, setUserPhoto] = useState('');
   const popoverRef = useRef(null);
 
   useEffect(() => {
@@ -37,6 +38,7 @@ const UserButton = () => {
     if (token) {
       setUserEmail(localStorage.getItem('userEmail') || '');
       setUserName(localStorage.getItem('userName') || '');
+      setUserPhoto(localStorage.getItem('userPhoto') || '');
     }
   }, []);
 
@@ -55,9 +57,11 @@ const UserButton = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userName');
+    localStorage.removeItem('userPhoto');
     setIsAuthenticated(false);
     setUserEmail('');
     setUserName('');
+    setUserPhoto('');
     setShowConfirmModal(false);
     // Recargar la página después de cerrar sesión
     window.location.reload();
@@ -93,8 +97,12 @@ const UserButton = () => {
           className="bg-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 group border-2 border-transparent hover:border-purple-300"
         >
           {isAuthenticated ? (
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-xl font-bold bg-gradient-to-br from-purple-500 to-indigo-500 border-4 border-white shadow ${getRandomColor(userEmail)}`}>
-              {getInitials(userEmail)}
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-xl font-bold bg-gradient-to-br from-purple-500 to-indigo-500 border-0 border-white shadow ${getRandomColor(userEmail)}`}>
+              {userPhoto ? (
+                <img src={userPhoto} alt={userName || userEmail} className="w-full h-full object-cover rounded-full" />
+              ) : (
+                getInitials(userEmail)
+              )}
             </div>
           ) : (
             <FaUser className="w-8 h-8 text-purple-600 group-hover:text-purple-700 transition-colors" />
@@ -107,7 +115,11 @@ const UserButton = () => {
               <div className="space-y-5">
                 <div className="flex items-center space-x-4 pb-2">
                   <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl font-bold bg-gradient-to-br from-purple-500 to-indigo-500 border-4 border-white shadow ${getRandomColor(userEmail)}`}>
-                    {getInitials(userEmail)}
+                    {userPhoto ? (
+                      <img src={userPhoto} alt={userName || userEmail} className="w-full h-full object-cover rounded-full" />
+                    ) : (
+                      getInitials(userEmail)
+                    )}
                   </div>
                   <div>
                     <h3 className="text-base font-extrabold text-gray-900 leading-tight">{userName || userEmail}</h3>
