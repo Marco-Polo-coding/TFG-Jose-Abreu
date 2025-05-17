@@ -29,12 +29,23 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
     setIsLoginMode(mode === 'login');
     const token = localStorage.getItem('token');
     setIsAuthenticated(!!token);
-    // Recuperar email y contraseña guardados
-    const savedEmail = localStorage.getItem('rememberedEmail') || '';
-    const savedPassword = localStorage.getItem('rememberedPassword') || '';
-    if (savedEmail && savedPassword) {
-      setFormData({ email: savedEmail, password: savedPassword, name: '' });
-      setRememberMe(true);
+    // Solo autocompletar si es login y hay datos recordados
+    if (mode === 'login') {
+      const savedEmail = localStorage.getItem('rememberedEmail') || '';
+      const savedPassword = localStorage.getItem('rememberedPassword') || '';
+      if (savedEmail && savedPassword) {
+        setFormData({ email: savedEmail, password: savedPassword, name: '' });
+        setRememberMe(true);
+      } else {
+        setFormData({ email: '', password: '', name: '' });
+        setRememberMe(false);
+      }
+    } else {
+      setFormData({ email: '', password: '', name: '' });
+      setRememberMe(false);
+      // Limpiar datos recordados al cambiar a registro
+      localStorage.removeItem('rememberedEmail');
+      localStorage.removeItem('rememberedPassword');
     }
   }, [mode]);
 
@@ -94,7 +105,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
-          name: formData.name
+          ...(isLoginMode ? {} : { nombre: formData.name })
         })
       });
 
@@ -104,8 +115,8 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
         throw new Error(data.detail || 'Error en la autenticación');
       }
 
-      // Guardar email y contraseña si el usuario marcó 'Recordarme'
-      if (rememberMe) {
+      // Guardar email y contraseña si el usuario marcó 'Recordarme' SOLO en login
+      if (isLoginMode && rememberMe) {
         localStorage.setItem('rememberedEmail', formData.email);
         localStorage.setItem('rememberedPassword', formData.password);
       } else {
@@ -118,6 +129,11 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
       localStorage.setItem('userName', data.name || formData.name || formData.email);
       if (data.uid) {
         localStorage.setItem('uid', data.uid);
+      }
+      if (data.foto) {
+        localStorage.setItem('userPhoto', data.foto);
+      } else {
+        localStorage.removeItem('userPhoto');
       }
       setIsAuthenticated(true);
       onLoginSuccess?.(formData.email, data.name || formData.name || formData.email, data.uid);
@@ -146,6 +162,10 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
       name: ''
     });
     setIsLoginMode(!isLoginMode);
+    setRememberMe(false);
+    // Limpiar datos recordados al cambiar de modo
+    localStorage.removeItem('rememberedEmail');
+    localStorage.removeItem('rememberedPassword');
   };
 
   const handleResetInput = (e) => {
@@ -187,6 +207,11 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
       localStorage.setItem('userName', loginData.nombre || resetForm.email);
       if (loginData.uid) {
         localStorage.setItem('uid', loginData.uid);
+      }
+      if (loginData.foto) {
+        localStorage.setItem('userPhoto', loginData.foto);
+      } else {
+        localStorage.removeItem('userPhoto');
       }
       showNotification('Contraseña actualizada e inicio de sesión exitoso', 'success');
       setShowResetPassword(false);
@@ -552,6 +577,11 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                               localStorage.setItem('userName', data.nombre || data.email);
                               if (data.uid) {
                                 localStorage.setItem('uid', data.uid);
+                              }
+                              if (data.foto) {
+                                localStorage.setItem('userPhoto', data.foto);
+                              } else {
+                                localStorage.removeItem('userPhoto');
                               }
                               setIsAuthenticated(true);
                               onLoginSuccess?.(data.email, data.nombre || data.email, data.uid);

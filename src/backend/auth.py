@@ -27,6 +27,7 @@ class UserLogin(BaseModel):
 class UserRegister(BaseModel):
     email: EmailStr
     password: str
+    nombre: Optional[str] = None
 
 class PasswordReset(BaseModel):
     email: EmailStr
@@ -50,17 +51,19 @@ async def register_user(user: UserRegister):
     try:
         user_record = auth.create_user(
             email=user.email,
-            password=user.password
+            password=user.password,
+            display_name=user.nombre or ""
         )
         
         # Guardar información adicional en Firestore
         user_data = {
             "uid": user_record.uid,
-            "email": user.email
+            "email": user.email,
+            "nombre": user.nombre or ""
         }
         db.collection("usuarios").document(user_record.uid).set(user_data)
         
-        return {"message": "Usuario registrado con éxito"}
+        return {"message": "Usuario registrado con éxito", "nombre": user.nombre or ""}
     except Exception as e:
         raise HTTPException(
             status_code=400,
@@ -117,12 +120,19 @@ async def login_user(user: UserLogin) -> Dict[str, str]:
             data = response.json()
             # Obtener el usuario de Firebase
             user_record = auth.get_user_by_email(user.email)
+            # Obtener la foto de perfil desde Firestore
+            user_doc = db.collection("usuarios").document(user_record.uid).get()
+            foto_url = ""
+            if user_doc.exists:
+                user_data = user_doc.to_dict()
+                foto_url = user_data.get("foto", "")
             return {
                 "idToken": data["idToken"],
                 "refreshToken": data["refreshToken"],
                 "email": user.email,
                 "nombre": user_record.display_name or "",
-                "uid": user_record.uid
+                "uid": user_record.uid,
+                "foto": foto_url
             }
     except HTTPException:
         raise
