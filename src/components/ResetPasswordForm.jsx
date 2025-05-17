@@ -136,7 +136,10 @@ const ResetPasswordForm = () => {
             <button
               type="button"
               className="absolute inset-y-0 right-0 pr-3 flex items-center"
-              onClick={() => setShowPassword(!showPassword)}
+              onMouseDown={() => setShowPassword(true)}
+              onMouseUp={() => setShowPassword(false)}
+              onMouseLeave={() => setShowPassword(false)}
+              tabIndex={-1}
             >
               {showPassword ? (
                 <FaEyeSlash className="h-5 w-5 text-gray-400" />
@@ -170,7 +173,10 @@ const ResetPasswordForm = () => {
             <button
               type="button"
               className="absolute inset-y-0 right-0 pr-3 flex items-center"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              onMouseDown={() => setShowConfirmPassword(true)}
+              onMouseUp={() => setShowConfirmPassword(false)}
+              onMouseLeave={() => setShowConfirmPassword(false)}
+              tabIndex={-1}
             >
               {showConfirmPassword ? (
                 <FaEyeSlash className="h-5 w-5 text-gray-400" />

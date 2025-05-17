@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaTimes, FaUser, FaLock, FaEnvelope, FaSignOutAlt } from 'react-icons/fa';
+import { FaTimes, FaUser, FaLock, FaEnvelope, FaSignOutAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
 import Toast from './Toast';
 import { GoogleLogin } from '@react-oauth/google';
 
@@ -21,6 +21,9 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
   const [resetErrors, setResetErrors] = useState({});
   const [resetLoading, setResetLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showResetPassword1, setShowResetPassword1] = useState(false);
+  const [showResetPassword2, setShowResetPassword2] = useState(false);
 
   useEffect(() => {
     setIsLoginMode(mode === 'login');
@@ -303,14 +306,28 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                         <FaLock className="h-5 w-5 text-gray-400" />
                       </div>
                       <input
-                        type="password"
+                        type={showResetPassword1 ? 'text' : 'password'}
                         name="password"
                         value={resetForm.password}
                         onChange={handleResetInput}
-                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         placeholder="Nueva contraseña"
                         required
                       />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onMouseDown={() => setShowResetPassword1(true)}
+                        onMouseUp={() => setShowResetPassword1(false)}
+                        onMouseLeave={() => setShowResetPassword1(false)}
+                        tabIndex={-1}
+                      >
+                        {showResetPassword1 ? (
+                          <FaEyeSlash className="h-5 w-5 text-gray-400" />
+                        ) : (
+                          <FaEye className="h-5 w-5 text-gray-400" />
+                        )}
+                      </button>
                     </div>
                     {resetErrors.password && <p className="text-red-600 text-sm mt-1">{resetErrors.password}</p>}
                   </div>
@@ -321,14 +338,28 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                         <FaLock className="h-5 w-5 text-gray-400" />
                       </div>
                       <input
-                        type="password"
+                        type={showResetPassword2 ? 'text' : 'password'}
                         name="confirmPassword"
                         value={resetForm.confirmPassword}
                         onChange={handleResetInput}
-                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         placeholder="Repite la contraseña"
                         required
                       />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onMouseDown={() => setShowResetPassword2(true)}
+                        onMouseUp={() => setShowResetPassword2(false)}
+                        onMouseLeave={() => setShowResetPassword2(false)}
+                        tabIndex={-1}
+                      >
+                        {showResetPassword2 ? (
+                          <FaEyeSlash className="h-5 w-5 text-gray-400" />
+                        ) : (
+                          <FaEye className="h-5 w-5 text-gray-400" />
+                        )}
+                      </button>
                     </div>
                     {resetErrors.confirmPassword && <p className="text-red-600 text-sm mt-1">{resetErrors.confirmPassword}</p>}
                   </div>
@@ -426,14 +457,28 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                             <FaLock className="h-5 w-5 text-gray-400" />
                           </div>
                           <input
-                            type="password"
+                            type={showPassword ? 'text' : 'password'}
                             name="password"
                             value={formData.password}
                             onChange={handleInputChange}
                             required
-                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base"
+                            className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl shadow focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base"
                             placeholder="••••••••"
                           />
+                          <button
+                            type="button"
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                            onMouseDown={() => setShowPassword(true)}
+                            onMouseUp={() => setShowPassword(false)}
+                            onMouseLeave={() => setShowPassword(false)}
+                            tabIndex={-1}
+                          >
+                            {showPassword ? (
+                              <FaEyeSlash className="h-5 w-5 text-gray-400" />
+                            ) : (
+                              <FaEye className="h-5 w-5 text-gray-400" />
+                            )}
+                          </button>
                         </div>
                       </div>
 
