@@ -1,12 +1,14 @@
 import os
-from typing import Dict
-from fastapi import APIRouter, HTTPException, Depends, Body
+from typing import Dict, Optional
+from fastapi import APIRouter, HTTPException, Depends, Body, File, UploadFile, Form
 from pydantic import BaseModel, EmailStr
 import firebase_admin
 from firebase_admin import auth
 import httpx
 from dotenv import load_dotenv
 import logging
+import base64
+import cloudinary
 
 from firebase_config import db
 
@@ -25,6 +27,23 @@ class UserLogin(BaseModel):
 class UserRegister(BaseModel):
     email: EmailStr
     password: str
+
+class PasswordReset(BaseModel):
+    email: EmailStr
+
+class ConfirmPasswordReset(BaseModel):
+    oobCode: str
+    newPassword: str
+
+class DirectPasswordReset(BaseModel):
+    email: EmailStr
+    newPassword: str
+
+class UserProfileUpdate(BaseModel):
+    uid: str
+    nombre: Optional[str] = None
+    email: Optional[EmailStr] = None
+    foto: Optional[str] = None  # base64 o url
 
 @router.post("/register")
 async def register_user(user: UserRegister):
@@ -170,4 +189,115 @@ async def login_with_google(id_token: str = Body(..., embed=True)):
 
     except Exception as e:
         logger.error(f"Error en login con Google: {str(e)}")
-        raise HTTPException(status_code=401, detail="Error al procesar el login con Google") 
+        raise HTTPException(status_code=401, detail="Error al procesar el login con Google")
+
+@router.post("/reset-password")
+async def reset_password(reset_data: PasswordReset):
+    try:
+        # Generar el enlace de restablecimiento de contraseña
+        reset_link = auth.generate_password_reset_link(reset_data.email)
+        
+        # Aquí podrías enviar el email con el enlace usando un servicio de email
+        # Por ahora solo retornamos el enlace (en producción deberías enviarlo por email)
+        return {
+            "message": "Se ha enviado un enlace de restablecimiento a tu correo electrónico",
+            "reset_link": reset_link  # En producción, no devolver el enlace directamente
+        }
+    except Exception as e:
+        logger.error(f"Error al restablecer contraseña: {str(e)}")
+        raise HTTPException(
+            status_code=400,
+            detail="Error al procesar la solicitud de restablecimiento de contraseña"
+        )
+
+@router.post("/confirm-reset-password")
+async def confirm_reset_password(reset_data: ConfirmPasswordReset):
+    try:
+        # Verificar y aplicar el restablecimiento de contraseña
+        auth.confirm_password_reset(reset_data.oobCode, reset_data.newPassword)
+        
+        return {
+            "message": "Contraseña restablecida con éxito"
+        }
+    except Exception as e:
+        logger.error(f"Error al confirmar restablecimiento de contraseña: {str(e)}")
+        raise HTTPException(
+            status_code=400,
+            detail="Error al restablecer la contraseña. El enlace puede haber expirado o ser inválido."
+        )
+
+@router.post("/direct-reset-password")
+async def direct_reset_password(reset_data: DirectPasswordReset):
+    try:
+        # Verificar si el email existe
+        try:
+            user = auth.get_user_by_email(reset_data.email)
+        except auth.UserNotFoundError:
+            raise HTTPException(
+                status_code=404,
+                detail="No existe una cuenta con este email"
+            )
+
+        # Actualizar la contraseña directamente
+        auth.update_user(
+            user.uid,
+            password=reset_data.newPassword
+        )
+        
+        return {
+            "message": "Contraseña actualizada con éxito"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error al actualizar contraseña: {str(e)}")
+        raise HTTPException(
+            status_code=400,
+            detail="Error al actualizar la contraseña"
+        )
+
+@router.put("/update-profile")
+async def update_profile(
+    uid: str = Form(...),
+    nombre: Optional[str] = Form(None),
+    email: Optional[EmailStr] = Form(None),
+    foto: Optional[UploadFile] = File(None)
+):
+    try:
+        user = auth.get_user(uid)
+        update_data = {}
+        firestore_data = {}
+        if nombre:
+            update_data["display_name"] = nombre
+            firestore_data["nombre"] = nombre
+        if email and email != user.email:
+            update_data["email"] = email
+            firestore_data["email"] = email
+        if foto:
+            # Validar tipo y tamaño
+            if foto.content_type not in ["image/png", "image/jpeg", "image/jpg", "image/gif"]:
+                raise HTTPException(status_code=400, detail="Tipo de imagen no soportado")
+            contents = await foto.read()
+            if len(contents) > 10 * 1024 * 1024:
+                raise HTTPException(status_code=400, detail="La imagen supera los 10MB")
+            # Subir a Cloudinary
+            try:
+                result = cloudinary.uploader.upload(
+                    contents,
+                    folder="profile_images",
+                    resource_type="auto"
+                )
+                firestore_data["foto"] = result["secure_url"]
+            except Exception as img_err:
+                logger.error(f"Error subiendo imagen a Cloudinary: {str(img_err)}")
+                raise HTTPException(status_code=400, detail="Error al subir la imagen")
+        # Actualizar en Firebase Auth
+        if update_data:
+            auth.update_user(uid, **update_data)
+        # Actualizar en Firestore
+        if firestore_data:
+            db.collection("usuarios").document(uid).set(firestore_data, merge=True)
+        return {"message": "Perfil actualizado con éxito", "data": firestore_data}
+    except Exception as e:
+        logger.error(f"Error al actualizar perfil: {str(e)}")
+        raise HTTPException(status_code=400, detail="Error al actualizar el perfil") 

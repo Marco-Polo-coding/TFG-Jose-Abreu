@@ -28,3 +28,8 @@ src/backend/serviceAccountKey.json
 
 # Cloudinary configuration
 src/backend/cloudinary_config.py
+
+# Python cache
+*.pyc
+__pycache__/
+
