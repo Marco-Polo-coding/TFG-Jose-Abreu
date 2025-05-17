@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaUser, FaSignInAlt, FaUserPlus, FaSignOutAlt, FaBookmark, FaHeart, FaUserCircle, FaNewspaper, FaBox } from 'react-icons/fa';
+import { FaUser, FaSignInAlt, FaUserPlus, FaSignOutAlt, FaBookmark, FaHeart, FaUserCircle, FaNewspaper, FaBox, FaSun, FaMoon } from 'react-icons/fa';
 import ProfileModal from './ProfileModal';
 import ConfirmModal from './ConfirmModal';
 import AuthModal from './AuthModal';
@@ -17,6 +17,14 @@ const UserButton = () => {
   const [userName, setUserName] = useState('');
   const [userPhoto, setUserPhoto] = useState('');
   const popoverRef = useRef(null);
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('theme');
+      if (saved) return saved === 'dark';
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  });
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -41,6 +49,17 @@ const UserButton = () => {
       setUserPhoto(localStorage.getItem('userPhoto') || '');
     }
   }, []);
+
+  useEffect(() => {
+    const html = document.documentElement;
+    if (darkMode) {
+      html.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      html.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [darkMode]);
 
   const handleAuthClick = (mode) => {
     setAuthMode(mode);
@@ -92,6 +111,8 @@ const UserButton = () => {
 
   // Utilidad para saber si la foto es válida
   const isValidPhoto = userPhoto && !userPhoto.includes('googleusercontent.com') && userPhoto !== '';
+
+  const toggleDarkMode = () => setDarkMode(dm => !dm);
 
   return (
     <>
@@ -167,6 +188,14 @@ const UserButton = () => {
                     <FaBox className="w-5 h-5 text-purple-500 group-hover:text-purple-700 transition-colors" />
                     <span>Mis Productos</span>
                   </a>
+                  <button
+                    onClick={toggleDarkMode}
+                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-base text-gray-700 dark:text-gray-200 hover:bg-purple-100/60 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 group font-semibold"
+                    aria-label="Cambiar modo oscuro/claro"
+                  >
+                    {darkMode ? <FaSun className="w-5 h-5 text-yellow-400" /> : <FaMoon className="w-5 h-5 text-gray-700 dark:text-gray-200" />}
+                    <span>{darkMode ? 'Modo claro' : 'Modo oscuro'}</span>
+                  </button>
                   <button
                     onClick={handleLogout}
                     className="w-full flex items-center space-x-3 px-4 py-2.5 text-base text-red-600 hover:bg-red-100/60 rounded-lg transition-all duration-200 group font-semibold mt-2"
