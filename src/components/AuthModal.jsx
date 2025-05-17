@@ -119,7 +119,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
       if (isLoginMode && rememberMe) {
         localStorage.setItem('rememberedEmail', formData.email);
         localStorage.setItem('rememberedPassword', formData.password);
-      } else {
+      } else if (isLoginMode) {
         localStorage.removeItem('rememberedEmail');
         localStorage.removeItem('rememberedPassword');
       }
