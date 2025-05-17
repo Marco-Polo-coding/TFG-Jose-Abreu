@@ -26,6 +26,17 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str
 
+class PasswordReset(BaseModel):
+    email: EmailStr
+
+class ConfirmPasswordReset(BaseModel):
+    oobCode: str
+    newPassword: str
+
+class DirectPasswordReset(BaseModel):
+    email: EmailStr
+    newPassword: str
+
 @router.post("/register")
 async def register_user(user: UserRegister):
     try:
@@ -170,4 +181,69 @@ async def login_with_google(id_token: str = Body(..., embed=True)):
 
     except Exception as e:
         logger.error(f"Error en login con Google: {str(e)}")
-        raise HTTPException(status_code=401, detail="Error al procesar el login con Google") 
+        raise HTTPException(status_code=401, detail="Error al procesar el login con Google")
+
+@router.post("/reset-password")
+async def reset_password(reset_data: PasswordReset):
+    try:
+        # Generar el enlace de restablecimiento de contraseña
+        reset_link = auth.generate_password_reset_link(reset_data.email)
+        
+        # Aquí podrías enviar el email con el enlace usando un servicio de email
+        # Por ahora solo retornamos el enlace (en producción deberías enviarlo por email)
+        return {
+            "message": "Se ha enviado un enlace de restablecimiento a tu correo electrónico",
+            "reset_link": reset_link  # En producción, no devolver el enlace directamente
+        }
+    except Exception as e:
+        logger.error(f"Error al restablecer contraseña: {str(e)}")
+        raise HTTPException(
+            status_code=400,
+            detail="Error al procesar la solicitud de restablecimiento de contraseña"
+        )
+
+@router.post("/confirm-reset-password")
+async def confirm_reset_password(reset_data: ConfirmPasswordReset):
+    try:
+        # Verificar y aplicar el restablecimiento de contraseña
+        auth.confirm_password_reset(reset_data.oobCode, reset_data.newPassword)
+        
+        return {
+            "message": "Contraseña restablecida con éxito"
+        }
+    except Exception as e:
+        logger.error(f"Error al confirmar restablecimiento de contraseña: {str(e)}")
+        raise HTTPException(
+            status_code=400,
+            detail="Error al restablecer la contraseña. El enlace puede haber expirado o ser inválido."
+        )
+
+@router.post("/direct-reset-password")
+async def direct_reset_password(reset_data: DirectPasswordReset):
+    try:
+        # Verificar si el email existe
+        try:
+            user = auth.get_user_by_email(reset_data.email)
+        except auth.UserNotFoundError:
+            raise HTTPException(
+                status_code=404,
+                detail="No existe una cuenta con este email"
+            )
+
+        # Actualizar la contraseña directamente
+        auth.update_user(
+            user.uid,
+            password=reset_data.newPassword
+        )
+        
+        return {
+            "message": "Contraseña actualizada con éxito"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error al actualizar contraseña: {str(e)}")
+        raise HTTPException(
+            status_code=400,
+            detail="Error al actualizar la contraseña"
+        ) 

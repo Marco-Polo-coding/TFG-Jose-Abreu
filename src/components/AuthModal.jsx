@@ -17,6 +17,9 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
   const [showResetPassword, setShowResetPassword] = useState(false);
+  const [resetForm, setResetForm] = useState({ email: '', password: '', confirmPassword: '' });
+  const [resetErrors, setResetErrors] = useState({});
+  const [resetLoading, setResetLoading] = useState(false);
 
   useEffect(() => {
     setIsLoginMode(mode === 'login');
@@ -113,6 +116,89 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
     setIsLoginMode(!isLoginMode);
   };
 
+  const handleResetInput = (e) => {
+    const { name, value } = e.target;
+    setResetForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleDirectReset = async (e) => {
+    e.preventDefault();
+    const errors = validateResetForm(resetForm);
+    setResetErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+    setResetLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('http://127.0.0.1:8000/auth/direct-reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: resetForm.email,
+          newPassword: resetForm.password
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Error al actualizar la contraseña');
+      // --- LOGIN AUTOMÁTICO ---
+      const loginResponse = await fetch('http://127.0.0.1:8000/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: resetForm.email,
+          password: resetForm.password
+        })
+      });
+      const loginData = await loginResponse.json();
+      if (!loginResponse.ok) throw new Error(loginData.detail || 'Contraseña cambiada, pero error al iniciar sesión');
+      localStorage.setItem('token', loginData.idToken);
+      localStorage.setItem('userEmail', resetForm.email);
+      localStorage.setItem('userName', loginData.nombre || resetForm.email);
+      if (loginData.uid) {
+        localStorage.setItem('uid', loginData.uid);
+      }
+      showNotification('Contraseña actualizada e inicio de sesión exitoso', 'success');
+      setShowResetPassword(false);
+      setResetForm({ email: '', password: '', confirmPassword: '' });
+      setTimeout(() => {
+        onClose();
+        window.location.reload();
+      }, 1500);
+    } catch (err) {
+      setError(err.message);
+      showNotification(err.message, 'error');
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const validateResetForm = (values) => {
+    const errors = {};
+    // Validar email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!values.email) {
+      errors.email = 'El email es requerido';
+    } else if (!emailRegex.test(values.email)) {
+      errors.email = 'El email no es válido';
+    }
+    // Validar contraseña
+    if (!values.password) {
+      errors.password = 'La contraseña es requerida';
+    } else {
+      if (values.password.length < 8) errors.password = 'Mínimo 8 caracteres';
+      if (!/[A-Z]/.test(values.password)) errors.password = 'Debe tener una mayúscula';
+      if (!/[a-z]/.test(values.password)) errors.password = 'Debe tener una minúscula';
+      if (!/\d/.test(values.password)) errors.password = 'Debe tener un número';
+      if (!/[!@#$%^&*(),.?":{}|<>]/.test(values.password)) errors.password = 'Debe tener un carácter especial';
+    }
+    // Validar confirmación
+    if (!values.confirmPassword) {
+      errors.confirmPassword = 'Confirma tu contraseña';
+    } else if (values.password !== values.confirmPassword) {
+      errors.confirmPassword = 'Las contraseñas no coinciden';
+    }
+    return errors;
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -144,7 +230,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
               <div className="text-center mb-8">
                 <h2 className="text-3xl font-extrabold text-gray-900 mb-2">
                   {showResetPassword
-                    ? 'Restablecer Contraseña'
+                    ? 'Recuperar Contraseña'
                     : isAuthenticated 
                       ? 'Tu Cuenta' 
                       : (isLoginMode ? 'Iniciar Sesión' : 'Crear Cuenta')}
@@ -162,36 +248,77 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
               </div>
 
               {showResetPassword ? (
-                <form className="space-y-4">
+                <form onSubmit={handleDirectReset} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <FaEnvelope className="h-5 w-5 text-gray-400" />
                       </div>
                       <input
                         type="email"
-                        name="resetEmail"
-                        className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base"
-                        placeholder="tu@email.com"
+                        name="email"
+                        value={resetForm.email}
+                        onChange={handleResetInput}
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        placeholder="Tu email"
+                        required
                       />
                     </div>
+                    {resetErrors.email && <p className="text-red-600 text-sm mt-1">{resetErrors.email}</p>}
                   </div>
-                  <button
-                    type="button"
-                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 px-4 rounded-full font-semibold shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 hover:scale-105"
-                  >
-                    Enviar instrucciones
-                  </button>
-                  <button
-                    type="button"
-                    className="w-full mt-2 bg-gray-200 text-gray-700 py-3 px-4 rounded-full font-semibold hover:bg-gray-300 transition-all duration-200"
-                    onClick={() => setShowResetPassword(false)}
-                  >
-                    Volver
-                  </button>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Nueva Contraseña</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaLock className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="password"
+                        name="password"
+                        value={resetForm.password}
+                        onChange={handleResetInput}
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        placeholder="Nueva contraseña"
+                        required
+                      />
+                    </div>
+                    {resetErrors.password && <p className="text-red-600 text-sm mt-1">{resetErrors.password}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar Contraseña</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaLock className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="password"
+                        name="confirmPassword"
+                        value={resetForm.confirmPassword}
+                        onChange={handleResetInput}
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        placeholder="Repite la contraseña"
+                        required
+                      />
+                    </div>
+                    {resetErrors.confirmPassword && <p className="text-red-600 text-sm mt-1">{resetErrors.confirmPassword}</p>}
+                  </div>
+                  <div className="flex flex-col gap-4">
+                    <button
+                      type="submit"
+                      disabled={resetLoading}
+                      className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {resetLoading ? 'Procesando...' : 'Actualizar Contraseña'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowResetPassword(false)}
+                      className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                    >
+                      Volver al inicio de sesión
+                    </button>
+                  </div>
                 </form>
               ) : (
                 isAuthenticated ? (
