@@ -2,7 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import CartButton from '../components/CartButton';
 import UserButton from '../components/UserButton';
-import MyProducts from '../components/MyProducts';
+import MyProductsComponent from '../components/MyProducts';
 import { FaHome, FaBox } from 'react-icons/fa';
 ---
 
@@ -35,7 +35,7 @@ import { FaHome, FaBox } from 'react-icons/fa';
     </section>
     <section class="py-16">
       <div class="container mx-auto px-4">
-        <MyProducts client:load />
+        <MyProductsComponent client:load />
       </div>
     </section>
   </div>
