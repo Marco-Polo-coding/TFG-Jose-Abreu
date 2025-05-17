@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaImage, FaSpinner, FaPaperPlane } from 'react-icons/fa';
+import LoadingSpinner from './LoadingSpinner';
+import useLoadingState from '../hooks/useLoadingState';
 
 const UploadProductForm = () => {
   const [formData, setFormData] = useState({
@@ -12,9 +14,14 @@ const UploadProductForm = () => {
   });
   const [loading, setLoading] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
+  const [initialLoading, setInitialLoading] = useLoadingState();
 
   const NAME_LIMIT = 100;
   const DESC_LIMIT = 300;
+
+  if (initialLoading) {
+    return <LoadingSpinner />;
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;

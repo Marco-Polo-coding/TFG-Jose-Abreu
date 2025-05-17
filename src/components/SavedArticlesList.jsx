@@ -1,5 +1,8 @@
-import React from 'react';
-import { FaArrowRight, FaBookmark } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaArrowRight, FaBookmark, FaTrash, FaSpinner } from 'react-icons/fa';
+import axios from 'axios';
+import LoadingSpinner from './LoadingSpinner';
+import useLoadingState from '../hooks/useLoadingState';
 
 // Datos de ejemplo (reemplazar por fetch a la API en el futuro)
 const savedArticles = [];
@@ -9,7 +12,38 @@ const savedArticles = [];
 // ];
 
 const SavedArticlesList = () => {
-  if (!savedArticles.length) {
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useLoadingState();
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchSavedArticles();
+  }, []);
+
+  const fetchSavedArticles = async () => {
+    try {
+      setLoading(true);
+      const userEmail = localStorage.getItem('userEmail');
+      if (!userEmail) {
+        setError('No se ha encontrado el email del usuario. Por favor, inicia sesión.');
+        return;
+      }
+      const response = await axios.get(`http://localhost:8000/usuarios/${userEmail}/articulos-guardados`);
+      setArticles(response.data);
+      setError(null);
+    } catch (err) {
+      setError('Error al cargar los artículos guardados. Por favor, intenta de nuevo.');
+      console.error('Error fetching saved articles:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!articles.length) {
     return (
       <div className="text-center py-16">
         <div className="flex justify-center mb-6">
@@ -28,7 +62,7 @@ const SavedArticlesList = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {savedArticles.map((articulo) => (
+      {articles.map((articulo) => (
         <div key={articulo.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
           <div className="relative h-48 bg-gray-200">
             <img src={articulo.imagen} alt={articulo.titulo} className="w-full h-full object-cover" />

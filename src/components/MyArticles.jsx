@@ -6,10 +6,12 @@ import UserButton from './UserButton';
 import ConfirmDeleteModal from './ConfirmDeleteModal';
 import EditArticleModal from './EditArticleModal';
 import Notification from './Notification';
+import LoadingSpinner from './LoadingSpinner';
+import useLoadingState from '../hooks/useLoadingState';
 
 const MyArticles = () => {
   const [articles, setArticles] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useLoadingState();
   const [error, setError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [articleToDelete, setArticleToDelete] = useState(null);
@@ -105,6 +107,10 @@ const MyArticles = () => {
       stopLoading();
     }
   };
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

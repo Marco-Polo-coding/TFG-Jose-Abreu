@@ -7,10 +7,12 @@ import UserButton from './UserButton';
 import EditProductModal from './EditProductModal';
 import ConfirmDeleteModal from './ConfirmDeleteModal';
 import Notification from './Notification';
+import LoadingSpinner from './LoadingSpinner';
+import useLoadingState from '../hooks/useLoadingState';
 
 const MyProducts = () => {
   const [productos, setProductos] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useLoadingState();
   const [error, setError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [productoToDelete, setProductoToDelete] = useState(null);
@@ -72,6 +74,10 @@ const MyProducts = () => {
     });
     setTimeout(() => setNotification(null), 3000);
   };
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

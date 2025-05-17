@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { FaBook, FaShoppingBag, FaChartLine, FaPlus, FaArrowRight } from 'react-icons/fa';
 import axios from 'axios';
+import LoadingSpinner from './LoadingSpinner';
+import useLoadingState from '../hooks/useLoadingState';
 
 function getInitials(email) {
   if (!email) return '';
@@ -30,6 +32,7 @@ const ProfileCard = () => {
   const [ventas, setVentas] = React.useState([]);
   const [loadingVentas, setLoadingVentas] = React.useState(true);
   const [errorVentas, setErrorVentas] = React.useState(null);
+  const [loading, setLoading] = useLoadingState();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -42,6 +45,7 @@ const ProfileCard = () => {
       if (!t) {
         window.location.href = '/';
       }
+      setLoading(false);
     }
   }, []);
 
@@ -91,6 +95,10 @@ const ProfileCard = () => {
     };
     fetchVentas();
   }, [userEmail]);
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   if (!token) return null;
 

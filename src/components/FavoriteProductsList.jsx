@@ -1,5 +1,8 @@
-import React from 'react';
-import { FaArrowRight, FaHeart } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaArrowRight, FaHeart, FaTrash, FaSpinner } from 'react-icons/fa';
+import axios from 'axios';
+import LoadingSpinner from './LoadingSpinner';
+import useLoadingState from '../hooks/useLoadingState';
 
 // Datos de ejemplo (reemplazar por fetch a la API en el futuro)
 const favoriteProducts = [];
@@ -9,7 +12,38 @@ const favoriteProducts = [];
 // ];
 
 const FavoriteProductsList = () => {
-  if (!favoriteProducts.length) {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useLoadingState();
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchFavoriteProducts();
+  }, []);
+
+  const fetchFavoriteProducts = async () => {
+    try {
+      setLoading(true);
+      const userEmail = localStorage.getItem('userEmail');
+      if (!userEmail) {
+        setError('No se ha encontrado el email del usuario. Por favor, inicia sesión.');
+        return;
+      }
+      const response = await axios.get(`http://localhost:8000/usuarios/${userEmail}/productos-favoritos`);
+      setProducts(response.data);
+      setError(null);
+    } catch (err) {
+      setError('Error al cargar los productos favoritos. Por favor, intenta de nuevo.');
+      console.error('Error fetching favorite products:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!products.length) {
     return (
       <div className="text-center py-16">
         <div className="flex justify-center mb-6">
@@ -28,7 +62,7 @@ const FavoriteProductsList = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {favoriteProducts.map((producto) => (
+      {products.map((producto) => (
         <div key={producto.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
           <div className="relative h-48 bg-gray-200">
             <img src={producto.imagen} alt={producto.nombre} className="w-full h-full object-cover" />
