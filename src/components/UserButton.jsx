@@ -89,6 +89,9 @@ const UserButton = () => {
     return colors[index];
   };
 
+  // Utilidad para saber si la foto es válida
+  const isValidPhoto = userPhoto && !userPhoto.includes('googleusercontent.com') && userPhoto !== '';
+
   return (
     <>
       <div className="relative" ref={popoverRef}>
@@ -98,10 +101,10 @@ const UserButton = () => {
         >
           {isAuthenticated ? (
             <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-xl font-bold bg-gradient-to-br from-purple-500 to-indigo-500 border-0 border-white shadow ${getRandomColor(userEmail)}`}>
-              {userPhoto ? (
+              {isValidPhoto ? (
                 <img src={userPhoto} alt={userName || userEmail} className="w-full h-full object-cover rounded-full" />
               ) : (
-                getInitials(userEmail)
+                getInitials(userName || userEmail)
               )}
             </div>
           ) : (
@@ -115,10 +118,10 @@ const UserButton = () => {
               <div className="space-y-5">
                 <div className="flex items-center space-x-4 pb-2">
                   <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl font-bold bg-gradient-to-br from-purple-500 to-indigo-500 border-4 border-white shadow ${getRandomColor(userEmail)}`}>
-                    {userPhoto ? (
+                    {isValidPhoto ? (
                       <img src={userPhoto} alt={userName || userEmail} className="w-full h-full object-cover rounded-full" />
                     ) : (
-                      getInitials(userEmail)
+                      getInitials(userName || userEmail)
                     )}
                   </div>
                   <div>

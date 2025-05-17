@@ -26,6 +26,10 @@ const ProfileModal = ({ isOpen, onClose, userData }) => {
     return colors[index];
   };
 
+  // Utilidad para saber si la foto es válida
+  const userPhoto = localStorage.getItem('userPhoto');
+  const isValidPhoto = userPhoto && !userPhoto.includes('googleusercontent.com') && userPhoto !== '';
+
   return (
     <div className="fixed inset-0 z-[200] overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
@@ -52,10 +56,10 @@ const ProfileModal = ({ isOpen, onClose, userData }) => {
               <div className="text-center">
                 <div className="flex justify-center mb-4">
                   <div className={`w-24 h-24 rounded-full flex items-center justify-center text-white text-3xl ${getRandomColor(userData.email)} overflow-hidden`}>
-                    {localStorage.getItem('userPhoto') ? (
-                      <img src={localStorage.getItem('userPhoto')} alt={userData.name} className="w-full h-full object-cover" />
+                    {isValidPhoto ? (
+                      <img src={userPhoto} alt={userData.name} className="w-full h-full object-cover" />
                     ) : (
-                      getInitials(userData.email)
+                      getInitials(userData.name || userData.email)
                     )}
                   </div>
                 </div>

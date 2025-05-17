@@ -256,6 +256,10 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
     return errors;
   };
 
+  // Utilidad para saber si la foto es válida
+  const userPhoto = (typeof window !== 'undefined') ? localStorage.getItem('userPhoto') : '';
+  const isValidPhoto = userPhoto && !userPhoto.includes('googleusercontent.com') && userPhoto !== '';
+
   if (!isOpen) return null;
 
   return (
@@ -411,10 +415,10 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                     <div className="text-center">
                       <div className="flex items-center justify-center mb-4">
                         <div className={`w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-3xl font-bold shadow-lg animate-avatar-glow overflow-hidden`}>
-                          {localStorage.getItem('userPhoto') ? (
-                            <img src={localStorage.getItem('userPhoto')} alt={formData.name} className="w-full h-full object-cover" />
+                          {isValidPhoto ? (
+                            <img src={userPhoto} alt={formData.name} className="w-full h-full object-cover" />
                           ) : (
-                            formData.email.charAt(0).toUpperCase()
+                            (formData.name ? formData.name.charAt(0).toUpperCase() : formData.email.charAt(0).toUpperCase())
                           )}
                         </div>
                       </div>

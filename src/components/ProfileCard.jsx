@@ -113,6 +113,9 @@ const ProfileCard = () => {
     fetchVentas();
   }, [userEmail]);
 
+  // Utilidad para saber si la foto es válida
+  const isValidPhoto = userPhoto && !userPhoto.includes('googleusercontent.com') && userPhoto !== '';
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -126,14 +129,14 @@ const ProfileCard = () => {
         {/* Avatar con borde animado y gradiente */}
         <div className="flex-shrink-0 flex justify-center w-full md:w-auto">
           <div className={`w-36 h-36 rounded-full flex items-center justify-center text-white text-6xl font-extrabold shadow-xl border-4 border-white bg-gradient-to-br ${getRandomColor(userEmail)} animate-avatar-glow relative`}>
-            {userPhoto ? (
+            {isValidPhoto ? (
               <img
                 src={userPhoto}
                 alt={userName || userEmail}
                 className="w-full h-full object-cover rounded-full"
               />
             ) : (
-              getInitials(userEmail)
+              getInitials(userName || userEmail)
             )}
             <span className="absolute -bottom-2 right-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-full px-3 py-1 text-xs font-semibold shadow-lg animate-bounce z-10">Tú</span>
           </div>
