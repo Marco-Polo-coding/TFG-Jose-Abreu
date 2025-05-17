@@ -3,6 +3,7 @@ import { FaRobot, FaTimes, FaPaperPlane, FaSpinner } from 'react-icons/fa';
 
 const VirtualAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const [messages, setMessages] = useState([
     {
       type: 'assistant',
@@ -12,6 +13,51 @@ const VirtualAssistant = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  const [currentPath, setCurrentPath] = useState('');
+
+  // Control de visibilidad durante la carga y actualización de la ruta
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 1000);
+
+    // Actualizar la ruta actual
+    setCurrentPath(window.location.pathname);
+
+    // Escuchar cambios en la ruta
+    const handleRouteChange = () => {
+      setCurrentPath(window.location.pathname);
+      setIsVisible(false);
+      setTimeout(() => {
+        setIsVisible(true);
+      }, 1000);
+    };
+
+    window.addEventListener('popstate', handleRouteChange);
+    window.addEventListener('astro:page-load', handleRouteChange);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('popstate', handleRouteChange);
+      window.removeEventListener('astro:page-load', handleRouteChange);
+    };
+  }, []);
+
+  // Determinar el z-index basado en la ruta
+  const getZIndex = () => {
+    if (currentPath === '/tienda' || currentPath === '/blog') {
+      return 'z-[60]'; // Por encima de los botones flotantes
+    }
+    return 'z-50'; // Valor por defecto
+  };
+
+  // Determinar la posición del botón
+  const getButtonPosition = () => {
+    if (currentPath === '/tienda' || currentPath === '/blog') {
+      return 'bottom-24'; // Por encima de los botones flotantes
+    }
+    return 'bottom-6'; // Posición por defecto
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -25,7 +71,6 @@ const VirtualAssistant = () => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    // Añadir mensaje del usuario
     const userMessage = {
       type: 'user',
       content: input
@@ -35,7 +80,6 @@ const VirtualAssistant = () => {
     setIsLoading(true);
 
     try {
-      // Aquí iría la llamada a tu API de IA
       const response = await fetch('http://localhost:8002/chat', {
         method: 'POST',
         headers: {
@@ -46,7 +90,6 @@ const VirtualAssistant = () => {
 
       const data = await response.json();
       
-      // Añadir respuesta del asistente
       setMessages(prev => [...prev, {
         type: 'assistant',
         content: data.response
@@ -62,19 +105,21 @@ const VirtualAssistant = () => {
     }
   };
 
+  if (!isVisible) return null;
+
   return (
     <>
       {/* Botón flotante del asistente */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 z-50"
+        className={`fixed ${getButtonPosition()} right-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 ${getZIndex()}`}
       >
         <FaRobot className="w-6 h-6" />
       </button>
 
       {/* Ventana del chat */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col z-50">
+        <div className={`fixed bottom-24 right-6 w-[calc(100%-3rem)] sm:w-96 h-[calc(100vh-8rem)] sm:h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col ${getZIndex()}`}>
           {/* Header */}
           <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 rounded-t-2xl flex justify-between items-center">
             <div className="flex items-center gap-3">
