@@ -131,10 +131,10 @@ const ProfileCard = () => {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Tarjeta principal con efecto glassmorphism */}
-      <div className="relative flex flex-col md:flex-row items-center md:items-end justify-center gap-8 mb-16 bg-white/60 backdrop-blur-lg rounded-2xl shadow-2xl p-10 border border-white/30 ring-2 ring-purple-100">
+      <div className="relative flex flex-col md:flex-row items-center md:items-end justify-center gap-8 mb-16 bg-white/60 dark:bg-gray-800 backdrop-blur-lg rounded-2xl shadow-2xl p-10 border border-white/30 dark:border-gray-700 ring-2 ring-purple-100">
         {/* Avatar con borde animado y gradiente */}
         <div className="flex-shrink-0 flex justify-center w-full md:w-auto">
-          <div className={`w-36 h-36 rounded-full flex items-center justify-center text-white text-6xl font-extrabold shadow-xl border-4 border-white bg-gradient-to-br ${getRandomColor(userEmail)} animate-avatar-glow relative`}>
+          <div className={`w-36 h-36 rounded-full flex items-center justify-center text-white text-6xl font-extrabold shadow-xl border-4 border-white dark:border-gray-700 bg-gradient-to-br ${getRandomColor(userEmail)} animate-avatar-glow relative`}>
             {isValidPhoto ? (
               <img
                 src={userPhoto}
@@ -149,10 +149,10 @@ const ProfileCard = () => {
         </div>
         {/* Info usuario */}
         <div className="text-center md:text-left w-full">
-          <h2 className="text-4xl font-extrabold text-gray-900 mb-2 drop-shadow-lg">{userName || userEmail}</h2>
-          <p className="text-lg text-gray-500 mb-2">{userEmail}</p>
+          <h2 className="text-4xl font-extrabold text-gray-900 dark:text-gray-100 mb-2 drop-shadow-lg">{userName || userEmail}</h2>
+          <p className="text-lg text-gray-500 dark:text-gray-300 mb-2">{userEmail}</p>
           {userBio && (
-            <p className="text-base text-gray-700 mb-2 whitespace-pre-line bg-white/70 rounded-lg px-4 py-2 border border-gray-200 shadow-sm max-w-xl mx-auto md:mx-0">
+            <p className="text-base text-gray-700 dark:text-gray-200 mb-2 whitespace-pre-line bg-white/70 dark:bg-gray-900/70 rounded-lg px-4 py-2 border border-gray-200 dark:border-gray-700 shadow-sm max-w-xl mx-auto md:mx-0">
               {userBio}
             </p>
           )}
@@ -165,12 +165,12 @@ const ProfileCard = () => {
       {/* Secciones de Artículos y Ventas */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         {/* Artículos publicados */}
-        <div className="bg-gradient-to-br from-purple-50 to-indigo-100 rounded-2xl p-8 border border-white/40 shadow-lg flex flex-col items-start w-full">
+        <div className="bg-gradient-to-br from-purple-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 border border-white/40 dark:border-gray-700 shadow-lg flex flex-col items-start w-full">
           <div className="flex items-center gap-4 mb-4">
             <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 rounded-full shadow-lg text-2xl">
               <FaBook />
             </span>
-            <h3 className="text-xl font-bold text-gray-900">Artículos publicados</h3>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Artículos publicados</h3>
           </div>
           {loadingArticles ? (
             <div className="flex justify-center items-center w-full py-8">
@@ -209,12 +209,12 @@ const ProfileCard = () => {
           )}
         </div>
         {/* Ventas en curso */}
-        <div className="bg-gradient-to-br from-purple-50 to-indigo-100 rounded-2xl p-8 border border-white/40 shadow-lg flex flex-col items-start">
+        <div className="bg-gradient-to-br from-purple-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 border border-white/40 dark:border-gray-700 shadow-lg flex flex-col items-start">
           <div className="flex items-center gap-4 mb-4">
             <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 rounded-full shadow-lg text-2xl">
               <FaShoppingBag />
             </span>
-            <h3 className="text-xl font-bold text-gray-900">Ventas en curso</h3>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Ventas en curso</h3>
           </div>
           {loadingVentas ? (
             <div className="flex justify-center items-center w-full py-8">
