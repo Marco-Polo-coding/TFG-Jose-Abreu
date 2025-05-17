@@ -58,6 +58,7 @@ const UserButton = () => {
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userName');
     localStorage.removeItem('userPhoto');
+    localStorage.removeItem('userBio');
     setIsAuthenticated(false);
     setUserEmail('');
     setUserName('');

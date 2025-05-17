@@ -9,7 +9,8 @@ const EditProfileForm = () => {
     nombre: '',
     email: '',
     foto: null,
-    fotoPreview: ''
+    fotoPreview: '',
+    biografia: ''
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -19,13 +20,16 @@ const EditProfileForm = () => {
   const [passwordForm, setPasswordForm] = useState({ password: '', confirmPassword: '' });
   const [passwordErrors, setPasswordErrors] = useState({});
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     // Cargar datos actuales del usuario
     const nombre = localStorage.getItem('userName') || '';
     const email = localStorage.getItem('userEmail') || '';
     const foto = localStorage.getItem('userPhoto') || '';
-    setForm(f => ({ ...f, nombre, email, fotoPreview: foto }));
+    const biografia = localStorage.getItem('userBio') || '';
+    setForm(f => ({ ...f, nombre, email, fotoPreview: foto, biografia }));
   }, []);
 
   const validate = () => {
@@ -71,6 +75,7 @@ const EditProfileForm = () => {
       formData.append('uid', uid);
       formData.append('nombre', form.nombre);
       formData.append('email', form.email);
+      formData.append('biografia', form.biografia);
       if (form.foto) formData.append('foto', form.foto);
       const res = await fetch('http://127.0.0.1:8000/auth/update-profile', {
         method: 'PUT',
@@ -81,6 +86,9 @@ const EditProfileForm = () => {
       // Actualizar localStorage
       localStorage.setItem('userName', form.nombre);
       localStorage.setItem('userEmail', form.email);
+      if (data.data && data.data.biografia !== undefined) {
+        localStorage.setItem('userBio', data.data.biografia);
+      }
       if (data.data && data.data.foto) {
         localStorage.setItem('userPhoto', data.data.foto);
       }
@@ -132,6 +140,43 @@ const EditProfileForm = () => {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (!showDeleteConfirm) {
+      setShowDeleteConfirm(true);
+      return;
+    }
+
+    setDeleteLoading(true);
+    try {
+      const uid = localStorage.getItem('uid');
+      const email = localStorage.getItem('userEmail');
+      
+      // Verificar que los datos coinciden con el usuario actual
+      if (!uid || !email) {
+        throw new Error('No se encontraron los datos del usuario');
+      }
+
+      const res = await fetch('http://127.0.0.1:8000/auth/delete-account', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid, email })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Error al eliminar la cuenta');
+      
+      // Limpiar localStorage
+      localStorage.clear();
+      
+      setToast({ open: true, message: 'Cuenta eliminada con éxito', type: 'success' });
+      setTimeout(() => window.location.href = '/', 1200);
+    } catch (err) {
+      setToast({ open: true, message: err.message, type: 'error' });
+      setShowDeleteConfirm(false);
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   return (
     <form className="bg-white rounded-2xl shadow-xl p-8 space-y-6 border border-gray-100" onSubmit={handleSubmit}>
       <div>
@@ -141,7 +186,7 @@ const EditProfileForm = () => {
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-        <input type="email" name="email" value={form.email} onChange={handleChange} className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Tu email" required />
+        <input type="email" name="email" value={form.email} readOnly className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Tu email" required />
         {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
       </div>
       <div>
@@ -166,6 +211,18 @@ const EditProfileForm = () => {
           </div>
         </div>
       </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Biografía</label>
+        <textarea
+          name="biografia"
+          value={form.biografia}
+          onChange={handleChange}
+          className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          placeholder="Cuéntanos algo sobre ti..."
+          rows={3}
+          maxLength={300}
+        />
+      </div>
       <div className="flex justify-end gap-4 pt-4">
         <a href="/profile" className="px-6 py-2 rounded-full bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition">Cancelar</a>
         <button type="submit" disabled={loading} className="inline-flex items-center px-6 py-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105 disabled:opacity-50">
@@ -173,68 +230,104 @@ const EditProfileForm = () => {
         </button>
       </div>
       <hr className="my-8" />
-      <h3 className="text-xl font-bold text-gray-800 mb-2">Cambiar contraseña</h3>
-      <form className="space-y-4" onSubmit={handlePasswordSubmit} autoComplete="off">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña</label>
-          <div className="relative">
-            <input
-              type={showPassword ? 'text' : 'password'}
-              name="password"
-              value={passwordForm.password}
-              onChange={handlePasswordChange}
-              className="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              placeholder="••••••••"
-            />
-            <button
-              type="button"
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
-              onMouseDown={() => setShowPassword(true)}
-              onMouseUp={() => setShowPassword(false)}
-              onMouseLeave={() => setShowPassword(false)}
-              tabIndex={-1}
-            >
-              {showPassword ? (
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.657.403-3.221 1.125-4.575m1.75-2.425A9.956 9.956 0 0112 3c5.523 0 10 4.477 10 10 0 1.657-.403 3.221-1.125 4.575m-1.75 2.425A9.956 9.956 0 0112 21c-1.657 0-3.221-.403-4.575-1.125" /></svg>
-              ) : (
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              )}
-            </button>
+      <div className="space-y-4">
+        <h3 className="text-xl font-bold text-gray-800 mb-2">Cambiar contraseña</h3>
+        <form className="space-y-4" onSubmit={handlePasswordSubmit} autoComplete="off">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña</label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                value={passwordForm.password}
+                onChange={handlePasswordChange}
+                className="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                onMouseDown={() => setShowPassword(true)}
+                onMouseUp={() => setShowPassword(false)}
+                onMouseLeave={() => setShowPassword(false)}
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.657.403-3.221 1.125-4.575m1.75-2.425A9.956 9.956 0 0112 3c5.523 0 10 4.477 10 10 0 1.657-.403 3.221-1.125 4.575m-1.75 2.425A9.956 9.956 0 0112 21c-1.657 0-3.221-.403-4.575-1.125" /></svg>
+                ) : (
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                )}
+              </button>
+            </div>
+            {passwordErrors.password && <p className="text-red-600 text-sm mt-1">{passwordErrors.password}</p>}
           </div>
-          {passwordErrors.password && <p className="text-red-600 text-sm mt-1">{passwordErrors.password}</p>}
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar contraseña</label>
-          <div className="relative">
-            <input
-              type={showConfirmPassword ? 'text' : 'password'}
-              name="confirmPassword"
-              value={passwordForm.confirmPassword}
-              onChange={handlePasswordChange}
-              className="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              placeholder="••••••••"
-            />
-            <button
-              type="button"
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
-              onMouseDown={() => setShowConfirmPassword(true)}
-              onMouseUp={() => setShowConfirmPassword(false)}
-              onMouseLeave={() => setShowConfirmPassword(false)}
-              tabIndex={-1}
-            >
-              {showConfirmPassword ? (
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.657.403-3.221 1.125-4.575m1.75-2.425A9.956 9.956 0 0112 3c5.523 0 10 4.477 10 10 0 1.657-.403 3.221-1.125 4.575m-1.75 2.425A9.956 9.956 0 0112 21c-1.657 0-3.221-.403-4.575-1.125" /></svg>
-              ) : (
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              )}
-            </button>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar contraseña</label>
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                name="confirmPassword"
+                value={passwordForm.confirmPassword}
+                onChange={handlePasswordChange}
+                className="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                onMouseDown={() => setShowConfirmPassword(true)}
+                onMouseUp={() => setShowConfirmPassword(false)}
+                onMouseLeave={() => setShowConfirmPassword(false)}
+                tabIndex={-1}
+              >
+                {showConfirmPassword ? (
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.657.403-3.221 1.125-4.575m1.75-2.425A9.956 9.956 0 0112 3c5.523 0 10 4.477 10 10 0 1.657-.403 3.221-1.125 4.575m-1.75 2.425A9.956 9.956 0 0112 21c-1.657 0-3.221-.403-4.575-1.125" /></svg>
+                ) : (
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                )}
+              </button>
+            </div>
+            {passwordErrors.confirmPassword && <p className="text-red-600 text-sm mt-1">{passwordErrors.confirmPassword}</p>}
           </div>
-          {passwordErrors.confirmPassword && <p className="text-red-600 text-sm mt-1">{passwordErrors.confirmPassword}</p>}
-        </div>
-        <button type="submit" disabled={passwordLoading} className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2 px-4 rounded-full font-semibold shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 hover:scale-105 disabled:opacity-50">
-          {passwordLoading ? 'Cambiando...' : 'Cambiar contraseña'}
+          <button type="submit" disabled={passwordLoading} className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2 px-4 rounded-full font-semibold shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 hover:scale-105 disabled:opacity-50">
+            {passwordLoading ? 'Cambiando...' : 'Cambiar contraseña'}
+          </button>
+        </form>
+      </div>
+      <hr className="my-8" />
+      <div className="space-y-4">
+        <h3 className="text-xl font-bold text-red-600 mb-2">Eliminar cuenta</h3>
+        <p className="text-gray-600">
+          {showDeleteConfirm 
+            ? "¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer y se eliminarán todos tus datos, artículos y productos."
+            : "Al eliminar tu cuenta, se eliminarán permanentemente todos tus datos, artículos y productos."}
+        </p>
+        <button
+          type="button"
+          onClick={handleDeleteAccount}
+          disabled={deleteLoading}
+          className={`w-full py-2 px-4 rounded-full font-semibold shadow transition-all duration-200 ${
+            showDeleteConfirm
+              ? 'bg-red-600 hover:bg-red-700 text-white'
+              : 'bg-red-100 hover:bg-red-200 text-red-600'
+          } disabled:opacity-50`}
+        >
+          {deleteLoading 
+            ? 'Eliminando...' 
+            : showDeleteConfirm 
+              ? 'Sí, eliminar mi cuenta' 
+              : 'Eliminar cuenta'}
         </button>
-      </form>
+        {showDeleteConfirm && (
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirm(false)}
+            className="w-full py-2 px-4 rounded-full font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all duration-200"
+          >
+            Cancelar
+          </button>
+        )}
+      </div>
       <Toast isOpen={toast.open} message={toast.message} type={toast.type} onClose={() => setToast(t => ({ ...t, open: false }))} />
     </form>
   );

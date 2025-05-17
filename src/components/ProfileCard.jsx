@@ -34,6 +34,7 @@ const ProfileCard = () => {
   const [loadingVentas, setLoadingVentas] = React.useState(true);
   const [errorVentas, setErrorVentas] = React.useState(null);
   const [loading, setLoading] = useLoadingState();
+  const [userBio, setUserBio] = React.useState('');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -41,10 +42,12 @@ const ProfileCard = () => {
       const email = localStorage.getItem('userEmail');
       const name = localStorage.getItem('userName');
       const photo = localStorage.getItem('userPhoto');
+      const bio = localStorage.getItem('userBio') || '';
       setToken(t);
       setUserEmail(email);
       setUserName(name);
       setUserPhoto(photo);
+      setUserBio(bio);
       if (!t) {
         window.location.href = '/';
       }
@@ -60,6 +63,9 @@ const ProfileCard = () => {
       }
       if (e.key === 'userEmail') {
         setUserEmail(e.newValue);
+      }
+      if (e.key === 'userBio') {
+        setUserBio(e.newValue);
       }
     };
     window.addEventListener('storage', handleStorage);
@@ -145,6 +151,11 @@ const ProfileCard = () => {
         <div className="text-center md:text-left w-full">
           <h2 className="text-4xl font-extrabold text-gray-900 mb-2 drop-shadow-lg">{userName || userEmail}</h2>
           <p className="text-lg text-gray-500 mb-2">{userEmail}</p>
+          {userBio && (
+            <p className="text-base text-gray-700 mb-2 whitespace-pre-line bg-white/70 rounded-lg px-4 py-2 border border-gray-200 shadow-sm max-w-xl mx-auto md:mx-0">
+              {userBio}
+            </p>
+          )}
           <a href="/edit_profile" className="mt-2 inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow hover:scale-105 hover:from-purple-700 hover:to-indigo-700 transition-all duration-300">
             <FaPlus className="w-4 h-4" /> Editar perfil
           </a>

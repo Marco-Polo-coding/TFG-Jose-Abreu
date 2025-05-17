@@ -28,6 +28,7 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str
     nombre: Optional[str] = None
+    biografia: Optional[str] = None
 
 class PasswordReset(BaseModel):
     email: EmailStr
@@ -45,6 +46,11 @@ class UserProfileUpdate(BaseModel):
     nombre: Optional[str] = None
     email: Optional[EmailStr] = None
     foto: Optional[str] = None  # base64 o url
+    biografia: Optional[str] = None
+
+class DeleteAccount(BaseModel):
+    uid: str
+    email: EmailStr
 
 @router.post("/register")
 async def register_user(user: UserRegister):
@@ -59,7 +65,8 @@ async def register_user(user: UserRegister):
         user_data = {
             "uid": user_record.uid,
             "email": user.email,
-            "nombre": user.nombre or ""
+            "nombre": user.nombre or "",
+            "biografia": user.biografia or ""
         }
         db.collection("usuarios").document(user_record.uid).set(user_data)
         
@@ -271,7 +278,8 @@ async def update_profile(
     uid: str = Form(...),
     nombre: Optional[str] = Form(None),
     email: Optional[EmailStr] = Form(None),
-    foto: Optional[UploadFile] = File(None)
+    foto: Optional[UploadFile] = File(None),
+    biografia: Optional[str] = Form(None)
 ):
     try:
         user = auth.get_user(uid)
@@ -280,9 +288,17 @@ async def update_profile(
         if nombre:
             update_data["display_name"] = nombre
             firestore_data["nombre"] = nombre
+        # Solo actualizar el email si realmente ha cambiado y no existe ya
         if email and email != user.email:
-            update_data["email"] = email
-            firestore_data["email"] = email
+            # Verificar si el email ya existe en Firebase
+            try:
+                auth.get_user_by_email(email)
+                raise HTTPException(status_code=400, detail="El email ya está en uso por otro usuario")
+            except auth.UserNotFoundError:
+                update_data["email"] = email
+                firestore_data["email"] = email
+        if biografia is not None:
+            firestore_data["biografia"] = biografia
         if foto:
             # Validar tipo y tamaño
             if foto.content_type not in ["image/png", "image/jpeg", "image/jpg", "image/gif"]:
@@ -306,8 +322,76 @@ async def update_profile(
             auth.update_user(uid, **update_data)
         # Actualizar en Firestore
         if firestore_data:
-            db.collection("usuarios").document(uid).set(firestore_data, merge=True)
+            # Obtener el documento actual para preservar datos no actualizados
+            current_doc = db.collection("usuarios").document(uid).get()
+            current_data = current_doc.to_dict() if current_doc.exists else {}
+            # Combinar datos actuales con nuevos datos
+            updated_data = {**current_data, **firestore_data}
+            db.collection("usuarios").document(uid).set(updated_data, merge=True)
         return {"message": "Perfil actualizado con éxito", "data": firestore_data}
+    except HTTPException as he:
+        raise he
     except Exception as e:
         logger.error(f"Error al actualizar perfil: {str(e)}")
-        raise HTTPException(status_code=400, detail="Error al actualizar el perfil") 
+        raise HTTPException(status_code=400, detail="Error al actualizar el perfil")
+
+@router.delete("/delete-account")
+async def delete_account(account_data: DeleteAccount):
+    try:
+        # Verificar que el usuario existe
+        try:
+            user = auth.get_user(account_data.uid)
+            # Verificar que el email coincide
+            if user.email != account_data.email:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Los datos del usuario no coinciden"
+                )
+        except auth.UserNotFoundError:
+            raise HTTPException(
+                status_code=404,
+                detail="Usuario no encontrado"
+            )
+        except Exception as e:
+            logger.error(f"Error al verificar usuario: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail="Error al verificar el usuario"
+            )
+
+        # Eliminar usuario de Firebase Auth
+        auth.delete_user(account_data.uid)
+        
+        # Eliminar datos del usuario de Firestore
+        user_ref = db.collection("usuarios").document(account_data.uid)
+        user_doc = user_ref.get()
+        
+        if not user_doc.exists:
+            raise HTTPException(
+                status_code=404,
+                detail="No se encontraron los datos del usuario"
+            )
+            
+        user_ref.delete()
+        
+        # Eliminar artículos y productos asociados
+        articles_ref = db.collection("articulos")
+        articles = articles_ref.where("email", "==", account_data.email).stream()
+        for article in articles:
+            article.reference.delete()
+            
+        products_ref = db.collection("productos")
+        products = products_ref.where("email", "==", account_data.email).stream()
+        for product in products:
+            product.reference.delete()
+        
+        return {"message": "Cuenta eliminada con éxito"}
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Error al eliminar cuenta: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Error al eliminar la cuenta"
+        ) 

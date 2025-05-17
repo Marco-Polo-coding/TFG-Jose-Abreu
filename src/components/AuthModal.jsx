@@ -76,6 +76,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userName');
     localStorage.removeItem('uid');
+    localStorage.removeItem('userBio');
     // Eliminar datos recordados al cerrar sesión
     localStorage.removeItem('rememberedEmail');
     localStorage.removeItem('rememberedPassword');
@@ -126,7 +127,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
 
       localStorage.setItem('token', data.idToken);
       localStorage.setItem('userEmail', formData.email);
-      localStorage.setItem('userName', data.name || formData.name || formData.email);
+      localStorage.setItem('userName', data.nombre || formData.name || formData.email);
       if (data.uid) {
         localStorage.setItem('uid', data.uid);
       }
@@ -135,8 +136,14 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
       } else {
         localStorage.removeItem('userPhoto');
       }
+      // Biografía: si viene en la respuesta, guardar; si no, limpiar
+      if (data.biografia !== undefined && data.biografia !== null) {
+        localStorage.setItem('userBio', data.biografia);
+      } else {
+        localStorage.removeItem('userBio');
+      }
       setIsAuthenticated(true);
-      onLoginSuccess?.(formData.email, data.name || formData.name || formData.email, data.uid);
+      onLoginSuccess?.(formData.email, data.nombre || formData.name || formData.email, data.uid);
       
       showNotification(
         isLoginMode ? '¡Inicio de sesión exitoso!' : '¡Cuenta creada exitosamente!',
@@ -212,6 +219,12 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
         localStorage.setItem('userPhoto', loginData.foto);
       } else {
         localStorage.removeItem('userPhoto');
+      }
+      // Biografía: si viene en la respuesta, guardar; si no, limpiar
+      if (loginData.biografia !== undefined && loginData.biografia !== null) {
+        localStorage.setItem('userBio', loginData.biografia);
+      } else {
+        localStorage.removeItem('userBio');
       }
       showNotification('Contraseña actualizada e inicio de sesión exitoso', 'success');
       setShowResetPassword(false);
@@ -586,6 +599,12 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                                 localStorage.setItem('userPhoto', data.foto);
                               } else {
                                 localStorage.removeItem('userPhoto');
+                              }
+                              // Biografía: si viene en la respuesta, guardar; si no, limpiar
+                              if (data.biografia !== undefined && data.biografia !== null) {
+                                localStorage.setItem('userBio', data.biografia);
+                              } else {
+                                localStorage.removeItem('userBio');
                               }
                               setIsAuthenticated(true);
                               onLoginSuccess?.(data.email, data.nombre || data.email, data.uid);
