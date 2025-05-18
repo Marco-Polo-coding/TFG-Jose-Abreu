@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { FaHeart, FaBookmark, FaArrowLeft, FaComment, FaHome } from "react-icons/fa";
+import { FaHeart, FaBookmark, FaArrowLeft, FaComment, FaHome, FaSpinner } from "react-icons/fa";
 import LoadingSpinner from './LoadingSpinner';
 import CartButton from './CartButton';
 import UserButton from './UserButton';
+import axios from 'axios';
+import Notification from './Notification';
 
 const ArticuloDetalle = ({ id }) => {
   const [articulo, setArticulo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [nuevoComentario, setNuevoComentario] = useState("");
+  const [notification, setNotification] = useState(null);
+  const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
     fetch(`http://localhost:8000/articulos/${id}`)
@@ -20,7 +24,58 @@ const ArticuloDetalle = ({ id }) => {
         console.error("Error al obtener el artículo:", error);
         setLoading(false);
       });
+    checkIfArticleIsSaved();
   }, [id]);
+
+  const checkIfArticleIsSaved = async () => {
+    try {
+      const userEmail = localStorage.getItem('userEmail');
+      if (!userEmail) return;
+
+      const response = await axios.get(`http://localhost:8000/usuarios/${userEmail}/articulos-guardados`);
+      const savedArticles = response.data;
+      setIsSaved(savedArticles.some(article => article.id === id));
+    } catch (error) {
+      console.error('Error checking if article is saved:', error);
+    }
+  };
+
+  const handleSaveArticle = async () => {
+    try {
+      const userEmail = localStorage.getItem('userEmail');
+      if (!userEmail) {
+        setNotification({
+          type: 'error',
+          message: 'Debes iniciar sesión para guardar artículos'
+        });
+        return;
+      }
+
+      setLoading(true);
+      if (isSaved) {
+        await axios.delete(`http://localhost:8000/usuarios/${userEmail}/articulos-guardados/${id}`);
+        setIsSaved(false);
+        setNotification({
+          type: 'success',
+          message: 'Artículo eliminado de guardados'
+        });
+      } else {
+        await axios.post(`http://localhost:8000/usuarios/${userEmail}/articulos-guardados/${id}`);
+        setIsSaved(true);
+        setNotification({
+          type: 'success',
+          message: 'Artículo guardado correctamente'
+        });
+      }
+    } catch (error) {
+      setNotification({
+        type: 'error',
+        message: error.response?.data?.detail || 'Error al guardar el artículo'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmitComentario = (e) => {
     e.preventDefault();
@@ -110,22 +165,16 @@ const ArticuloDetalle = ({ id }) => {
               />
               <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <button 
-                  onClick={() => {
-                    // Lógica para dar like
-                  }}
-                  className="bg-gradient-to-r from-purple-600 to-indigo-600 p-3 rounded-full text-white hover:text-red-200 transition-colors hover:scale-110 shadow-lg"
-                  title="Me gusta"
+                  onClick={handleSaveArticle}
+                  disabled={loading}
+                  className={`bg-gradient-to-r from-purple-600 to-indigo-600 p-3 rounded-full text-white hover:text-yellow-200 transition-colors hover:scale-110 shadow-lg ${isSaved ? 'bg-yellow-500' : ''}`}
+                  title={isSaved ? "Eliminar de guardados" : "Guardar artículo"}
                 >
-                  <FaHeart className="w-6 h-6" />
-                </button>
-                <button 
-                  onClick={() => {
-                    // Lógica para guardar
-                  }}
-                  className="bg-gradient-to-r from-purple-600 to-indigo-600 p-3 rounded-full text-white hover:text-yellow-200 transition-colors hover:scale-110 shadow-lg"
-                  title="Guardar"
-                >
-                  <FaBookmark className="w-6 h-6" />
+                  {loading ? (
+                    <FaSpinner className="w-6 h-6 animate-spin" />
+                  ) : (
+                    <FaBookmark className="w-6 h-6" />
+                  )}
                 </button>
               </div>
             </div>
@@ -193,6 +242,15 @@ const ArticuloDetalle = ({ id }) => {
           </div>
         </div>
       </section>
+
+      {/* Notificación */}
+      {notification && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onClose={() => setNotification(null)}
+        />
+      )}
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { FaArrowRight, FaHeart, FaTrash, FaSpinner } from 'react-icons/fa';
 import axios from 'axios';
 import LoadingSpinner from './LoadingSpinner';
 import useLoadingState from '../hooks/useLoadingState';
+import Toast from './Toast';
 
 // Datos de ejemplo (reemplazar por fetch a la API en el futuro)
 const favoriteProducts = [];
@@ -15,10 +16,20 @@ const FavoriteProductsList = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useLoadingState();
   const [error, setError] = useState(null);
+  const [isDeleting, setIsDeleting] = useState({});
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success');
 
   useEffect(() => {
     fetchFavoriteProducts();
   }, []);
+
+  const showNotification = (message, type = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+  };
 
   const fetchFavoriteProducts = async () => {
     try {
@@ -36,6 +47,25 @@ const FavoriteProductsList = () => {
       console.error('Error fetching favorite products:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRemoveFavorite = async (productoId) => {
+    try {
+      setIsDeleting(prev => ({ ...prev, [productoId]: true }));
+      const userEmail = localStorage.getItem('userEmail');
+      if (!userEmail) {
+        showNotification('No se ha encontrado el email del usuario', 'error');
+        return;
+      }
+
+      await axios.delete(`http://localhost:8000/usuarios/${userEmail}/productos-favoritos/${productoId}`);
+      setProducts(prev => prev.filter(p => p.id !== productoId));
+      showNotification('Producto eliminado de favoritos', 'success');
+    } catch (error) {
+      showNotification('Error al eliminar el producto de favoritos', 'error');
+    } finally {
+      setIsDeleting(prev => ({ ...prev, [productoId]: false }));
     }
   };
 
@@ -66,9 +96,18 @@ const FavoriteProductsList = () => {
         <div key={producto.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
           <div className="relative h-48 bg-gray-200">
             <img src={producto.imagen} alt={producto.nombre} className="w-full h-full object-cover" />
-            <span className="absolute top-4 right-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-2 rounded-full shadow-lg">
-              <FaHeart />
-            </span>
+            <button
+              onClick={() => handleRemoveFavorite(producto.id)}
+              disabled={isDeleting[producto.id]}
+              className="absolute top-4 right-4 bg-white/90 p-3 rounded-full text-gray-500 hover:text-red-500 transition-colors hover:scale-110 shadow disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Eliminar de favoritos"
+            >
+              {isDeleting[producto.id] ? (
+                <FaSpinner className="w-5 h-5 animate-spin" />
+              ) : (
+                <FaTrash className="w-5 h-5" />
+              )}
+            </button>
           </div>
           <div className="p-6">
             <h3 className="text-xl font-semibold mb-2">{producto.nombre}</h3>
@@ -82,6 +121,15 @@ const FavoriteProductsList = () => {
           </div>
         </div>
       ))}
+
+      {/* Toast de notificación */}
+      {showToast && (
+        <Toast
+          message={toastMessage}
+          type={toastType}
+          onClose={() => setShowToast(false)}
+        />
+      )}
     </div>
   );
 };

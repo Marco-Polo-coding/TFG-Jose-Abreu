@@ -188,14 +188,14 @@ const UserButton = () => {
                     <FaBox className="w-5 h-5 text-purple-500 group-hover:text-purple-700 transition-colors" />
                     <span>Mis Productos</span>
                   </a>
-                  <button
+                  {/* <button
                     onClick={toggleDarkMode}
                     className="w-full flex items-center space-x-3 px-4 py-2.5 text-base text-gray-700 dark:text-gray-200 hover:bg-purple-100/60 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 group font-semibold"
                     aria-label="Cambiar modo oscuro/claro"
                   >
                     {darkMode ? <FaSun className="w-5 h-5 text-yellow-400" /> : <FaMoon className="w-5 h-5 text-gray-700 dark:text-gray-200" />}
                     <span>{darkMode ? 'Modo claro' : 'Modo oscuro'}</span>
-                  </button>
+                  </button> */}
                   <button
                     onClick={handleLogout}
                     className="w-full flex items-center space-x-3 px-4 py-2.5 text-base text-red-600 hover:bg-red-100/60 rounded-lg transition-all duration-200 group font-semibold mt-2"

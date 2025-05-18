@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { FaHeart, FaBookmark, FaHome, FaShoppingCart, FaArrowRight, FaBoxOpen, FaSearch, FaSortAlphaDown, FaFilter } from "react-icons/fa";
+import { FaHeart, FaBookmark, FaHome, FaShoppingCart, FaArrowRight, FaBoxOpen, FaSearch, FaSortAlphaDown, FaFilter, FaSpinner } from "react-icons/fa";
 import CartButton from './CartButton';
 import UserButton from './UserButton';
 import LoadingSpinner from './LoadingSpinner';
+import axios from 'axios';
+import Toast from './Toast';
 
 const TiendaPage = () => {
   const [productos, setProductos] = useState([]);
@@ -12,6 +14,11 @@ const TiendaPage = () => {
   const [category, setCategory] = useState("");
   const [priceOrder, setPriceOrder] = useState(""); // asc, desc
   const [estado, setEstado] = useState(""); // nuevo, usado, etc.
+  const [error, setError] = useState(null);
+  const [isSaving, setIsSaving] = useState({});
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success');
 
   useEffect(() => {
     fetch("http://localhost:8000/productos")
@@ -57,6 +64,34 @@ const TiendaPage = () => {
     setCategory("");
     setPriceOrder("");
     setEstado("");
+  };
+
+  const showNotification = (message, type = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+  };
+
+  const handleSaveProduct = async (productoId) => {
+    try {
+      setIsSaving(prev => ({ ...prev, [productoId]: true }));
+      const userEmail = localStorage.getItem('userEmail');
+      if (!userEmail) {
+        showNotification('Debes iniciar sesión para guardar productos', 'error');
+        return;
+      }
+
+      await axios.post(`http://localhost:8000/usuarios/${userEmail}/productos-favoritos/${productoId}`);
+      showNotification('Producto guardado correctamente', 'success');
+    } catch (error) {
+      if (error.response?.status === 400) {
+        showNotification('Este producto ya está en tus favoritos', 'warning');
+      } else {
+        showNotification('Error al guardar el producto', 'error');
+      }
+    } finally {
+      setIsSaving(prev => ({ ...prev, [productoId]: false }));
+    }
   };
 
   if (loading) {
@@ -208,22 +243,16 @@ const TiendaPage = () => {
                     />
                     <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <button
-                        onClick={() => {
-                          // Lógica para dar like
-                        }}
-                        className="bg-white/90 p-3 rounded-full text-gray-500 hover:text-red-500 transition-colors hover:scale-110 shadow"
-                        title="Me gusta"
+                        onClick={() => handleSaveProduct(producto.id)}
+                        disabled={isSaving[producto.id]}
+                        className="bg-white/90 p-3 rounded-full text-gray-500 hover:text-red-500 transition-colors hover:scale-110 shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Guardar producto"
                       >
-                        <FaHeart className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          // Lógica para guardar
-                        }}
-                        className="bg-white/90 p-3 rounded-full text-gray-500 hover:text-yellow-500 transition-colors hover:scale-110 shadow"
-                        title="Guardar"
-                      >
-                        <FaBookmark className="w-5 h-5" />
+                        {isSaving[producto.id] ? (
+                          <FaSpinner className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <FaHeart className="w-5 h-5" />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -264,6 +293,15 @@ const TiendaPage = () => {
           )}
         </div>
       </section>
+
+      {/* Toast de notificación */}
+      {showToast && (
+        <Toast
+          message={toastMessage}
+          type={toastType}
+          onClose={() => setShowToast(false)}
+        />
+      )}
     </div>
   );
 };
