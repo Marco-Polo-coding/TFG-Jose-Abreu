@@ -3,6 +3,8 @@ import { FaHeart, FaBookmark, FaHome, FaArrowRight, FaPen, FaSearch, FaSortAlpha
 import CartButton from './CartButton';
 import UserButton from './UserButton';
 import LoadingSpinner from './LoadingSpinner';
+import axios from 'axios';
+import Notification from './Notification';
 
 const BlogPage = () => {
   const [articulos, setArticulos] = useState([]);
@@ -11,19 +13,73 @@ const BlogPage = () => {
   const [order, setOrder] = useState("az"); // az, za
   const [category, setCategory] = useState("");
   const [dateOrder, setDateOrder] = useState("desc"); // desc, asc
+  const [notification, setNotification] = useState(null);
+  const [savedArticles, setSavedArticles] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:8000/articulos")
-      .then((res) => res.json())
-      .then((data) => {
-        setArticulos(data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error al obtener artículos:", error);
-        setLoading(false);
-      });
+    fetchArticles();
+    fetchSavedArticles();
   }, []);
+
+  const fetchArticles = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/articulos');
+      setArticulos(response.data);
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching articles:', err);
+      setLoading(false);
+    }
+  };
+
+  const fetchSavedArticles = async () => {
+    try {
+      const userEmail = localStorage.getItem('userEmail');
+      if (!userEmail) return;
+
+      const response = await axios.get(`http://localhost:8000/usuarios/${userEmail}/articulos-guardados`);
+      setSavedArticles(response.data);
+    } catch (error) {
+      console.error('Error fetching saved articles:', error);
+    }
+  };
+
+  const handleSaveArticle = async (articleId) => {
+    try {
+      const userEmail = localStorage.getItem('userEmail');
+      if (!userEmail) {
+        setNotification({
+          type: 'error',
+          message: 'Debes iniciar sesión para guardar artículos'
+        });
+        return;
+      }
+
+      const isSaved = savedArticles.some(article => article.id === articleId);
+      
+      if (isSaved) {
+        await axios.delete(`http://localhost:8000/usuarios/${userEmail}/articulos-guardados/${articleId}`);
+        setSavedArticles(prev => prev.filter(article => article.id !== articleId));
+        setNotification({
+          type: 'success',
+          message: 'Artículo eliminado de guardados'
+        });
+      } else {
+        await axios.post(`http://localhost:8000/usuarios/${userEmail}/articulos-guardados/${articleId}`);
+        const article = articulos.find(a => a.id === articleId);
+        setSavedArticles(prev => [...prev, article]);
+        setNotification({
+          type: 'success',
+          message: 'Artículo guardado correctamente'
+        });
+      }
+    } catch (error) {
+      setNotification({
+        type: 'error',
+        message: error.response?.data?.detail || 'Error al guardar el artículo'
+      });
+    }
+  };
 
   // Obtener categorías únicas (incluyendo 'Sin categoría' si aplica)
   const categoriasSet = new Set(articulos.map(a => a.categoria || 'Sin categoría'));
@@ -199,24 +255,13 @@ const BlogPage = () => {
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      {/* <button
-                        onClick={() => {
-                          // Lógica para dar like
-                        }}
-                        className="bg-white/90 p-3 rounded-full text-gray-500 hover:text-red-500 transition-colors hover:scale-110 shadow"
-                        title="Me gusta"
-                      >
-                        <FaHeart className="w-5 h-5" />
-                      </button>
                       <button
-                        onClick={() => {
-                          // Lógica para guardar
-                        }}
-                        className="bg-white/90 p-3 rounded-full text-gray-500 hover:text-yellow-500 transition-colors hover:scale-110 shadow"
-                        title="Guardar"
+                        onClick={() => handleSaveArticle(articulo.id)}
+                        className={`bg-white/90 p-3 rounded-full text-gray-500 hover:text-yellow-500 transition-colors hover:scale-110 shadow ${savedArticles.some(a => a.id === articulo.id) ? 'text-yellow-500' : ''}`}
+                        title={savedArticles.some(a => a.id === articulo.id) ? "Eliminar de guardados" : "Guardar artículo"}
                       >
                         <FaBookmark className="w-5 h-5" />
-                      </button> */}
+                      </button>
                     </div>
                   </div>
                   <div className="p-6">
@@ -243,6 +288,15 @@ const BlogPage = () => {
           )}
         </div>
       </section>
+
+      {/* Notificación */}
+      {notification && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onClose={() => setNotification(null)}
+        />
+      )}
     </div>
   );
 };

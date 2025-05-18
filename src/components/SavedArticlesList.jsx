@@ -3,6 +3,7 @@ import { FaArrowRight, FaBookmark, FaTrash, FaSpinner } from 'react-icons/fa';
 import axios from 'axios';
 import LoadingSpinner from './LoadingSpinner';
 import useLoadingState from '../hooks/useLoadingState';
+import Notification from './Notification';
 
 // Datos de ejemplo (reemplazar por fetch a la API en el futuro)
 const savedArticles = [];
@@ -15,6 +16,8 @@ const SavedArticlesList = () => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useLoadingState();
   const [error, setError] = useState(null);
+  const [notification, setNotification] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     fetchSavedArticles();
@@ -36,6 +39,34 @@ const SavedArticlesList = () => {
       console.error('Error fetching saved articles:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteArticle = async (articleId) => {
+    try {
+      setDeletingId(articleId);
+      const userEmail = localStorage.getItem('userEmail');
+      if (!userEmail) {
+        setNotification({
+          type: 'error',
+          message: 'No se ha encontrado el email del usuario'
+        });
+        return;
+      }
+
+      await axios.delete(`http://localhost:8000/usuarios/${userEmail}/articulos-guardados/${articleId}`);
+      setArticles(prev => prev.filter(article => article.id !== articleId));
+      setNotification({
+        type: 'success',
+        message: 'Artículo eliminado de guardados'
+      });
+    } catch (error) {
+      setNotification({
+        type: 'error',
+        message: error.response?.data?.detail || 'Error al eliminar el artículo'
+      });
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -66,16 +97,27 @@ const SavedArticlesList = () => {
         <div key={articulo.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
           <div className="relative h-48 bg-gray-200">
             <img src={articulo.imagen} alt={articulo.titulo} className="w-full h-full object-cover" />
-            <span className="absolute top-4 right-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-2 rounded-full shadow-lg">
-              <FaBookmark />
-            </span>
+            <div className="absolute top-4 right-4 flex gap-2">
+              <button
+                onClick={() => handleDeleteArticle(articulo.id)}
+                disabled={deletingId === articulo.id}
+                className="bg-white/90 p-2 rounded-full text-red-500 hover:bg-red-50 transition-colors hover:scale-110 shadow"
+                title="Eliminar de guardados"
+              >
+                {deletingId === articulo.id ? (
+                  <FaSpinner className="w-4 h-4 animate-spin" />
+                ) : (
+                  <FaTrash className="w-4 h-4" />
+                )}
+              </button>
+            </div>
           </div>
           <div className="p-6">
             <h3 className="text-xl font-semibold mb-2">{articulo.titulo}</h3>
             <p className="text-gray-600 mb-4 line-clamp-2">{articulo.descripcion}</p>
             <div className="flex items-center justify-between mb-4">
               <div className="text-sm text-gray-500">
-                Por {articulo.autor} • {new Date(articulo.fecha).toLocaleDateString()}
+                Por {articulo.autor} • {new Date(articulo.fecha_publicacion).toLocaleDateString()}
               </div>
             </div>
             <a href={`/articulo/${articulo.id}`} className="block w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-center py-3 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 font-semibold">
@@ -84,6 +126,15 @@ const SavedArticlesList = () => {
           </div>
         </div>
       ))}
+
+      {/* Notificación */}
+      {notification && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onClose={() => setNotification(null)}
+        />
+      )}
     </div>
   );
 };
