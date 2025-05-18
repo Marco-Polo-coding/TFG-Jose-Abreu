@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { FaHeart, FaShoppingCart, FaBookmark, FaArrowLeft, FaHome } from "react-icons/fa";
+import { FaHeart, FaShoppingCart, FaBookmark, FaArrowLeft, FaHome, FaSpinner } from "react-icons/fa";
 import LoadingSpinner from './LoadingSpinner';
 import CartButton from './CartButton';
 import UserButton from './UserButton';
+import Toast from './Toast';
+import axios from 'axios';
 
 const ProductoDetalle = ({ id }) => {
   const [producto, setProducto] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success');
 
   useEffect(() => {
     fetch("http://localhost:8000/productos")
@@ -21,6 +27,34 @@ const ProductoDetalle = ({ id }) => {
         setLoading(false);
       });
   }, [id]);
+
+  const showNotification = (message, type = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+  };
+
+  const handleSaveProduct = async () => {
+    try {
+      setIsSaving(true);
+      const userEmail = localStorage.getItem('userEmail');
+      if (!userEmail) {
+        showNotification('Debes iniciar sesión para guardar productos', 'error');
+        return;
+      }
+
+      await axios.post(`http://localhost:8000/usuarios/${userEmail}/productos-favoritos/${producto.id}`);
+      showNotification('Producto guardado correctamente', 'success');
+    } catch (error) {
+      if (error.response?.status === 400) {
+        showNotification('Este producto ya está en tus favoritos', 'warning');
+      } else {
+        showNotification('Error al guardar el producto', 'error');
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (loading) {
     return <LoadingSpinner />;
@@ -97,7 +131,7 @@ const ProductoDetalle = ({ id }) => {
                 className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-[1.03]"
               />
               <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <button 
+                {/* <button 
                   onClick={() => {
                     // Lógica para dar like
                   }}
@@ -105,16 +139,19 @@ const ProductoDetalle = ({ id }) => {
                   title="Me gusta"
                 >
                   <FaHeart className="w-6 h-6" />
-                </button>
-                {/* <button 
-                  onClick={() => {
-                    // Lógica para guardar
-                  }}
-                  className="bg-gradient-to-r from-purple-600 to-indigo-600 p-3 rounded-full text-white hover:text-yellow-200 transition-colors hover:scale-110 shadow-lg"
-                  title="Guardar"
-                >
-                  <FaBookmark className="w-6 h-6" />
                 </button> */}
+                <button 
+                  onClick={handleSaveProduct}
+                  disabled={isSaving}
+                  className="bg-gradient-to-r from-purple-600 to-indigo-600 p-3 rounded-full text-white hover:text-yellow-200 transition-colors hover:scale-110 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Guardar producto"
+                >
+                  {isSaving ? (
+                    <FaSpinner className="w-6 h-6 animate-spin" />
+                  ) : (
+                    <FaHeart className="w-6 h-6" />
+                    )}
+                </button>
               </div>
             </div>
 
@@ -166,6 +203,15 @@ const ProductoDetalle = ({ id }) => {
           </div>
         </div>
       </section>
+
+      {/* Toast de notificación */}
+      {showToast && (
+        <Toast
+          message={toastMessage}
+          type={toastType}
+          onClose={() => setShowToast(false)}
+        />
+      )}
     </div>
   );
 };

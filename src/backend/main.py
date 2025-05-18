@@ -515,3 +515,94 @@ async def eliminar_articulo_guardado(user_email: str, articulo_id: str):
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# Endpoint para guardar un producto como favorito
+@app.post("/usuarios/{user_email}/productos-favoritos/{producto_id}")
+async def guardar_producto_favorito(user_email: str, producto_id: str):
+    try:
+        # Verificar que el producto existe
+        producto_ref = db.collection("productos").document(producto_id)
+        producto = producto_ref.get()
+        if not producto.exists:
+            raise HTTPException(status_code=404, detail="Producto no encontrado")
+
+        # Obtener el usuario
+        usuarios_ref = db.collection("usuarios").where("email", "==", user_email).limit(1)
+        usuarios = list(usuarios_ref.stream())
+        if not usuarios:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+        usuario_ref = usuarios[0].reference
+        
+        # Obtener los productos favoritos actuales
+        usuario_data = usuario_ref.get().to_dict()
+        productos_favoritos = usuario_data.get("productos_favoritos", [])
+        
+        # Verificar si el producto ya está en favoritos
+        if producto_id in productos_favoritos:
+            raise HTTPException(status_code=400, detail="El producto ya está en favoritos")
+        
+        # Añadir el producto a la lista de favoritos
+        productos_favoritos.append(producto_id)
+        usuario_ref.update({"productos_favoritos": productos_favoritos})
+        
+        return {"message": "Producto añadido a favoritos correctamente"}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Endpoint para obtener productos favoritos de un usuario
+@app.get("/usuarios/{user_email}/productos-favoritos")
+async def obtener_productos_favoritos(user_email: str):
+    try:
+        # Obtener el usuario
+        usuarios_ref = db.collection("usuarios").where("email", "==", user_email).limit(1)
+        usuarios = list(usuarios_ref.stream())
+        if not usuarios:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+        usuario_data = usuarios[0].to_dict()
+        productos_favoritos = usuario_data.get("productos_favoritos", [])
+        
+        # Obtener los detalles de cada producto favorito
+        productos = []
+        for producto_id in productos_favoritos:
+            producto_ref = db.collection("productos").document(producto_id)
+            producto = producto_ref.get()
+            if producto.exists:
+                productos.append({"id": producto.id, **producto.to_dict()})
+        
+        return productos
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Endpoint para eliminar un producto de favoritos
+@app.delete("/usuarios/{user_email}/productos-favoritos/{producto_id}")
+async def eliminar_producto_favorito(user_email: str, producto_id: str):
+    try:
+        # Obtener el usuario
+        usuarios_ref = db.collection("usuarios").where("email", "==", user_email).limit(1)
+        usuarios = list(usuarios_ref.stream())
+        if not usuarios:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+        usuario_ref = usuarios[0].reference
+        
+        # Obtener los productos favoritos actuales
+        usuario_data = usuario_ref.get().to_dict()
+        productos_favoritos = usuario_data.get("productos_favoritos", [])
+        
+        # Verificar si el producto está en favoritos
+        if producto_id not in productos_favoritos:
+            raise HTTPException(status_code=404, detail="El producto no está en favoritos")
+        
+        # Eliminar el producto de la lista de favoritos
+        productos_favoritos.remove(producto_id)
+        usuario_ref.update({"productos_favoritos": productos_favoritos})
+        
+        return {"message": "Producto eliminado de favoritos correctamente"}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
