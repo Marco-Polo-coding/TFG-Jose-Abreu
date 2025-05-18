@@ -279,7 +279,8 @@ async def update_profile(
     nombre: Optional[str] = Form(None),
     email: Optional[EmailStr] = Form(None),
     foto: Optional[UploadFile] = File(None),
-    biografia: Optional[str] = Form(None)
+    biografia: Optional[str] = Form(None),
+    delete_photo: Optional[str] = Form(None)
 ):
     try:
         user = auth.get_user(uid)
@@ -299,7 +300,12 @@ async def update_profile(
                 firestore_data["email"] = email
         if biografia is not None:
             firestore_data["biografia"] = biografia
-        if foto:
+
+        # Manejar la foto de perfil
+        if delete_photo == 'true':
+            # Eliminar la foto actual
+            firestore_data["foto"] = None
+        elif foto:
             # Validar tipo y tamaño
             if foto.content_type not in ["image/png", "image/jpeg", "image/jpg", "image/gif"]:
                 raise HTTPException(status_code=400, detail="Tipo de imagen no soportado")
@@ -317,6 +323,7 @@ async def update_profile(
             except Exception as img_err:
                 logger.error(f"Error subiendo imagen a Cloudinary: {str(img_err)}")
                 raise HTTPException(status_code=400, detail="Error al subir la imagen")
+
         # Actualizar en Firebase Auth
         if update_data:
             auth.update_user(uid, **update_data)

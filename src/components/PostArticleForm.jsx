@@ -13,11 +13,19 @@ const PostArticleForm = () => {
   });
   const [loading, setLoading] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
-  const [initialLoading, setInitialLoading] = useLoadingState();
+  const [initialLoading, setInitialLoading] = useState(true);
 
   const TITLE_LIMIT = 100;
   const DESC_LIMIT = 300;
   const CONTENT_LIMIT = 500;
+
+  useEffect(() => {
+    // Simular una carga inicial rápida
+    const timer = setTimeout(() => {
+      setInitialLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   if (initialLoading) {
     return <LoadingSpinner />;

@@ -10,7 +10,8 @@ const EditProfileForm = () => {
     email: '',
     foto: null,
     fotoPreview: '',
-    biografia: ''
+    biografia: '',
+    deletePhoto: false
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -63,6 +64,15 @@ const EditProfileForm = () => {
     }
   };
 
+  const handleDeletePhoto = () => {
+    setForm(f => ({
+      ...f,
+      foto: null,
+      fotoPreview: '',
+      deletePhoto: true
+    }));
+  };
+
   const handleSubmit = async e => {
     e.preventDefault();
     const errs = validate();
@@ -77,6 +87,7 @@ const EditProfileForm = () => {
       formData.append('email', form.email);
       formData.append('biografia', form.biografia);
       if (form.foto) formData.append('foto', form.foto);
+      if (form.deletePhoto) formData.append('delete_photo', 'true');
       const res = await fetch('http://127.0.0.1:8000/auth/update-profile', {
         method: 'PUT',
         body: formData
@@ -89,7 +100,9 @@ const EditProfileForm = () => {
       if (data.data && data.data.biografia !== undefined) {
         localStorage.setItem('userBio', data.data.biografia);
       }
-      if (data.data && data.data.foto) {
+      if (form.deletePhoto) {
+        localStorage.removeItem('userPhoto');
+      } else if (data.data && data.data.foto) {
         localStorage.setItem('userPhoto', data.data.foto);
       }
       setToast({ open: true, message: 'Perfil actualizado con éxito', type: 'success' });
@@ -194,7 +207,16 @@ const EditProfileForm = () => {
         <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
           <div className="space-y-2 text-center w-full flex flex-col items-center justify-center">
             {form.fotoPreview ? (
-              <img src={form.fotoPreview} alt="Preview" className="mx-auto h-32 w-32 object-cover rounded-lg" />
+              <div className="relative">
+                <img src={form.fotoPreview} alt="Preview" className="mx-auto h-32 w-32 object-cover rounded-lg" />
+                <button
+                  type="button"
+                  onClick={handleDeletePhoto}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors duration-300"
+                >
+                  ×
+                </button>
+              </div>
             ) : (
               <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
                 <path d="M28 8H20a2 2 0 00-2 2v2H8a2 2 0 00-2 2v24a2 2 0 002 2h32a2 2 0 002-2V14a2 2 0 00-2-2h-10v-2a2 2 0 00-2-2z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
