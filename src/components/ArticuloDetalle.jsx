@@ -109,7 +109,7 @@ const ArticuloDetalle = ({ id }) => {
                 className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-[1.03]"
               />
               <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <button 
+                {/* <button 
                   onClick={() => {
                     // Lógica para dar like
                   }}
@@ -117,7 +117,7 @@ const ArticuloDetalle = ({ id }) => {
                   title="Me gusta"
                 >
                   <FaHeart className="w-6 h-6" />
-                </button>
+                </button> */}
                 <button 
                   onClick={() => {
                     // Lógica para guardar

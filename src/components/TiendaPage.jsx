@@ -207,7 +207,7 @@ const TiendaPage = () => {
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <button
+                      {/* <button
                         onClick={() => {
                           // Lógica para dar like
                         }}
@@ -224,7 +224,7 @@ const TiendaPage = () => {
                         title="Guardar"
                       >
                         <FaBookmark className="w-5 h-5" />
-                      </button>
+                      </button> */}
                     </div>
                   </div>
                   <div className="p-6">

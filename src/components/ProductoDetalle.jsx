@@ -106,7 +106,7 @@ const ProductoDetalle = ({ id }) => {
                 >
                   <FaHeart className="w-6 h-6" />
                 </button>
-                <button 
+                {/* <button 
                   onClick={() => {
                     // Lógica para guardar
                   }}
@@ -114,7 +114,7 @@ const ProductoDetalle = ({ id }) => {
                   title="Guardar"
                 >
                   <FaBookmark className="w-6 h-6" />
-                </button>
+                </button> */}
               </div>
             </div>
 

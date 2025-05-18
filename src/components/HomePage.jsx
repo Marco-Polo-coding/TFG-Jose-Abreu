@@ -48,7 +48,7 @@ const HomePage = () => {
           className="w-full h-full object-cover"
         />
         <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <button 
+          {/* <button 
             onClick={() => {
               // Lógica para dar like
             }}
@@ -63,7 +63,7 @@ const HomePage = () => {
             className="bg-white/90 p-3 rounded-full text-gray-500 hover:text-yellow-500 transition-colors hover:scale-110 shadow"
           >
             <FaBookmark className="w-5 h-5" />
-          </button>
+          </button> */}
         </div>
       </div>
       <div className="p-6">
@@ -81,14 +81,14 @@ const HomePage = () => {
           >
             Ver más <FaArrowRight className="w-4 h-4" />
           </a>
-          <button 
+          {/* <button 
             onClick={() => {
               // Lógica para añadir al carrito
             }}
             className="bg-purple-100 text-purple-600 p-3 rounded-full hover:bg-purple-200 transition-all duration-300 hover:scale-110 shadow"
           >
             <FaShoppingCart className="w-5 h-5" />
-          </button>
+          </button> */}
         </div>
       </div>
     </div>
@@ -166,7 +166,7 @@ const HomePage = () => {
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <button 
+                    {/* <button 
                       onClick={() => {
                         // Lógica para dar like
                       }}
@@ -181,7 +181,7 @@ const HomePage = () => {
                       className="bg-white/90 p-3 rounded-full text-gray-500 hover:text-yellow-500 transition-colors hover:scale-110 shadow"
                     >
                       <FaBookmark className="w-5 h-5" />
-                    </button>
+                    </button> */}
                   </div>
                 </div>
                 <div className="p-6">

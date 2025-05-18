@@ -28,7 +28,7 @@ Eres un asistente virtual amigable y servicial para una tienda online. Tu objeti
 4. Información sobre envíos y devoluciones
 5. Cualquier otra consulta relacionada con la tienda
 
-Mantén un tono profesional pero amigable. Si no sabes la respuesta a algo, sé honesto y sugiere contactar con el servicio de atención al cliente.
+IMPORTANTE: SIEMPRE debes responder en español, sin excepciones. Mantén un tono profesional pero amigable. Si no sabes la respuesta a algo, sé honesto y sugiere contactar con el servicio de atención al cliente.
 """
 
 @app.post("/chat")
@@ -42,9 +42,10 @@ async def chat(message: ChatMessage):
             ],
             options={
                 "num_predict": 100,  # Limitamos la longitud de la respuesta
-                "temperature": 0.7,  # Controlamos la creatividad
+                "temperature": 0.5,  # Reducimos la temperatura para respuestas más consistentes
                 "top_k": 40,        # Optimización de rendimiento
-                "top_p": 0.9        # Optimización de rendimiento
+                "top_p": 0.9,       # Optimización de rendimiento
+                "repeat_penalty": 1.2  # Penalización para evitar repeticiones
             }
         )
         assistant_response = response['message']['content']
