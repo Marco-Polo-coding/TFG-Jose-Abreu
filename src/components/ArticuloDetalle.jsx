@@ -3,6 +3,7 @@ import { FaHeart, FaBookmark, FaArrowLeft, FaComment, FaHome, FaSpinner } from "
 import LoadingSpinner from './LoadingSpinner';
 import CartButton from './CartButton';
 import UserButton from './UserButton';
+import Comments from './Comments';
 import axios from 'axios';
 import Notification from './Notification';
 
@@ -190,53 +191,7 @@ const ArticuloDetalle = ({ id }) => {
 
               {/* Sección de Comentarios */}
               <div className="border-t border-gray-200 pt-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <FaComment className="w-6 h-6 text-purple-600" />
-                  Comentarios
-                </h2>
-                
-                <form onSubmit={handleSubmitComentario} className="mb-8">
-                  <textarea
-                    value={nuevoComentario}
-                    onChange={(e) => setNuevoComentario(e.target.value)}
-                    placeholder="Escribe un comentario..."
-                    className="w-full p-4 border rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    rows="4"
-                  />
-                  <button
-                    type="submit"
-                    className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-3 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105 font-semibold shadow-lg"
-                  >
-                    Publicar Comentario
-                  </button>
-                </form>
-
-                <div className="space-y-6">
-                  {articulo.comentarios?.map((comentario) => (
-                    <div key={comentario.id} className="bg-gradient-to-br from-purple-50 to-indigo-100 rounded-xl p-6">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="font-semibold text-purple-900">{comentario.usuario}</span>
-                        <span className="text-gray-500">
-                          {new Date(comentario.fecha).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <p className="text-gray-700">{comentario.texto}</p>
-                      
-                      {/* Respuestas */}
-                      {comentario.respuestas?.map((respuesta) => (
-                        <div key={respuesta.id} className="ml-8 mt-4 border-l-2 border-purple-200 pl-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-semibold text-purple-900">{respuesta.usuario}</span>
-                            <span className="text-gray-500">
-                              {new Date(respuesta.fecha).toLocaleDateString()}
-                            </span>
-                          </div>
-                          <p className="text-gray-700">{respuesta.texto}</p>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
+                <Comments articuloId={id} />
               </div>
             </div>
           </div>

@@ -197,7 +197,17 @@ async def get_articulos():
 @app.get("/articulos/{articulo_id}/comentarios", response_model=List[Dict[str, Any]])
 async def get_comentarios(articulo_id: str):
     comentarios_ref = db.collection("articulos").document(articulo_id).collection("comentarios").stream()
-    return [{"id": c.id, **c.to_dict()} for c in comentarios_ref]
+    comentarios = []
+    for c in comentarios_ref:
+        comentario_data = c.to_dict()
+        comentario_id = c.id
+        # Obtener respuestas de este comentario
+        respuestas_ref = db.collection("articulos").document(articulo_id).collection("comentarios").document(comentario_id).collection("respuestas").stream()
+        respuestas = [{"id": r.id, **r.to_dict()} for r in respuestas_ref]
+        comentario_data["id"] = comentario_id
+        comentario_data["respuestas"] = respuestas
+        comentarios.append(comentario_data)
+    return comentarios
 
 # Endpoint para simular compra (mock)
 @app.post("/comprar")
