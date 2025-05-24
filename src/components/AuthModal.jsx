@@ -29,12 +29,11 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
     setIsLoginMode(mode === 'login');
     const token = localStorage.getItem('token');
     setIsAuthenticated(!!token);
-    // Solo autocompletar si es login y hay datos recordados
+    // Solo autocompletar si es login y hay email recordado
     if (mode === 'login') {
       const savedEmail = localStorage.getItem('rememberedEmail') || '';
-      const savedPassword = localStorage.getItem('rememberedPassword') || '';
-      if (savedEmail && savedPassword) {
-        setFormData({ email: savedEmail, password: savedPassword, name: '' });
+      if (savedEmail) {
+        setFormData({ email: savedEmail, password: '', name: '' });
         setRememberMe(true);
       } else {
         setFormData({ email: '', password: '', name: '' });
@@ -116,14 +115,19 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
         throw new Error(data.detail || 'Error en la autenticación');
       }
 
-      // Guardar email y contraseña si el usuario marcó 'Recordarme' SOLO en login
+      // Guardar email si el usuario marcó 'Recordarme' SOLO en login
       if (isLoginMode && rememberMe) {
         localStorage.setItem('rememberedEmail', formData.email);
-        localStorage.setItem('rememberedPassword', formData.password);
       } else if (isLoginMode) {
         localStorage.removeItem('rememberedEmail');
         localStorage.removeItem('rememberedPassword');
       }
+
+      // Guardar expiración del token
+      const now = new Date();
+      const expiresInDays = rememberMe ? 15 : 1;
+      const expiresAt = new Date(now.getTime() + expiresInDays * 24 * 60 * 60 * 1000);
+      localStorage.setItem('tokenExpiresAt', expiresAt.toISOString());
 
       localStorage.setItem('token', data.idToken);
       localStorage.setItem('userEmail', formData.email);

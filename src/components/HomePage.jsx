@@ -15,6 +15,24 @@ const HomePage = () => {
   const [showContent, setShowContent] = useState(false);
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    const expiresAt = localStorage.getItem('tokenExpiresAt');
+    if (token && expiresAt) {
+      const now = new Date();
+      if (now > new Date(expiresAt)) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('tokenExpiresAt');
+        localStorage.removeItem('userEmail');
+        localStorage.removeItem('userName');
+        localStorage.removeItem('userPhoto');
+        localStorage.removeItem('userBio');
+        localStorage.removeItem('uid');
+        window.location.reload();
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     Promise.all([
       fetch("http://localhost:8000/productos").then(res => res.json()),
       fetch("http://localhost:8000/articulos").then(res => res.json())
