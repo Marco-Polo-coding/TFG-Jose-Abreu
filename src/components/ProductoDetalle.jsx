@@ -66,6 +66,10 @@ const ProductoDetalle = ({ id }) => {
   }
 
   const handleAddToCart = () => {
+    if (!producto || !producto.id) {
+      showNotification('Error: producto no válido', 'error');
+      return;
+    }
     addItem(producto);
     showNotification('Producto añadido al carrito', 'success');
   };

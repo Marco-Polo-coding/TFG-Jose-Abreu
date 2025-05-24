@@ -61,7 +61,7 @@ const Toast = ({ message, type = 'success', duration = 3000, onClose }) => {
   if (!isVisible) return null;
 
   return (
-    <div className={`fixed top-4 right-4 z-[1000] ${getBgColor()} rounded-lg shadow-lg p-4 max-w-sm transform transition-all duration-300 ease-in-out`}>
+    <div className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[1000] ${getBgColor()} rounded-lg shadow-lg p-4 max-w-sm transition-all duration-300 ease-in-out`}>
       <div className="flex items-center gap-3">
         {getIcon()}
         <p className={`${getTextColor()} font-medium`}>{message}</p>

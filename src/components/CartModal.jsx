@@ -1,5 +1,5 @@
 // src/components/CartModal.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaTimes, FaShoppingCart, FaTrash, FaMinus, FaPlus } from 'react-icons/fa';
 import useCartStore from '../store/cartStore';
 import Toast from './Toast';
@@ -9,6 +9,14 @@ const CartModal = ({ isOpen, onClose }) => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
+
+  useEffect(() => {
+    if (isOpen) {
+      setShowToast(false);
+      setToastMessage('');
+      setToastType('success');
+    }
+  }, [isOpen]);
 
   const showNotification = (message, type = 'success') => {
     setToastMessage(message);
@@ -68,7 +76,7 @@ const CartModal = ({ isOpen, onClose }) => {
                         className="w-16 h-16 object-cover rounded"
                       />
                       <div>
-                        <h4 className="font-medium">{item.nombre}</h4>
+                        <h4 className="font-medium">{item.nombre.length > 18 ? item.nombre.slice(0, 18) + '...' : item.nombre}</h4>
                         <p className="text-gray-500">${item.precio}</p>
                       </div>
                     </div>
@@ -123,12 +131,17 @@ const CartModal = ({ isOpen, onClose }) => {
           </div>
         </div>
       </div>
-      <Toast
-        show={showToast}
-        message={toastMessage}
-        type={toastType}
-        onClose={() => setShowToast(false)}
-      />
+      {showToast && toastMessage && (
+        <Toast
+          show={showToast}
+          message={toastMessage}
+          type={toastType}
+          onClose={() => {
+            setShowToast(false);
+            setToastMessage('');
+          }}
+        />
+      )}
     </div>
   );
 };

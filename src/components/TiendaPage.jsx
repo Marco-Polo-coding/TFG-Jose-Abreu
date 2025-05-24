@@ -5,6 +5,7 @@ import UserButton from './UserButton';
 import LoadingSpinner from './LoadingSpinner';
 import axios from 'axios';
 import Toast from './Toast';
+import useCartStore from '../store/cartStore';
 
 const TiendaPage = () => {
   const [productos, setProductos] = useState([]);
@@ -19,6 +20,8 @@ const TiendaPage = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
+
+  const addItem = useCartStore((state) => state.addItem);
 
   useEffect(() => {
     fetch("http://localhost:8000/productos")
@@ -278,7 +281,8 @@ const TiendaPage = () => {
                       </a>
                       <button
                         onClick={() => {
-                          // Lógica para añadir al carrito
+                          addItem(producto);
+                          showNotification('Producto añadido al carrito', 'success');
                         }}
                         className="bg-purple-100 text-purple-600 p-3 rounded-full hover:bg-purple-200 transition-all duration-300 hover:scale-110 shadow"
                         title="Añadir al carrito"
