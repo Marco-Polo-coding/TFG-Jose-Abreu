@@ -1,0 +1,45 @@
+---
+import Layout from '../layouts/Layout.astro';
+import CartButton from '../components/CartButton';
+import UserButton from '../components/UserButton';
+import { FaHome, FaShoppingCart, FaCreditCard } from 'react-icons/fa';
+import CheckoutComponent from '../components/CheckoutComponent';
+---
+
+<Layout>
+  <div class="min-h-screen bg-gray-50">
+    <div class="fixed top-4 right-4 z-50 flex items-center gap-8">
+      <CartButton client:load />
+      <UserButton client:load />
+    </div>
+    <section class="relative h-[30vh] bg-gradient-to-r from-purple-900 to-indigo-900 overflow-hidden">
+      <div class="absolute inset-0 bg-black opacity-50"></div>
+      <div class="relative container mx-auto px-4 h-full flex items-center">
+        <div class="text-white max-w-2xl">
+          <div class="flex items-center gap-4 mb-6">
+            <a href="/" class="flex items-center gap-2 text-white hover:text-purple-200 transition-colors">
+              <FaHome className="w-5 h-5" />
+              <span>Inicio</span>
+            </a>
+            <span class="text-white/50">/</span>
+            <a href="/tienda" class="flex items-center gap-2 text-white hover:text-purple-200 transition-colors">
+              <FaShoppingCart className="w-5 h-5" />
+              <span>Tienda</span>
+            </a>
+            <span class="text-white/50">/</span>
+            <span class="text-white/50">Checkout</span>
+          </div>
+          <h1 class="text-3xl md:text-5xl font-extrabold mb-2 flex items-center gap-2 drop-shadow-xl">
+            <FaCreditCard className="w-8 h-8" /> Checkout
+          </h1>
+          <p class="text-lg md:text-xl font-medium text-gray-200 drop-shadow">Revisa tu pedido y elige el método de pago</p>
+        </div>
+      </div>
+    </section>
+    <section class="py-16">
+      <div class="container mx-auto px-4">
+        <CheckoutComponent client:load />
+      </div>
+    </section>
+  </div>
+</Layout> 

@@ -3,12 +3,14 @@ import React, { useState, useEffect } from 'react';
 import { FaTimes, FaShoppingCart, FaTrash, FaMinus, FaPlus } from 'react-icons/fa';
 import useCartStore from '../store/cartStore';
 import Toast from './Toast';
+import LoadingSpinner from './LoadingSpinner';
 
 const CartModal = ({ isOpen, onClose }) => {
-  const { items, removeItem, updateQuantity } = useCartStore();
+  const { items, removeItem, updateQuantity, clearCart } = useCartStore();
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
+  const [loadingCheckout, setLoadingCheckout] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -113,18 +115,37 @@ const CartModal = ({ isOpen, onClose }) => {
             )}
 
             <div className="mt-6 flex justify-center space-x-3">
-              <button
-                onClick={onClose}
-                className="inline-flex justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-              >
-                Seguir comprando
-              </button>
+              {items.length > 0 ? (
+                <button
+                  onClick={() => {
+                    clearCart();
+                    showNotification('Carrito vaciado', 'success');
+                  }}
+                  className="bg-white border border-gray-300 text-gray-700 px-6 py-2 rounded-full font-medium hover:bg-gray-100 transition-all duration-300"
+                >
+                  Vaciar el carrito
+                </button>
+              ) : (
+                <button
+                  onClick={onClose}
+                  className="bg-white border-2 border-purple-400 text-gray-700 px-6 py-2 rounded-full font-medium hover:bg-purple-50 transition-all duration-300"
+                >
+                  Seguir comprando
+                </button>
+              )}
               {items.length > 0 && (
                 <button
-                  onClick={() => {/* Implementar checkout */}}
-                  className="inline-flex justify-center rounded-lg border border-transparent bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                  onClick={() => {
+                    setLoadingCheckout(true);
+                    setTimeout(() => {
+                      window.location.href = '/checkout';
+                    }, 1500);
+                  }}
+                  disabled={loadingCheckout}
+                  className={`bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-2 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 flex items-center justify-center gap-2 ${loadingCheckout ? 'opacity-60 cursor-not-allowed' : ''}`}
                 >
-                  Proceder al pago
+                  {loadingCheckout && <LoadingSpinner />}
+                  {loadingCheckout ? 'Redirigiendo...' : 'Proceder al pago'}
                 </button>
               )}
             </div>
