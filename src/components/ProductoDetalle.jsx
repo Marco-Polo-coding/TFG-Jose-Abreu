@@ -128,7 +128,9 @@ const ProductoDetalle = ({ id }) => {
               <span className="text-white/50">/</span>
               <span className="text-white/50">{producto.nombre}</span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-extrabold mb-2 drop-shadow-xl">{producto.nombre}</h1>
+            <h1 className="text-4xl md:text-6xl font-extrabold mb-2 drop-shadow-xl ">
+              {producto.nombre}
+            </h1>
           </div>
         </div>
       </section>
