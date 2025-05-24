@@ -23,6 +23,7 @@ router = APIRouter()
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+    foto: Optional[str] = None
 
 class UserRegister(BaseModel):
     email: EmailStr
@@ -132,7 +133,7 @@ async def login_user(user: UserLogin) -> Dict[str, str]:
             foto_url = ""
             if user_doc.exists:
                 user_data = user_doc.to_dict()
-                foto_url = user_data.get("foto", "")
+                foto_url = user_data.get("foto", "") or ""
             return {
                 "idToken": data["idToken"],
                 "refreshToken": data["refreshToken"],

@@ -5,6 +5,8 @@ import CartButton from './CartButton';
 import UserButton from './UserButton';
 import Toast from './Toast';
 import axios from 'axios';
+import useCartStore from '../store/cartStore';
+
 
 const ProductoDetalle = ({ id }) => {
   const [producto, setProducto] = useState(null);
@@ -56,9 +58,17 @@ const ProductoDetalle = ({ id }) => {
     }
   };
 
+  const addItem = useCartStore((state) => state.addItem);
+
+
   if (loading) {
     return <LoadingSpinner />;
   }
+
+  const handleAddToCart = () => {
+    addItem(producto);
+    showNotification('Producto añadido al carrito', 'success');
+  };
 
   if (!producto) {
     return (
@@ -176,9 +186,7 @@ const ProductoDetalle = ({ id }) => {
                   </div>
                   <div className="flex items-center gap-4">
                     <button 
-                      onClick={() => {
-                        // Lógica para añadir al carrito
-                      }}
+                      onClick={handleAddToCart}
                       className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-3 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105 flex items-center gap-2 font-semibold shadow-lg"
                     >
                       <FaShoppingCart className="w-5 h-5" />
