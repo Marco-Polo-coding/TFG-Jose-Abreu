@@ -8,6 +8,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 from cloudinary_config import *  # Importar la configuración
 import cloudinary.uploader
+from pydantic import BaseModel
 
 app = FastAPI(title="API de la Aplicación")
 
@@ -614,5 +615,46 @@ async def eliminar_producto_favorito(user_email: str, producto_id: str):
         return {"message": "Producto eliminado de favoritos correctamente"}
     except HTTPException as he:
         raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class MetodoPago(BaseModel):
+    tipo: str
+    datos: dict
+
+class Compra(BaseModel):
+    uid: str
+    productos: list
+    total: float
+    metodo_pago: dict
+    fecha: str
+
+@app.post("/usuarios/{uid}/metodo_pago")
+async def guardar_metodo_pago(uid: str, metodo: MetodoPago):
+    try:
+        db.collection("usuarios").document(uid).update({
+            "metodo_pago": metodo.dict()
+        })
+        return {"message": "Método de pago guardado correctamente"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/usuarios/{uid}/metodo_pago")
+async def obtener_metodo_pago(uid: str):
+    try:
+        doc = db.collection("usuarios").document(uid).get()
+        if doc.exists:
+            data = doc.to_dict()
+            return data.get("metodo_pago", None)
+        else:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/compras")
+async def guardar_compra(compra: Compra):
+    try:
+        db.collection("compras").add(compra.dict())
+        return {"message": "Compra guardada correctamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

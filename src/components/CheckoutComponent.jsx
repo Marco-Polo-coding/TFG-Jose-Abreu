@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import useCartStore from '../store/cartStore';
 import { FaCreditCard, FaPaypal, FaMoneyBillWave, FaCheckCircle } from 'react-icons/fa';
 import LoadingSpinner from './LoadingSpinner';
+import { getMetodoPago, saveMetodoPago, registrarCompra } from '../utils/api';
 
 const paymentMethods = [
   { value: 'tarjeta', label: 'Tarjeta', icon: <FaCreditCard className="inline mr-2" /> },
@@ -9,21 +10,102 @@ const paymentMethods = [
   { value: 'bizum', label: 'Bizum', icon: <FaMoneyBillWave className="inline mr-2" /> },
 ];
 
+const initialForms = {
+  tarjeta: { numero: '', titular: '', caducidad: '', cvc: '' },
+  paypal: { email: '' },
+  bizum: { telefono: '' },
+};
+
+function validateForm(tipo, datos) {
+  if (tipo === 'tarjeta') {
+    return datos.numero && datos.titular && datos.caducidad && datos.cvc;
+  }
+  if (tipo === 'paypal') {
+    return datos.email && /.+@.+\..+/.test(datos.email);
+  }
+  if (tipo === 'bizum') {
+    return datos.telefono && /^\d{9}$/.test(datos.telefono);
+  }
+  return false;
+}
+
 function CheckoutComponent() {
   const { items, clearCart } = useCartStore();
   const [selectedMethod, setSelectedMethod] = useState('tarjeta');
+  const [form, setForm] = useState(initialForms['tarjeta']);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [loadingSave, setLoadingSave] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
+  const uid = typeof window !== 'undefined' ? localStorage.getItem('uid') : null;
+  const [metodoGuardado, setMetodoGuardado] = useState(null);
 
   const total = items.reduce((sum, item) => sum + (item.precio * item.quantity), 0);
 
-  const handlePay = () => {
+  // Recuperar método de pago guardado
+  useEffect(() => {
+    if (uid) {
+      getMetodoPago(uid).then(data => {
+        if (data && data.tipo && data.datos) {
+          setSelectedMethod(data.tipo);
+          setForm({ ...initialForms[data.tipo], ...data.datos });
+          setMetodoGuardado(data);
+        }
+      });
+    }
+  }, [uid]);
+
+  // Cambiar formulario al cambiar método
+  useEffect(() => {
+    if (metodoGuardado && metodoGuardado.tipo === selectedMethod) {
+      setForm({ ...initialForms[selectedMethod], ...metodoGuardado.datos });
+    } else {
+      setForm(initialForms[selectedMethod]);
+    }
+    setSaved(false);
+    setError('');
+  }, [selectedMethod, metodoGuardado]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+    setSaved(false);
+    setError('');
+  };
+
+  const handleSaveMetodoPago = async () => {
+    if (!uid) return;
+    setLoadingSave(true);
+    setError('');
+    try {
+      await saveMetodoPago(uid, { tipo: selectedMethod, datos: form });
+      setSaved(true);
+    } catch (err) {
+      setError('Error al guardar el método de pago');
+    }
+    setLoadingSave(false);
+  };
+
+  const handlePay = async () => {
+    if (!uid) return;
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setSuccess(true);
+    setError('');
+    try {
+      await saveMetodoPago(uid, { tipo: selectedMethod, datos: form });
+      await registrarCompra({
+        uid,
+        productos: items,
+        total,
+        metodo_pago: { tipo: selectedMethod, datos: form },
+        fecha: new Date().toISOString(),
+      });
       clearCart();
-    }, 2000);
+      setSuccess(true);
+    } catch (err) {
+      setError('Error al procesar el pago');
+    }
+    setLoading(false);
   };
 
   if (loading) {
@@ -88,14 +170,42 @@ function CheckoutComponent() {
           </label>
         ))}
       </div>
-      <button
-        onClick={handlePay}
-        className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-full font-semibold text-lg shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-300"
-      >
-        Pagar
-      </button>
+      {/* Formulario dinámico */}
+      <div className="mb-8">
+        {selectedMethod === 'tarjeta' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input type="text" name="numero" value={form.numero} onChange={handleInputChange} placeholder="Número de tarjeta" className="border rounded-lg px-4 py-2" maxLength={19} />
+            <input type="text" name="titular" value={form.titular} onChange={handleInputChange} placeholder="Titular" className="border rounded-lg px-4 py-2" />
+            <input type="text" name="caducidad" value={form.caducidad} onChange={handleInputChange} placeholder="MM/AA" className="border rounded-lg px-4 py-2" maxLength={5} />
+            <input type="text" name="cvc" value={form.cvc} onChange={handleInputChange} placeholder="CVC" className="border rounded-lg px-4 py-2" maxLength={4} />
+          </div>
+        )}
+        {selectedMethod === 'paypal' && (
+          <input type="email" name="email" value={form.email} onChange={handleInputChange} placeholder="Email de PayPal" className="border rounded-lg px-4 py-2 w-full" />
+        )}
+        {selectedMethod === 'bizum' && (
+          <input type="text" name="telefono" value={form.telefono} onChange={handleInputChange} placeholder="Teléfono Bizum" className="border rounded-lg px-4 py-2 w-full" maxLength={9} />
+        )}
+      </div>
+      {error && <p className="text-red-500 mb-4">{error}</p>}
+      <div className="flex gap-4 mb-4">
+        <button
+          onClick={handleSaveMetodoPago}
+          disabled={loadingSave || !validateForm(selectedMethod, form)}
+          className="bg-white border-2 border-purple-400 text-gray-700 px-6 py-2 rounded-full font-medium hover:bg-purple-50 transition-all duration-300"
+        >
+          {loadingSave ? 'Guardando...' : saved ? 'Método guardado' : 'Guardar método de pago'}
+        </button>
+        <button
+          onClick={handlePay}
+          disabled={!validateForm(selectedMethod, form) || loading}
+          className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-full font-semibold text-lg shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-300"
+        >
+          Pagar
+        </button>
+      </div>
     </div>
   );
 }
 
-export default CheckoutComponent; 
+export default CheckoutComponent;
