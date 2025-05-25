@@ -658,3 +658,14 @@ async def guardar_compra(compra: Compra):
         return {"message": "Compra guardada correctamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/compras")
+async def obtener_compras(uid: str):
+    try:
+        compras_ref = db.collection("compras").where("uid", "==", uid)
+        compras = [{"id": compra.id, **compra.to_dict()} for compra in compras_ref.stream()]
+        # Ordenar por fecha (asumiendo string ISO)
+        compras.sort(key=lambda x: x.get("fecha", ""), reverse=True)
+        return compras
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

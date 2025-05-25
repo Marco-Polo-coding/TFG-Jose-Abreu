@@ -1,8 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import Toast from './Toast';
 import { validateEmail, validateName, validatePassword } from '../utils/validation';
+import { FaCreditCard, FaPaypal, FaMoneyBillWave } from 'react-icons/fa';
+import { getMetodoPago, saveMetodoPago } from '../utils/api';
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+
+const paymentMethods = [
+  { value: 'tarjeta', label: 'Tarjeta', icon: <FaCreditCard className="inline mr-2" /> },
+  { value: 'paypal', label: 'PayPal', icon: <FaPaypal className="inline mr-2" /> },
+  { value: 'bizum', label: 'Bizum', icon: <FaMoneyBillWave className="inline mr-2" /> },
+];
+
+const initialForms = {
+  tarjeta: { numero: '', titular: '', caducidad: '', cvc: '' },
+  paypal: { email: '' },
+  bizum: { telefono: '' },
+};
+
+function validateForm(tipo, datos) {
+  if (tipo === 'tarjeta') {
+    return datos.numero && datos.titular && datos.caducidad && datos.cvc;
+  }
+  if (tipo === 'paypal') {
+    return datos.email && /.+@.+\..+/.test(datos.email);
+  }
+  if (tipo === 'bizum') {
+    return datos.telefono && /^\d{9}$/.test(datos.telefono);
+  }
+  return false;
+}
 
 const EditProfileForm = () => {
   const [form, setForm] = useState({
@@ -23,6 +50,11 @@ const EditProfileForm = () => {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState('tarjeta');
+  const [paymentForm, setPaymentForm] = useState(initialForms['tarjeta']);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentSaved, setPaymentSaved] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
 
   useEffect(() => {
     // Cargar datos actuales del usuario
@@ -31,6 +63,17 @@ const EditProfileForm = () => {
     const foto = localStorage.getItem('userPhoto') || '';
     const biografia = localStorage.getItem('userBio') || '';
     setForm(f => ({ ...f, nombre, email, fotoPreview: foto, biografia }));
+
+    // Cargar método de pago guardado
+    const uid = localStorage.getItem('uid');
+    if (uid) {
+      getMetodoPago(uid).then(data => {
+        if (data && data.tipo && data.datos) {
+          setSelectedMethod(data.tipo);
+          setPaymentForm({ ...initialForms[data.tipo], ...data.datos });
+        }
+      });
+    }
   }, []);
 
   const validate = () => {
@@ -190,6 +233,35 @@ const EditProfileForm = () => {
     }
   };
 
+  const handlePaymentMethodChange = (e) => {
+    const value = e.target.value;
+    setSelectedMethod(value);
+    setPaymentForm(initialForms[value]);
+    setPaymentSaved(false);
+    setPaymentError('');
+  };
+
+  const handlePaymentInputChange = (e) => {
+    const { name, value } = e.target;
+    setPaymentForm(prev => ({ ...prev, [name]: value }));
+    setPaymentSaved(false);
+    setPaymentError('');
+  };
+
+  const handleSavePaymentMethod = async () => {
+    const uid = localStorage.getItem('uid');
+    if (!uid) return;
+    setPaymentLoading(true);
+    setPaymentError('');
+    try {
+      await saveMetodoPago(uid, { tipo: selectedMethod, datos: paymentForm });
+      setPaymentSaved(true);
+    } catch (err) {
+      setPaymentError('Error al guardar el método de pago');
+    }
+    setPaymentLoading(false);
+  };
+
   return (
     <form className="bg-white rounded-2xl shadow-xl p-8 space-y-6 border border-gray-100" onSubmit={handleSubmit}>
       <div>
@@ -199,7 +271,7 @@ const EditProfileForm = () => {
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-        <input type="email" name="email" value={form.email} readOnly className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Tu email" required />
+        <input type="email" name="email" value={form.email} onChange={handleChange} className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Tu email" required />
         {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
       </div>
       <div>
@@ -315,6 +387,53 @@ const EditProfileForm = () => {
             {passwordLoading ? 'Cambiando...' : 'Cambiar contraseña'}
           </button>
         </form>
+      </div>
+      <hr className="my-8" />
+      <div className="space-y-4">
+        <h3 className="text-xl font-bold text-gray-800 mb-2">Método de pago</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Selecciona un método de pago</label>
+            <div className="flex gap-4 mb-4">
+              {paymentMethods.map(method => (
+                <label key={method.value} className={`flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg border transition-all duration-200 ${selectedMethod === method.value ? 'border-purple-600 bg-purple-50' : 'border-gray-300 bg-white hover:bg-gray-100'}`}>
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value={method.value}
+                    checked={selectedMethod === method.value}
+                    onChange={handlePaymentMethodChange}
+                    className="form-radio text-purple-600"
+                  />
+                  {method.icon}
+                  <span>{method.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div>
+            {selectedMethod === 'tarjeta' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" name="numero" value={paymentForm.numero} onChange={handlePaymentInputChange} placeholder="Número de tarjeta" className="border rounded-lg px-4 py-2" maxLength={19} />
+                <input type="text" name="titular" value={paymentForm.titular} onChange={handlePaymentInputChange} placeholder="Titular" className="border rounded-lg px-4 py-2" />
+                <input type="text" name="caducidad" value={paymentForm.caducidad} onChange={handlePaymentInputChange} placeholder="MM/AA" className="border rounded-lg px-4 py-2" maxLength={5} />
+                <input type="text" name="cvc" value={paymentForm.cvc} onChange={handlePaymentInputChange} placeholder="CVC" className="border rounded-lg px-4 py-2" maxLength={4} />
+              </div>
+            )}
+            {selectedMethod === 'paypal' && (
+              <input type="email" name="email" value={paymentForm.email} onChange={handlePaymentInputChange} placeholder="Email de PayPal" className="border rounded-lg px-4 py-2 w-full" />
+            )}
+            {selectedMethod === 'bizum' && (
+              <input type="text" name="telefono" value={paymentForm.telefono} onChange={handlePaymentInputChange} placeholder="Teléfono Bizum" className="border rounded-lg px-4 py-2 w-full" maxLength={9} />
+            )}
+          </div>
+          {paymentError && <p className="text-red-500 mb-4">{paymentError}</p>}
+          <div>
+            <button type="button" onClick={handleSavePaymentMethod} disabled={paymentLoading || !validateForm(selectedMethod, paymentForm)} className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-full font-semibold text-lg shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-300">
+              {paymentLoading ? 'Guardando...' : paymentSaved ? 'Método guardado' : 'Guardar método de pago'}
+            </button>
+          </div>
+        </div>
       </div>
       <hr className="my-8" />
       <div className="space-y-4">

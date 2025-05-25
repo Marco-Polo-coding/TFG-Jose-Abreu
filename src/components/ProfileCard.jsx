@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
-import { FaBook, FaShoppingBag, FaChartLine, FaPlus, FaArrowRight } from 'react-icons/fa';
+import { FaBook, FaShoppingBag, FaChartLine, FaPlus, FaArrowRight, FaHistory } from 'react-icons/fa';
 import axios from 'axios';
 import LoadingSpinner from './LoadingSpinner';
 import useLoadingState from '../hooks/useLoadingState';
+import CompraDetalleModal from './CompraDetalleModal';
 
 function getInitials(email) {
   if (!email) return '';
@@ -35,6 +36,11 @@ const ProfileCard = () => {
   const [errorVentas, setErrorVentas] = React.useState(null);
   const [loading, setLoading] = useLoadingState();
   const [userBio, setUserBio] = React.useState('');
+  const [compras, setCompras] = React.useState([]);
+  const [loadingCompras, setLoadingCompras] = React.useState(true);
+  const [errorCompras, setErrorCompras] = React.useState(null);
+  const [selectedCompra, setSelectedCompra] = React.useState(null);
+  const [modalOpen, setModalOpen] = React.useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -119,6 +125,28 @@ const ProfileCard = () => {
     fetchVentas();
   }, [userEmail]);
 
+  React.useEffect(() => {
+    const fetchCompras = async () => {
+      try {
+        setLoadingCompras(true);
+        const uid = localStorage.getItem('uid');
+        if (!uid) {
+          setErrorCompras('No se ha encontrado el ID del usuario');
+          setLoadingCompras(false);
+          return;
+        }
+        const response = await axios.get(`http://localhost:8000/compras?uid=${uid}`);
+        setCompras(response.data);
+        setErrorCompras(null);
+      } catch (err) {
+        setErrorCompras('Error al cargar el historial de compras.');
+      } finally {
+        setLoadingCompras(false);
+      }
+    };
+    fetchCompras();
+  }, []);
+
   // Utilidad para saber si la foto es válida
   const isValidPhoto = userPhoto && !userPhoto.includes('googleusercontent.com') && userPhoto !== '';
 
@@ -201,15 +229,15 @@ const ProfileCard = () => {
                 ))}
               </div>
               {articles.length > 3 && (
-                <a href="/my_articles" className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow hover:scale-105 hover:from-purple-700 hover:to-indigo-700 transition-all duration-300">
-                  Ver todos <FaArrowRight className="w-4 h-4" />
+                <a href="/my_articles" className="mt-4 inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-semibold">
+                  Ver todos mis artículos <FaArrowRight className="w-4 h-4" />
                 </a>
               )}
             </div>
           )}
         </div>
         {/* Ventas en curso */}
-        <div className="bg-gradient-to-br from-purple-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 border border-white/40 dark:border-gray-700 shadow-lg flex flex-col items-start">
+        <div className="bg-gradient-to-br from-purple-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 border border-white/40 dark:border-gray-700 shadow-lg flex flex-col items-start w-full">
           <div className="flex items-center gap-4 mb-4">
             <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 rounded-full shadow-lg text-2xl">
               <FaShoppingBag />
@@ -226,8 +254,8 @@ const ProfileCard = () => {
           ) : ventas.length === 0 ? (
             <>
               <p className="text-gray-500 text-base mb-4">No tienes ventas en curso todavía</p>
-              <a href="/upload_product" className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow hover:scale-105 hover:from-purple-700 hover:to-indigo-700 transition-all duration-300">
-                <FaPlus className="w-4 h-4" /> Subir producto
+              <a href="/post_product" className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow hover:scale-105 hover:from-purple-700 hover:to-indigo-700 transition-all duration-300">
+                <FaPlus className="w-4 h-4" /> Publicar producto
               </a>
             </>
           ) : (
@@ -235,23 +263,71 @@ const ProfileCard = () => {
               <div className="grid grid-cols-1 gap-4 w-full">
                 {ventas.slice(0, 3).map(producto => (
                   <div key={producto.id} className="flex items-center gap-4 bg-white/80 rounded-xl shadow p-4 border border-white/60 hover:shadow-lg transition-all">
-                    <img src={producto.imagen || 'https://cataas.com/cat'} alt={producto.nombre} className="w-16 h-16 object-cover rounded-lg border border-purple-100" />
+                    <img src={producto.imagen && producto.imagen !== '/default-product.jpg' ? producto.imagen : 'https://cataas.com/cat'} alt={producto.nombre} className="w-16 h-16 object-cover rounded-lg border border-purple-100" />
                     <div className="flex-1">
                       <h4 className="text-lg font-semibold text-gray-900 mb-1 truncate max-w-[180px]">{producto.nombre}</h4>
-                      <p className="text-xs text-gray-500 mb-1">Precio: {producto.precio}€</p>
+                      <p className="text-xs text-gray-500 mb-1">{new Date(producto.fecha_publicacion).toLocaleDateString()}</p>
                     </div>
                     <a href={`/producto/${producto.id}`} className="text-purple-600 hover:text-indigo-700 font-bold text-sm">Ver</a>
                   </div>
                 ))}
               </div>
               {ventas.length > 3 && (
-                <a href="/my_products" className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow hover:scale-105 hover:from-purple-700 hover:to-indigo-700 transition-all duration-300">
-                  Ver todos <FaArrowRight className="w-4 h-4" />
+                <a href="/my_products" className="mt-4 inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-semibold">
+                  Ver todos mis productos <FaArrowRight className="w-4 h-4" />
                 </a>
               )}
             </div>
           )}
         </div>
+      </div>
+
+      {/* Historial de compras */}
+      <div className="bg-gradient-to-br from-purple-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 border border-white/40 dark:border-gray-700 shadow-lg flex flex-col items-start w-full mb-8">
+        <div className="flex items-center gap-4 mb-4">
+          <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 rounded-full shadow-lg text-2xl">
+            <FaHistory />
+          </span>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Historial de compras</h3>
+        </div>
+        {loadingCompras ? (
+          <div className="flex justify-center items-center w-full py-8">
+            <span className="animate-spin text-2xl text-purple-500 mr-2">⏳</span>
+            <span className="text-gray-500">Cargando historial de compras...</span>
+          </div>
+        ) : errorCompras ? (
+          <div className="text-red-600 py-4">{errorCompras}</div>
+        ) : compras.length === 0 ? (
+          <p className="text-gray-500 text-base mb-4">No has realizado ninguna compra todavía</p>
+        ) : (
+          <div className="w-full">
+            <div className="grid grid-cols-1 gap-4 w-full">
+              {compras.map(compra => {
+                const fechaBonita = compra.fecha ? new Date(compra.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+                let nombreProducto = compra.productos && compra.productos.length > 0 ? compra.productos[0].nombre : '';
+                // Truncar el nombre si es muy largo
+                const MAX_LEN = 25;
+                if (nombreProducto && nombreProducto.length > MAX_LEN) {
+                  nombreProducto = nombreProducto.slice(0, MAX_LEN) + '...';
+                }
+                return (
+                  <button
+                    key={compra.id}
+                    className="w-full text-left bg-white/90 hover:bg-purple-100 transition rounded-xl p-5 border border-white/60 shadow flex flex-col gap-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    onClick={() => { setSelectedCompra(compra); setModalOpen(true); }}
+                  >
+                    <div className="font-semibold text-lg text-gray-800 truncate">
+                      Compra del {fechaBonita}{nombreProducto ? ` - ${nombreProducto}` : ''}
+                    </div>
+                    <div className="text-sm text-gray-500">{fechaBonita}</div>
+                    <div className="text-base text-gray-700 font-medium">Total: {compra.total}€</div>
+                  </button>
+                );
+              })}
+            </div>
+            <CompraDetalleModal isOpen={modalOpen} onClose={() => setModalOpen(false)} compra={selectedCompra} />
+          </div>
+        )}
       </div>
 
       {/* Estadísticas */}
