@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Form, File, UploadFile
 from firebase_config import db
@@ -629,23 +629,44 @@ class Compra(BaseModel):
     metodo_pago: dict
     fecha: str
 
-@app.post("/usuarios/{uid}/metodo_pago")
-async def guardar_metodo_pago(uid: str, metodo: MetodoPago):
+@app.post("/usuarios/{uid}/metodos_pago/{tipo}")
+async def guardar_metodo_pago(uid: str, tipo: str, datos: dict = Body(...)):
     try:
-        db.collection("usuarios").document(uid).update({
-            "metodo_pago": metodo.dict()
-        })
-        return {"message": "Método de pago guardado correctamente"}
+        user_ref = db.collection("usuarios").document(uid)
+        user_doc = user_ref.get()
+        if not user_doc.exists:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        metodos = user_doc.to_dict().get("metodos_pago", {})
+        metodos[tipo] = datos
+        user_ref.update({"metodos_pago": metodos})
+        return {"message": f"Método de pago '{tipo}' guardado correctamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/usuarios/{uid}/metodo_pago")
-async def obtener_metodo_pago(uid: str):
+@app.delete("/usuarios/{uid}/metodos_pago/{tipo}")
+async def eliminar_metodo_pago(uid: str, tipo: str):
+    try:
+        user_ref = db.collection("usuarios").document(uid)
+        user_doc = user_ref.get()
+        if not user_doc.exists:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        metodos = user_doc.to_dict().get("metodos_pago", {})
+        if tipo in metodos:
+            del metodos[tipo]
+            user_ref.update({"metodos_pago": metodos})
+            return {"message": f"Método de pago '{tipo}' eliminado correctamente"}
+        else:
+            raise HTTPException(status_code=404, detail=f"Método de pago '{tipo}' no encontrado")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/usuarios/{uid}/metodos_pago")
+async def obtener_metodos_pago(uid: str):
     try:
         doc = db.collection("usuarios").document(uid).get()
         if doc.exists:
             data = doc.to_dict()
-            return data.get("metodo_pago", None)
+            return data.get("metodos_pago", {})
         else:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
     except Exception as e:

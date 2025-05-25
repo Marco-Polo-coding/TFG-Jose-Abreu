@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import useCartStore from '../store/cartStore';
 import { FaCreditCard, FaPaypal, FaMoneyBillWave, FaCheckCircle } from 'react-icons/fa';
 import LoadingSpinner from './LoadingSpinner';
-import { getMetodoPago, saveMetodoPago, registrarCompra } from '../utils/api';
+import { getMetodosPago, saveMetodoPago, deleteMetodoPago, registrarCompra } from '../utils/api';
 
 const paymentMethods = [
   { value: 'tarjeta', label: 'Tarjeta', icon: <FaCreditCard className="inline mr-2" /> },
@@ -39,33 +39,32 @@ function CheckoutComponent() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const uid = typeof window !== 'undefined' ? localStorage.getItem('uid') : null;
-  const [metodoGuardado, setMetodoGuardado] = useState(null);
+  const [metodosGuardados, setMetodosGuardados] = useState({});
 
   const total = items.reduce((sum, item) => sum + (item.precio * item.quantity), 0);
 
-  // Recuperar método de pago guardado
   useEffect(() => {
     if (uid) {
-      getMetodoPago(uid).then(data => {
-        if (data && data.tipo && data.datos) {
-          setSelectedMethod(data.tipo);
-          setForm({ ...initialForms[data.tipo], ...data.datos });
-          setMetodoGuardado(data);
+      getMetodosPago(uid).then(data => {
+        setMetodosGuardados(data || {});
+        const tipos = Object.keys(data || {});
+        if (tipos.length > 0) {
+          setSelectedMethod(tipos[0]);
+          setForm({ ...initialForms[tipos[0]], ...data[tipos[0]] });
         }
       });
     }
   }, [uid]);
 
-  // Cambiar formulario al cambiar método
   useEffect(() => {
-    if (metodoGuardado && metodoGuardado.tipo === selectedMethod) {
-      setForm({ ...initialForms[selectedMethod], ...metodoGuardado.datos });
+    if (metodosGuardados[selectedMethod]) {
+      setForm({ ...initialForms[selectedMethod], ...metodosGuardados[selectedMethod] });
     } else {
       setForm(initialForms[selectedMethod]);
     }
     setSaved(false);
     setError('');
-  }, [selectedMethod, metodoGuardado]);
+  }, [selectedMethod, metodosGuardados]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -79,10 +78,32 @@ function CheckoutComponent() {
     setLoadingSave(true);
     setError('');
     try {
-      await saveMetodoPago(uid, { tipo: selectedMethod, datos: form });
+      await saveMetodoPago(uid, selectedMethod, form);
+      setMetodosGuardados(prev => ({ ...prev, [selectedMethod]: form }));
       setSaved(true);
     } catch (err) {
       setError('Error al guardar el método de pago');
+    }
+    setLoadingSave(false);
+  };
+
+  const handleDeleteMetodoPago = async (tipo) => {
+    if (!uid) return;
+    setLoadingSave(true);
+    setError('');
+    try {
+      await deleteMetodoPago(uid, tipo);
+      setMetodosGuardados(prev => {
+        const nuevo = { ...prev };
+        delete nuevo[tipo];
+        return nuevo;
+      });
+      if (selectedMethod === tipo) {
+        setSelectedMethod('tarjeta');
+        setForm(initialForms['tarjeta']);
+      }
+    } catch (err) {
+      setError('Error al eliminar el método de pago');
     }
     setLoadingSave(false);
   };
@@ -92,7 +113,7 @@ function CheckoutComponent() {
     setLoading(true);
     setError('');
     try {
-      await saveMetodoPago(uid, { tipo: selectedMethod, datos: form });
+      await saveMetodoPago(uid, selectedMethod, form);
       await registrarCompra({
         uid,
         productos: items,
@@ -133,7 +154,7 @@ function CheckoutComponent() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-8">
+    <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl p-8">
       <h2 className="text-2xl font-bold mb-6">Resumen de tu pedido</h2>
       <ul className="divide-y divide-gray-200 mb-6">
         {items.map(item => (
@@ -167,7 +188,37 @@ function CheckoutComponent() {
             />
             {method.icon}
             <span>{method.label}</span>
+            {metodosGuardados[method.value] && (
+              <button
+                type="button"
+                title="Eliminar método"
+                className="ml-2 text-red-500 hover:text-red-700 text-xs px-2 py-1 rounded"
+                onClick={e => { e.stopPropagation(); handleDeleteMetodoPago(method.value); }}
+                disabled={loadingSave}
+              >
+                Eliminar
+              </button>
+            )}
           </label>
+        ))}
+      </div>
+      <div className="flex flex-col gap-2 mt-2 mb-4">
+        {Object.entries(metodosGuardados).length > 0 && (
+          <div className="text-sm text-gray-600 font-semibold mb-1">Métodos guardados:</div>
+        )}
+        {Object.entries(metodosGuardados).map(([tipo, datos]) => (
+          <div key={tipo} className="flex items-center gap-2 text-gray-700 bg-purple-50 rounded px-3 py-2 text-sm">
+            <span className="capitalize font-bold">{tipo}</span>
+            <span className="text-gray-500">{tipo === 'tarjeta' && datos.numero ? `•••• ${datos.numero.slice(-4)}` : tipo === 'paypal' && datos.email ? datos.email : tipo === 'bizum' && datos.telefono ? datos.telefono : ''}</span>
+            <button
+              type="button"
+              className="ml-auto text-red-500 hover:text-red-700 text-xs px-2 py-1 rounded"
+              onClick={() => handleDeleteMetodoPago(tipo)}
+              disabled={loadingSave}
+            >
+              Eliminar
+            </button>
+          </div>
         ))}
       </div>
       {/* Formulario dinámico */}

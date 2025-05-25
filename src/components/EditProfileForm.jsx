@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Toast from './Toast';
 import { validateEmail, validateName, validatePassword } from '../utils/validation';
 import { FaCreditCard, FaPaypal, FaMoneyBillWave } from 'react-icons/fa';
-import { getMetodoPago, saveMetodoPago } from '../utils/api';
+import { getMetodosPago, saveMetodoPago, deleteMetodoPago } from '../utils/api';
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -55,6 +55,7 @@ const EditProfileForm = () => {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentSaved, setPaymentSaved] = useState(false);
   const [paymentError, setPaymentError] = useState('');
+  const [metodosGuardados, setMetodosGuardados] = useState({});
 
   useEffect(() => {
     // Cargar datos actuales del usuario
@@ -64,13 +65,16 @@ const EditProfileForm = () => {
     const biografia = localStorage.getItem('userBio') || '';
     setForm(f => ({ ...f, nombre, email, fotoPreview: foto, biografia }));
 
-    // Cargar método de pago guardado
+    // Cargar métodos de pago guardados
     const uid = localStorage.getItem('uid');
     if (uid) {
-      getMetodoPago(uid).then(data => {
-        if (data && data.tipo && data.datos) {
-          setSelectedMethod(data.tipo);
-          setPaymentForm({ ...initialForms[data.tipo], ...data.datos });
+      getMetodosPago(uid).then(data => {
+        setMetodosGuardados(data || {});
+        // Si hay alguno guardado, selecciona el primero
+        const tipos = Object.keys(data || {});
+        if (tipos.length > 0) {
+          setSelectedMethod(tipos[0]);
+          setPaymentForm({ ...initialForms[tipos[0]], ...data[tipos[0]] });
         }
       });
     }
@@ -236,7 +240,7 @@ const EditProfileForm = () => {
   const handlePaymentMethodChange = (e) => {
     const value = e.target.value;
     setSelectedMethod(value);
-    setPaymentForm(initialForms[value]);
+    setPaymentForm(metodosGuardados[value] ? { ...initialForms[value], ...metodosGuardados[value] } : initialForms[value]);
     setPaymentSaved(false);
     setPaymentError('');
   };
@@ -254,10 +258,32 @@ const EditProfileForm = () => {
     setPaymentLoading(true);
     setPaymentError('');
     try {
-      await saveMetodoPago(uid, { tipo: selectedMethod, datos: paymentForm });
+      await saveMetodoPago(uid, selectedMethod, paymentForm);
+      setMetodosGuardados(prev => ({ ...prev, [selectedMethod]: paymentForm }));
       setPaymentSaved(true);
     } catch (err) {
       setPaymentError('Error al guardar el método de pago');
+    }
+    setPaymentLoading(false);
+  };
+
+  const handleDeletePaymentMethod = async (tipo) => {
+    const uid = localStorage.getItem('uid');
+    if (!uid) return;
+    setPaymentLoading(true);
+    try {
+      await deleteMetodoPago(uid, tipo);
+      setMetodosGuardados(prev => {
+        const nuevo = { ...prev };
+        delete nuevo[tipo];
+        return nuevo;
+      });
+      if (selectedMethod === tipo) {
+        setSelectedMethod('tarjeta');
+        setPaymentForm(initialForms['tarjeta']);
+      }
+    } catch (err) {
+      setPaymentError('Error al eliminar el método de pago');
     }
     setPaymentLoading(false);
   };
@@ -407,6 +433,17 @@ const EditProfileForm = () => {
                   />
                   {method.icon}
                   <span>{method.label}</span>
+                  {metodosGuardados[method.value] && (
+                    <button
+                      type="button"
+                      title="Eliminar método"
+                      className="ml-2 text-red-500 hover:text-red-700 text-xs px-2 py-1 rounded"
+                      onClick={e => { e.stopPropagation(); handleDeletePaymentMethod(method.value); }}
+                      disabled={paymentLoading}
+                    >
+                      Eliminar
+                    </button>
+                  )}
                 </label>
               ))}
             </div>
@@ -430,8 +467,27 @@ const EditProfileForm = () => {
           {paymentError && <p className="text-red-500 mb-4">{paymentError}</p>}
           <div>
             <button type="button" onClick={handleSavePaymentMethod} disabled={paymentLoading || !validateForm(selectedMethod, paymentForm)} className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-full font-semibold text-lg shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-300">
-              {paymentLoading ? 'Guardando...' : paymentSaved ? 'Método guardado' : 'Guardar método de pago'}
+              {paymentLoading ? 'Guardando...' : paymentSaved ? 'Método guardado' : metodosGuardados[selectedMethod] ? 'Actualizar método de pago' : 'Guardar método de pago'}
             </button>
+          </div>
+          <div className="flex flex-col gap-2 mt-2">
+            {Object.entries(metodosGuardados).length > 0 && (
+              <div className="text-sm text-gray-600 font-semibold mb-1">Métodos guardados:</div>
+            )}
+            {Object.entries(metodosGuardados).map(([tipo, datos]) => (
+              <div key={tipo} className="flex items-center gap-2 text-gray-700 bg-purple-50 rounded px-3 py-2 text-sm">
+                <span className="capitalize font-bold">{tipo}</span>
+                <span className="text-gray-500">{tipo === 'tarjeta' && datos.numero ? `•••• ${datos.numero.slice(-4)}` : tipo === 'paypal' && datos.email ? datos.email : tipo === 'bizum' && datos.telefono ? datos.telefono : ''}</span>
+                <button
+                  type="button"
+                  className="ml-auto text-red-500 hover:text-red-700 text-xs px-2 py-1 rounded"
+                  onClick={() => handleDeletePaymentMethod(tipo)}
+                  disabled={paymentLoading}
+                >
+                  Eliminar
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       </div>

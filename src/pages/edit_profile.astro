@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import CartButton from '../components/CartButton';
 import UserButton from '../components/UserButton';
 import EditProfileForm from '../components/EditProfileForm.jsx';
+import { FaHome } from 'react-icons/fa';
 ---
 <Layout>
   <div class="min-h-screen bg-gray-50">
@@ -16,7 +17,7 @@ import EditProfileForm from '../components/EditProfileForm.jsx';
         <div class="text-white max-w-2xl">
           <div class="flex items-center gap-4 mb-6">
             <a href="/" class="flex items-center gap-2 text-white hover:text-purple-200 transition-colors">
-              <span class="material-icons">home</span>
+              <FaHome className="w-5 h-5" />
               <span>Inicio</span>
             </a>
             <span class="text-white/50">/</span>
