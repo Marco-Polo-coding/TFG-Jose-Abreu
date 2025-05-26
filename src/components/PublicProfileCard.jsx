@@ -1,0 +1,212 @@
+import React, { useEffect, useState } from 'react';
+import { FaBook, FaShoppingBag, FaHome } from 'react-icons/fa';
+import axios from 'axios';
+import LoadingSpinner from './LoadingSpinner';
+
+function getInitials(email) {
+  if (!email) return '';
+  return email.charAt(0).toUpperCase();
+}
+
+function getRandomColor(email) {
+  const colors = [
+    'from-purple-500 to-indigo-500',
+    'from-pink-500 to-purple-500',
+    'from-blue-500 to-teal-500',
+    'from-green-500 to-teal-500',
+    'from-yellow-500 to-orange-500',
+    'from-red-500 to-pink-500',
+  ];
+  const index = email.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
+  return colors[index];
+}
+
+const PublicProfileCard = ({ userEmail }) => {
+  const [userData, setUserData] = useState(null);
+  const [articles, setArticles] = useState([]);
+  const [loadingArticles, setLoadingArticles] = useState(true);
+  const [errorArticles, setErrorArticles] = useState(null);
+  const [ventas, setVentas] = useState([]);
+  const [loadingVentas, setLoadingVentas] = useState(true);
+  const [errorVentas, setErrorVentas] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const encodedEmail = encodeURIComponent(userEmail);
+        const response = await axios.get(`http://localhost:8000/usuarios/${encodedEmail}`);
+        setUserData(response.data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [userEmail]);
+
+  useEffect(() => {
+    const fetchArticles = async () => {
+      try {
+        setLoadingArticles(true);
+        const response = await axios.get('http://localhost:8000/articulos');
+        const filtered = response.data.filter(a => a.autor_email === userEmail);
+        setArticles(filtered);
+        setErrorArticles(null);
+      } catch (err) {
+        setErrorArticles('Error al cargar los artículos.');
+      } finally {
+        setLoadingArticles(false);
+      }
+    };
+
+    fetchArticles();
+  }, [userEmail]);
+
+  useEffect(() => {
+    const fetchVentas = async () => {
+      try {
+        setLoadingVentas(true);
+        const response = await axios.get('http://localhost:8000/productos');
+        const ventasUsuario = response.data.filter(p => p.usuario_email === userEmail);
+        setVentas(ventasUsuario);
+        setErrorVentas(null);
+      } catch (err) {
+        setErrorVentas('Error al cargar las ventas.');
+      } finally {
+        setLoadingVentas(false);
+      }
+    };
+
+    fetchVentas();
+  }, [userEmail]);
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!userData) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white/60 backdrop-blur-lg rounded-2xl shadow-2xl p-10 border border-white/30 dark:border-gray-700 ring-2 ring-purple-100 text-center">
+          <div className="text-gray-400 text-6xl mb-4">👤</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            Usuario no encontrado
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Lo sentimos, no pudimos encontrar el perfil que buscas.
+          </p>
+          <a
+            href="/"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105 font-semibold shadow-lg"
+          >
+            <FaHome className="w-5 h-5" />
+            Volver al inicio
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  const isValidPhoto = userData.foto && !userData.foto.includes('googleusercontent.com') && userData.foto !== '';
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      {/* Tarjeta principal con efecto glassmorphism */}
+      <div className="relative flex flex-col md:flex-row items-center md:items-end justify-center gap-8 mb-16 bg-white/60 dark:bg-gray-800 backdrop-blur-lg rounded-2xl shadow-2xl p-10 border border-white/30 dark:border-gray-700 ring-2 ring-purple-100">
+        {/* Avatar con borde animado y gradiente */}
+        <div className="flex-shrink-0 flex justify-center w-full md:w-auto">
+          <div className={`w-36 h-36 rounded-full flex items-center justify-center text-white text-6xl font-extrabold shadow-xl border-4 border-white dark:border-gray-700 bg-gradient-to-br ${getRandomColor(userEmail)} animate-avatar-glow relative`}>
+            {isValidPhoto ? (
+              <img
+                src={userData.foto}
+                alt={userData.nombre || userEmail}
+                className="w-full h-full object-cover rounded-full"
+              />
+            ) : (
+              getInitials(userData.nombre || userEmail)
+            )}
+          </div>
+        </div>
+        {/* Info usuario */}
+        <div className="text-center md:text-left w-full">
+          <h2 className="text-4xl font-extrabold text-gray-900 dark:text-gray-100 mb-2 drop-shadow-lg">{userData.nombre || userEmail}</h2>
+          <p className="text-lg text-gray-500 dark:text-gray-300 mb-2">{userEmail}</p>
+          {userData.biografia && (
+            <p className="text-base text-gray-700 dark:text-gray-200 mb-2 whitespace-pre-line bg-white/70 dark:bg-gray-900/70 rounded-lg px-4 py-2 border border-gray-200 dark:border-gray-700 shadow-sm max-w-xl mx-auto md:mx-0">
+              {userData.biografia}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Sección de Artículos */}
+      <div className="bg-white/60 backdrop-blur-lg rounded-2xl shadow-xl p-8 mb-8 border border-white/30">
+        <div className="flex items-center gap-3 mb-6">
+          <FaBook className="w-6 h-6 text-purple-600" />
+          <h3 className="text-2xl font-bold text-gray-900">Artículos publicados</h3>
+        </div>
+        {loadingArticles ? (
+          <LoadingSpinner />
+        ) : errorArticles ? (
+          <p className="text-red-500">{errorArticles}</p>
+        ) : articles.length === 0 ? (
+          <p className="text-gray-500">No hay artículos publicados</p>
+        ) : (
+          <div className="grid grid-cols-1 gap-4">
+            {articles.map(article => (
+              <div key={article.id} className="flex items-center gap-4 bg-white/80 rounded-xl shadow p-4 border border-white/60 hover:shadow-lg transition-all">
+                <img 
+                  src={article.imagen && article.imagen !== '/default-article.jpg' ? article.imagen : 'https://cataas.com/cat'} 
+                  alt={article.titulo} 
+                  className="w-16 h-16 object-cover rounded-lg border border-purple-100" 
+                />
+                <div className="flex-1">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-1 truncate max-w-[180px]">{article.titulo}</h4>
+                  <p className="text-xs text-gray-500 mb-1">{new Date(article.fecha_publicacion).toLocaleDateString()}</p>
+                </div>
+                <a href={`/articulo/${article.id}`} className="text-purple-600 hover:text-indigo-700 font-bold text-sm">Ver</a>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Sección de Productos en Venta */}
+      <div className="bg-white/60 backdrop-blur-lg rounded-2xl shadow-xl p-8 border border-white/30">
+        <div className="flex items-center gap-3 mb-6">
+          <FaShoppingBag className="w-6 h-6 text-purple-600" />
+          <h3 className="text-2xl font-bold text-gray-900">Productos en venta</h3>
+        </div>
+        {loadingVentas ? (
+          <LoadingSpinner />
+        ) : errorVentas ? (
+          <p className="text-red-500">{errorVentas}</p>
+        ) : ventas.length === 0 ? (
+          <p className="text-gray-500">No hay productos en venta</p>
+        ) : (
+          <div className="grid grid-cols-1 gap-4">
+            {ventas.map(producto => (
+              <div key={producto.id} className="flex items-center gap-4 bg-white/80 rounded-xl shadow p-4 border border-white/60 hover:shadow-lg transition-all">
+                <img 
+                  src={producto.imagen} 
+                  alt={producto.nombre} 
+                  className="w-16 h-16 object-cover rounded-lg border border-purple-100" 
+                />
+                <div className="flex-1">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-1 truncate max-w-[180px]">{producto.nombre}</h4>
+                  <p className="text-sm text-purple-600 font-bold">{producto.precio}€</p>
+                </div>
+                <a href={`/producto/${producto.id}`} className="text-purple-600 hover:text-indigo-700 font-bold text-sm">Ver</a>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default PublicProfileCard; 

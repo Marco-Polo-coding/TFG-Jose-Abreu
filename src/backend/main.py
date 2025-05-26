@@ -690,3 +690,15 @@ async def obtener_compras(uid: str):
         return compras
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# GET /usuarios/{email} → Devuelve un usuario específico por email
+@app.get("/usuarios/{email}")
+async def obtener_usuario_por_email(email: str):
+    try:
+        usuarios_ref = db.collection("usuarios").where("email", "==", email).limit(1)
+        usuarios = list(usuarios_ref.stream())
+        if not usuarios:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        return {"id": usuarios[0].id, **usuarios[0].to_dict()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

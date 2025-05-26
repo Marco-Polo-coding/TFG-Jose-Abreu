@@ -145,7 +145,12 @@ const ArticuloDetalle = ({ id }) => {
             </div>
             <h1 className="text-4xl md:text-6xl font-extrabold mb-2 drop-shadow-xl truncate" title={articulo.titulo}>{articulo.titulo}</h1>
             <div className="flex items-center gap-4 text-purple-200">
-              <span>Por {articulo.autor}</span>
+              <a 
+                href={`/user/${articulo.autor_email}`}
+                className="hover:text-white transition-colors"
+              >
+                Por {articulo.autor}
+              </a>
               <span>•</span>
               <span>{new Date(articulo.fecha_publicacion).toLocaleDateString()}</span>
             </div>

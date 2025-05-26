@@ -131,6 +131,14 @@ const ProductoDetalle = ({ id }) => {
             <h1 className="text-4xl md:text-6xl font-extrabold mb-2 drop-shadow-xl truncate" title={producto.nombre}>
               {producto.nombre}
             </h1>
+            <div className="flex items-center gap-4 text-purple-200">
+              <a 
+                href={`/user/${producto.usuario_email}`}
+                className="hover:text-white transition-colors"
+              >
+                Vendido por {producto.usuario_nombre || producto.usuario_email}
+              </a>
+            </div>
           </div>
         </div>
       </section>

@@ -132,7 +132,12 @@ const Comments = ({ articuloId }) => {
         {comentarios.map((comentario) => (
           <div key={comentario.id} className="bg-gradient-to-br from-purple-50 to-indigo-100 rounded-xl p-6">
             <div className="flex items-center gap-2 mb-2">
-              <span className="font-semibold text-purple-900">{comentario.usuario}</span>
+              <a 
+                href={`/user/${comentario.usuario}`}
+                className="font-semibold text-purple-900 hover:text-purple-700 transition-colors"
+              >
+                {comentario.usuario}
+              </a>
               <span className="text-gray-500">
                 {new Date(comentario.fecha).toLocaleDateString()}
               </span>
@@ -183,7 +188,12 @@ const Comments = ({ articuloId }) => {
             {comentario.respuestas?.map((respuesta) => (
               <div key={respuesta.id} className="ml-8 mt-4 border-l-2 border-purple-200 pl-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="font-semibold text-purple-900">{respuesta.usuario}</span>
+                  <a 
+                    href={`/user/${respuesta.usuario}`}
+                    className="font-semibold text-purple-900 hover:text-purple-700 transition-colors"
+                  >
+                    {respuesta.usuario}
+                  </a>
                   <span className="text-gray-500">
                     {new Date(respuesta.fecha).toLocaleDateString()}
                   </span>
