@@ -41,6 +41,7 @@ const ProfileCard = () => {
   const [errorCompras, setErrorCompras] = React.useState(null);
   const [selectedCompra, setSelectedCompra] = React.useState(null);
   const [modalOpen, setModalOpen] = React.useState(false);
+  const [showAllCompras, setShowAllCompras] = React.useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -302,7 +303,7 @@ const ProfileCard = () => {
         ) : (
           <div className="w-full">
             <div className="grid grid-cols-1 gap-4 w-full">
-              {compras.map(compra => {
+              {(showAllCompras ? compras : compras.slice(0, 3)).map(compra => {
                 const fechaBonita = compra.fecha ? new Date(compra.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
                 let nombreProducto = compra.productos && compra.productos.length > 0 ? compra.productos[0].nombre : '';
                 // Truncar el nombre si es muy largo
@@ -325,6 +326,14 @@ const ProfileCard = () => {
                 );
               })}
             </div>
+            {compras.length > 3 && (
+              <button
+                onClick={() => setShowAllCompras(!showAllCompras)}
+                className="mt-4 inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-semibold"
+              >
+                {showAllCompras ? 'Mostrar menos' : 'Ver todas las compras'} <FaArrowRight className={`w-4 h-4 transition-transform ${showAllCompras ? 'rotate-90' : ''}`} />
+              </button>
+            )}
             <CompraDetalleModal isOpen={modalOpen} onClose={() => setModalOpen(false)} compra={selectedCompra} />
           </div>
         )}
