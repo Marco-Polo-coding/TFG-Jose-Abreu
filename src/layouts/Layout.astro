@@ -1,5 +1,8 @@
 ---
 import VirtualAssistant from '../components/VirtualAssistant';
+import AdminRedirect from '../components/AdminRedirect';
+
+const { title } = Astro.props;
 ---
 
 <!doctype html>
@@ -9,9 +12,10 @@ import VirtualAssistant from '../components/VirtualAssistant';
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/rpg-game.svg" />
 		<meta name="generator" content={Astro.generator} />
-		<title>CRPG Game Hub</title>
+		<title>{title}</title>
 	</head>
 	<body class="bg-gray-50 dark:bg-gray-900">
+		<AdminRedirect client:load />
 		<slot />
 		<VirtualAssistant client:load />
 	</body>

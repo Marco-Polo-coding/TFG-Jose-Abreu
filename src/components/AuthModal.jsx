@@ -79,7 +79,11 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
     // Eliminar datos recordados al cerrar sesión
     localStorage.removeItem('rememberedEmail');
     localStorage.removeItem('rememberedPassword');
+    // Eliminar el rol del usuario
+    localStorage.removeItem('userRole');
     setIsAuthenticated(false);
+    // Eliminar la cookie de rol
+    document.cookie = 'userRole=; path=/; max-age=0';
     showNotification('Has cerrado sesión correctamente', 'info');
     onClose();
     setTimeout(() => {
@@ -97,19 +101,24 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
         ? 'http://127.0.0.1:8000/auth/login'
         : 'http://127.0.0.1:8000/auth/register';
 
+      const requestBody = {
+        email: formData.email,
+        password: formData.password,
+        ...(isLoginMode ? {} : { nombre: formData.name })
+      };
+
+      console.log('Enviando petición de login:', requestBody); // Log para depuración
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          ...(isLoginMode ? {} : { nombre: formData.name })
-        })
+        body: JSON.stringify(requestBody)
       });
 
       const data = await response.json();
+      console.log('Respuesta del servidor:', data); // Log para depuración
 
       if (!response.ok) {
         throw new Error(data.detail || 'Error en la autenticación');
@@ -139,6 +148,14 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
         localStorage.setItem('userPhoto', data.foto);
       } else {
         localStorage.removeItem('userPhoto');
+      }
+      // Guardar el rol del usuario
+      if (data.role) {
+        localStorage.setItem('userRole', data.role);
+        document.cookie = `userRole=${data.role}; path=/; max-age=86400`; // 24 horas
+      } else {
+        localStorage.setItem('userRole', 'user');
+        document.cookie = `userRole=user; path=/; max-age=86400`;
       }
       // Biografía: si viene en la respuesta, guardar; si no, limpiar
       if (data.biografia !== undefined && data.biografia !== null) {

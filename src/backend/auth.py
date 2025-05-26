@@ -25,11 +25,15 @@ class UserLogin(BaseModel):
     password: str
     foto: Optional[str] = None
 
+    class Config:
+        extra = "ignore"  # Ignorar campos extra en la petición
+
 class UserRegister(BaseModel):
     email: EmailStr
     password: str
     nombre: Optional[str] = None
     biografia: Optional[str] = None
+    role: Optional[str] = "user"  # Por defecto será "user"
 
 class PasswordReset(BaseModel):
     email: EmailStr
@@ -48,6 +52,7 @@ class UserProfileUpdate(BaseModel):
     email: Optional[EmailStr] = None
     foto: Optional[str] = None  # base64 o url
     biografia: Optional[str] = None
+    role: Optional[str] = None
 
 class DeleteAccount(BaseModel):
     uid: str
@@ -67,7 +72,8 @@ async def register_user(user: UserRegister):
             "uid": user_record.uid,
             "email": user.email,
             "nombre": user.nombre or "",
-            "biografia": user.biografia or ""
+            "biografia": user.biografia or "",
+            "role": user.role or "user"  # Añadir el rol
         }
         db.collection("usuarios").document(user_record.uid).set(user_data)
         
@@ -81,6 +87,9 @@ async def register_user(user: UserRegister):
 @router.post("/login")
 async def login_user(user: UserLogin) -> Dict[str, str]:
     try:
+        # Log para depuración
+        logger.info(f"Intento de login para email: {user.email}")
+        
         # Verificar que FIREBASE_API_KEY esté configurada
         firebase_api_key = os.getenv('FIREBASE_API_KEY')
         if not firebase_api_key:
@@ -128,20 +137,27 @@ async def login_user(user: UserLogin) -> Dict[str, str]:
             data = response.json()
             # Obtener el usuario de Firebase
             user_record = auth.get_user_by_email(user.email)
-            # Obtener la foto de perfil desde Firestore
+            # Obtener la foto de perfil y rol desde Firestore
             user_doc = db.collection("usuarios").document(user_record.uid).get()
             foto_url = ""
+            role = "user"
             if user_doc.exists:
                 user_data = user_doc.to_dict()
                 foto_url = user_data.get("foto", "") or ""
-            return {
+                role = user_data.get("role", "user")
+                logger.info(f"Rol del usuario: {role}")  # Log del rol
+            
+            response_data = {
                 "idToken": data["idToken"],
                 "refreshToken": data["refreshToken"],
                 "email": user.email,
                 "nombre": user_record.display_name or "",
                 "uid": user_record.uid,
-                "foto": foto_url
+                "foto": foto_url,
+                "role": role
             }
+            logger.info(f"Datos de respuesta: {response_data}")  # Log de la respuesta completa
+            return response_data
     except HTTPException:
         raise
     except Exception as e:

@@ -1,0 +1,186 @@
+import React, { useState, useEffect } from 'react';
+import { FaSearch, FaTrash, FaEdit, FaPlus } from 'react-icons/fa';
+
+const ArticleManagement = () => {
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    fetchArticles();
+  }, []);
+
+  const fetchArticles = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No hay token de autenticación');
+      }
+
+      const response = await fetch('http://127.0.0.1:8000/admin/articles', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al obtener artículos');
+      }
+
+      const data = await response.json();
+      setArticles(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteArticle = async (articleId) => {
+    if (!confirm('¿Estás seguro de que deseas eliminar este artículo?')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://127.0.0.1:8000/admin/articles/${articleId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al eliminar artículo');
+      }
+
+      // Actualizar la lista de artículos
+      setArticles(articles.filter(article => article.id !== articleId));
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const filteredArticles = articles.filter(article =>
+    article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    article.content?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Gestión de Artículos</h1>
+        <div className="flex space-x-4">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Buscar artículos..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
+            />
+            <FaSearch className="absolute left-3 top-3 text-gray-400" />
+          </div>
+          <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2">
+            <FaPlus />
+            <span>Nuevo Artículo</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-700">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Artículo
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Autor
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Fecha
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Acciones
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            {filteredArticles.map((article) => (
+              <tr key={article.id}>
+                <td className="px-6 py-4">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 h-10 w-10">
+                      {article.image ? (
+                        <img
+                          className="h-10 w-10 rounded-full object-cover"
+                          src={article.image}
+                          alt={article.title}
+                        />
+                      ) : (
+                        <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                          <span className="text-gray-500 dark:text-gray-400">
+                            {article.title[0].toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="ml-4">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        {article.title}
+                      </div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                        {article.content?.substring(0, 50)}...
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900 dark:text-white">{article.author}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900 dark:text-white">
+                    {new Date(article.created_at).toLocaleDateString('es-ES')}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <button
+                    onClick={() => handleDeleteArticle(article.id)}
+                    className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 mr-4"
+                  >
+                    <FaTrash />
+                  </button>
+                  <button className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
+                    <FaEdit />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+export default ArticleManagement; 
