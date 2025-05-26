@@ -36,6 +36,7 @@ function CheckoutComponent() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [loadingSave, setLoadingSave] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const uid = typeof window !== 'undefined' ? localStorage.getItem('uid') : null;
@@ -89,7 +90,7 @@ function CheckoutComponent() {
 
   const handleDeleteMetodoPago = async (tipo) => {
     if (!uid) return;
-    setLoadingSave(true);
+    setIsDeleting(true);
     setError('');
     try {
       await deleteMetodoPago(uid, tipo);
@@ -105,7 +106,7 @@ function CheckoutComponent() {
     } catch (err) {
       setError('Error al eliminar el método de pago');
     }
-    setLoadingSave(false);
+    setIsDeleting(false);
   };
 
   const handlePay = async () => {
@@ -242,10 +243,17 @@ function CheckoutComponent() {
       <div className="flex gap-4 mb-4">
         <button
           onClick={handleSaveMetodoPago}
-          disabled={loadingSave || !validateForm(selectedMethod, form)}
-          className="bg-white border-2 border-purple-400 text-gray-700 px-6 py-2 rounded-full font-medium hover:bg-purple-50 transition-all duration-300"
+          disabled={loadingSave || !validateForm(selectedMethod, form) || metodosGuardados[selectedMethod]}
+          className={`bg-white border-2 border-purple-400 text-gray-700 px-6 py-2 rounded-full font-medium transition-all duration-300 ${
+            metodosGuardados[selectedMethod] 
+              ? 'opacity-50 cursor-not-allowed' 
+              : 'hover:bg-purple-50'
+          }`}
         >
-          {loadingSave ? 'Guardando...' : saved ? 'Método guardado' : 'Guardar método de pago'}
+          {loadingSave ? (isDeleting ? 'Procesando...' : 'Guardando...') : 
+           saved ? 'Método guardado' : 
+           metodosGuardados[selectedMethod] ? 'Método ya guardado' : 
+           'Guardar método de pago'}
         </button>
         <button
           onClick={handlePay}
