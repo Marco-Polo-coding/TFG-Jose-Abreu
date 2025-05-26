@@ -143,7 +143,7 @@ const ArticuloDetalle = ({ id }) => {
               <span className="text-white/50">/</span>
               <span className="text-white/50">{articulo.titulo}</span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-extrabold mb-2 drop-shadow-xl">{articulo.titulo}</h1>
+            <h1 className="text-4xl md:text-6xl font-extrabold mb-2 drop-shadow-xl truncate" title={articulo.titulo}>{articulo.titulo}</h1>
             <div className="flex items-center gap-4 text-purple-200">
               <span>Por {articulo.autor}</span>
               <span>•</span>
