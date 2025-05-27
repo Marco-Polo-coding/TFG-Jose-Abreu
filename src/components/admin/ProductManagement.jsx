@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaTrash, FaEdit, FaPlus, FaSortUp, FaSortDown, FaExclamationTriangle } from 'react-icons/fa';
+import { FaSearch, FaTrash, FaEdit, FaPlus, FaSort, FaSortUp, FaSortDown, FaExclamationTriangle } from 'react-icons/fa';
 import LoadingSpinner from '../LoadingSpinner';
 import AdminDeleteModal from './AdminDeleteModal';
 
@@ -204,6 +204,13 @@ const ProductManagement = () => {
     }
   };
 
+  // Añadir función para el icono de ordenación
+  const getSortIcon = (order) => {
+    if (order === 'asc') return <FaSortUp className="inline ml-1 text-purple-400" />;
+    if (order === 'desc') return <FaSortDown className="inline ml-1 text-purple-400" />;
+    return <FaSort className="inline ml-1 text-gray-300" />;
+  };
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -252,23 +259,14 @@ const ProductManagement = () => {
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead className="bg-gray-50 dark:bg-gray-700">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none" onClick={() => handleSort('nombre')}>
-                Producto
-                {sortBy === 'nombre' && sortOrder === 'asc' && <FaSortUp className="inline ml-1" />}
-                {sortBy === 'nombre' && sortOrder === 'desc' && <FaSortDown className="inline ml-1" />}
-                {sortBy !== 'nombre' && <FaSortUp className="inline ml-1 opacity-20" />}
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none hover:text-purple-600 transition" onClick={() => handleSort('nombre')}>
+                Producto {getSortIcon(sortBy === 'nombre' ? sortOrder : '')}
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none" onClick={() => handleSort('precio')}>
-                Precio
-                {sortBy === 'precio' && sortOrder === 'asc' && <FaSortUp className="inline ml-1" />}
-                {sortBy === 'precio' && sortOrder === 'desc' && <FaSortDown className="inline ml-1" />}
-                {sortBy !== 'precio' && <FaSortUp className="inline ml-1 opacity-20" />}
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none hover:text-purple-600 transition" onClick={() => handleSort('precio')}>
+                Precio {getSortIcon(sortBy === 'precio' ? sortOrder : '')}
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none" onClick={() => handleSort('stock')}>
-                Stock
-                {sortBy === 'stock' && sortOrder === 'asc' && <FaSortUp className="inline ml-1" />}
-                {sortBy === 'stock' && sortOrder === 'desc' && <FaSortDown className="inline ml-1" />}
-                {sortBy !== 'stock' && <FaSortUp className="inline ml-1 opacity-20" />}
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none hover:text-purple-600 transition" onClick={() => handleSort('stock')}>
+                Stock {getSortIcon(sortBy === 'stock' ? sortOrder : '')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Acciones
@@ -277,7 +275,7 @@ const ProductManagement = () => {
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {sortedProducts.map((product) => (
-              <tr key={product.id}>
+              <tr key={product.id} className="hover:bg-purple-50 dark:hover:bg-purple-900/20 transition">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-10 w-10">

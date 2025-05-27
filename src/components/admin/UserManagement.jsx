@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaTrash, FaEdit, FaPlus, FaSortUp, FaSortDown, FaExclamationTriangle } from 'react-icons/fa';
+import { FaSearch, FaTrash, FaEdit, FaPlus, FaSort, FaSortUp, FaSortDown, FaExclamationTriangle } from 'react-icons/fa';
 import LoadingSpinner from '../LoadingSpinner';
 import ConfirmModal from '../ConfirmModal';
 import AdminDeleteModal from './AdminDeleteModal';
@@ -272,6 +272,13 @@ const UserManagement = () => {
     sortedUsers = filteredUsers;
   }
 
+  // Añadir función para el icono de ordenación
+  const getSortIcon = (order) => {
+    if (order === 'asc') return <FaSortUp className="inline ml-1 text-purple-400" />;
+    if (order === 'desc') return <FaSortDown className="inline ml-1 text-purple-400" />;
+    return <FaSort className="inline ml-1 text-gray-300" />;
+  };
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -319,29 +326,17 @@ const UserManagement = () => {
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead className="bg-gray-50 dark:bg-gray-700">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none" onClick={() => handleSort('nombre')}>
-                USUARIO
-                {sortBy === 'nombre' && sortOrder === 'asc' && <FaSortUp className="inline ml-1" />}
-                {sortBy === 'nombre' && sortOrder === 'desc' && <FaSortDown className="inline ml-1" />}
-                {sortBy !== 'nombre' && <FaSortUp className="inline ml-1 opacity-20" />}
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none hover:text-purple-600 transition" onClick={() => handleSort('nombre')}>
+                USUARIO {getSortIcon(sortBy === 'nombre' ? sortOrder : '')}
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none" onClick={() => handleSort('email')}>
-                EMAIL
-                {sortBy === 'email' && sortOrder === 'asc' && <FaSortUp className="inline ml-1" />}
-                {sortBy === 'email' && sortOrder === 'desc' && <FaSortDown className="inline ml-1" />}
-                {sortBy !== 'email' && <FaSortUp className="inline ml-1 opacity-20" />}
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none hover:text-purple-600 transition" onClick={() => handleSort('email')}>
+                EMAIL {getSortIcon(sortBy === 'email' ? sortOrder : '')}
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none" onClick={() => handleSort('role')}>
-                ROL
-                {sortBy === 'role' && sortOrder === 'asc' && <FaSortUp className="inline ml-1" />}
-                {sortBy === 'role' && sortOrder === 'desc' && <FaSortDown className="inline ml-1" />}
-                {sortBy !== 'role' && <FaSortUp className="inline ml-1 opacity-20" />}
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none hover:text-purple-600 transition" onClick={() => handleSort('role')}>
+                ROL {getSortIcon(sortBy === 'role' ? sortOrder : '')}
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none" onClick={() => handleSort('uid')}>
-                UID
-                {sortBy === 'uid' && sortOrder === 'asc' && <FaSortUp className="inline ml-1" />}
-                {sortBy === 'uid' && sortOrder === 'desc' && <FaSortDown className="inline ml-1" />}
-                {sortBy !== 'uid' && <FaSortUp className="inline ml-1 opacity-20" />}
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none hover:text-purple-600 transition" onClick={() => handleSort('uid')}>
+                UID {getSortIcon(sortBy === 'uid' ? sortOrder : '')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Acciones
@@ -350,7 +345,7 @@ const UserManagement = () => {
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {sortedUsers.map((user) => (
-              <tr key={user.uid || user.id}>
+              <tr key={user.uid || user.id} className="hover:bg-purple-50 dark:hover:bg-purple-900/20 transition">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-10 w-10 relative">
