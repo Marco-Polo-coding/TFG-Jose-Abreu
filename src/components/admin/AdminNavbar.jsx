@@ -31,7 +31,7 @@ const AdminNavbar = () => {
       </div>
       {/* Buscador a la derecha */}
       <div className="flex-1 flex justify-end items-center gap-6">
-        <div className="hidden md:flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg px-3 py-1">
+        {/* <div className="hidden md:flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg px-3 py-1">
           <FaSearch className="text-gray-400 mr-2" />
           <input
             type="text"
@@ -39,11 +39,11 @@ const AdminNavbar = () => {
             className="bg-transparent outline-none text-gray-700 dark:text-gray-200 text-sm w-32 md:w-48"
             disabled
           />
-        </div>
-        <button className="relative group">
+        </div> */}
+        {/* <button className="relative group">
           <FaBell className="text-xl text-gray-500 dark:text-gray-300 group-hover:text-purple-500 transition-colors" />
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 border-2 border-white dark:border-gray-900 animate-pulse-slow">3</span>
-        </button>
+        </button> */}
         {/* Menú de usuario */}
         <div className="relative" ref={menuRef}>
           <button

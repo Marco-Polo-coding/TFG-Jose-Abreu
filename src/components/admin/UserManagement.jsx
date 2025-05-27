@@ -114,7 +114,7 @@ const UserManagement = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [errorModal, setErrorModal] = useState("");
   const [sortBy, setSortBy] = useState('');
-  const [sortOrder, setSortOrder] = useState('asc');
+  const [sortOrder, setSortOrder] = useState(null);
 
   useEffect(() => {
     fetchUsers();
@@ -232,10 +232,15 @@ const UserManagement = () => {
   };
 
   const handleSort = (field) => {
-    if (sortBy === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
+    if (sortBy !== field) {
       setSortBy(field);
+      setSortOrder('asc');
+    } else if (sortOrder === 'asc') {
+      setSortOrder('desc');
+    } else if (sortOrder === 'desc') {
+      setSortBy('');
+      setSortOrder(null);
+    } else {
       setSortOrder('asc');
     }
   };
@@ -246,7 +251,7 @@ const UserManagement = () => {
   );
 
   let sortedUsers = [...filteredUsers];
-  if (sortBy) {
+  if (sortBy && sortOrder) {
     sortedUsers.sort((a, b) => {
       let aValue = a[sortBy] || '';
       let bValue = b[sortBy] || '';
@@ -256,6 +261,8 @@ const UserManagement = () => {
       if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
       return 0;
     });
+  } else {
+    sortedUsers = filteredUsers;
   }
 
   if (loading) {
@@ -307,19 +314,27 @@ const UserManagement = () => {
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none" onClick={() => handleSort('nombre')}>
                 USUARIO
-                {sortBy === 'nombre' && (sortOrder === 'asc' ? <FaSortUp className="inline ml-1" /> : <FaSortDown className="inline ml-1" />)}
+                {sortBy === 'nombre' && sortOrder === 'asc' && <FaSortUp className="inline ml-1" />}
+                {sortBy === 'nombre' && sortOrder === 'desc' && <FaSortDown className="inline ml-1" />}
+                {sortBy !== 'nombre' && <FaSortUp className="inline ml-1 opacity-20" />}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none" onClick={() => handleSort('email')}>
                 EMAIL
-                {sortBy === 'email' && (sortOrder === 'asc' ? <FaSortUp className="inline ml-1" /> : <FaSortDown className="inline ml-1" />)}
+                {sortBy === 'email' && sortOrder === 'asc' && <FaSortUp className="inline ml-1" />}
+                {sortBy === 'email' && sortOrder === 'desc' && <FaSortDown className="inline ml-1" />}
+                {sortBy !== 'email' && <FaSortUp className="inline ml-1 opacity-20" />}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none" onClick={() => handleSort('role')}>
                 ROL
-                {sortBy === 'role' && (sortOrder === 'asc' ? <FaSortUp className="inline ml-1" /> : <FaSortDown className="inline ml-1" />)}
+                {sortBy === 'role' && sortOrder === 'asc' && <FaSortUp className="inline ml-1" />}
+                {sortBy === 'role' && sortOrder === 'desc' && <FaSortDown className="inline ml-1" />}
+                {sortBy !== 'role' && <FaSortUp className="inline ml-1 opacity-20" />}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none" onClick={() => handleSort('uid')}>
                 UID
-                {sortBy === 'uid' && (sortOrder === 'asc' ? <FaSortUp className="inline ml-1" /> : <FaSortDown className="inline ml-1" />)}
+                {sortBy === 'uid' && sortOrder === 'asc' && <FaSortUp className="inline ml-1" />}
+                {sortBy === 'uid' && sortOrder === 'desc' && <FaSortDown className="inline ml-1" />}
+                {sortBy !== 'uid' && <FaSortUp className="inline ml-1 opacity-20" />}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Acciones
@@ -331,16 +346,29 @@ const UserManagement = () => {
               <tr key={user.uid || user.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10">
+                    <div className="flex-shrink-0 h-10 w-10 relative">
                       {user.foto ? (
-                        <img src={user.foto} alt="Foto de perfil" className="h-10 w-10 rounded-full object-cover border-2 border-purple-200" />
-                      ) : (
-                        <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
-                          <span className="text-purple-600 dark:text-purple-300 font-medium">
-                            {user.nombre?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
-                          </span>
-                        </div>
-                      )}
+                        <img
+                          src={user.foto}
+                          alt="Foto de perfil"
+                          className="h-10 w-10 rounded-full object-cover border-2 border-purple-200"
+                          onError={e => {
+                            e.target.onerror = null;
+                            e.target.style.display = 'none';
+                            const fallback = e.target.parentNode.querySelector('.fallback-initial');
+                            if (fallback) fallback.style.display = 'flex';
+                          }}
+                          style={{ display: user.foto ? 'block' : 'none' }}
+                        />
+                      ) : null}
+                      <div
+                        className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center fallback-initial absolute top-0 left-0 w-full h-full"
+                        style={{ display: !user.foto ? 'flex' : 'none' }}
+                      >
+                        <span className="text-purple-600 dark:text-purple-300 font-medium">
+                          {user.nombre?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
+                        </span>
+                      </div>
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900 dark:text-white">

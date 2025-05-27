@@ -205,7 +205,7 @@ async def login_with_google(id_token: str = Body(..., embed=True)):
                 "uid": data.get("localId"),
                 "email": data.get("email"),
                 "nombre": data.get("displayName", ""),
-                "foto": data.get("photoUrl", "")
+                "foto": ""  # Ignorar la foto de Google
             }
 
             # Guardar o actualizar usuario en Firestore

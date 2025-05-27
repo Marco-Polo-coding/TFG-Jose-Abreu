@@ -33,7 +33,19 @@ def subir_coleccion(nombre_archivo, nombre_coleccion):
         print(f"✅ {len(data)} documentos subidos a '{nombre_coleccion}'")
 
 # Ejecutar para cada colección
-subir_coleccion("usuarios.json", "usuarios")
-subir_coleccion("productos.json", "productos")
-subir_coleccion("compras.json", "compras")
-subir_coleccion("articulos.json", "articulos")
+# subir_coleccion("usuarios.json", "usuarios")
+# subir_coleccion("productos.json", "productos")
+# subir_coleccion("compras.json", "compras")
+# subir_coleccion("articulos.json", "articulos")
+
+def limpiar_fotos_google():
+    usuarios_ref = db.collection("usuarios").stream()
+    for user in usuarios_ref:
+        data = user.to_dict()
+        if "foto" in data and data["foto"] and "googleusercontent.com" in data["foto"]:
+            print(f"Limpiando foto de usuario: {data.get('email', user.id)}")
+            db.collection("usuarios").document(user.id).update({"foto": ""})
+
+if __name__ == "__main__":
+    limpiar_fotos_google()
+    print("Limpieza completada.")
