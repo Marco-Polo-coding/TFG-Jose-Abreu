@@ -181,7 +181,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-[80vh] bg-gray-100 dark:bg-gray-950 py-8 px-2 md:px-8 animate-slide-up">
-      <h1 className="text-4xl font-extrabold text-black-700 dark:text-purple-300 text-center mb-10 tracking-tight drop-shadow">Dashboard</h1>
+      {/* <h1 className="text-4xl font-extrabold text-black-700 dark:text-purple-300 text-center mb-10 tracking-tight drop-shadow">Dashboard</h1> */}
       <div className="w-full flex justify-center">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Usuarios */}
