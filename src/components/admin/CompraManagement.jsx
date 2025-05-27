@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FaEye, FaTrash, FaSearch, FaShoppingCart, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
-import CompraDetalleModal from '../CompraDetalleModal';
+import AdminCompraDetalleModal from '../AdminCompraDetalleModal';
 import AdminDeleteModal from './AdminDeleteModal';
 import LoadingSpinner from '../LoadingSpinner';
 
@@ -202,7 +202,7 @@ const CompraManagement = () => {
         </div>
       )}
       {/* Modal detalle */}
-      <CompraDetalleModal
+      <AdminCompraDetalleModal
         isOpen={showDetalle}
         onClose={() => setShowDetalle(false)}
         compra={selectedCompra}
