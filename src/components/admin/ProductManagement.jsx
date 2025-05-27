@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaTrash, FaEdit, FaPlus, FaSortUp, FaSortDown } from 'react-icons/fa';
+import { FaSearch, FaTrash, FaEdit, FaPlus, FaSortUp, FaSortDown, FaExclamationTriangle } from 'react-icons/fa';
 import LoadingSpinner from '../LoadingSpinner';
 import AdminDeleteModal from './AdminDeleteModal';
 
@@ -211,8 +211,16 @@ const ProductManagement = () => {
   if (error) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          <p>{error}</p>
+        <div className="bg-red-100 border border-red-400 text-red-700 px-8 py-6 rounded-2xl shadow-lg flex flex-col items-center animate-fade-in">
+          <FaExclamationTriangle className="text-4xl text-red-400 mb-2" />
+          <p className="text-lg font-semibold mb-1">Error al obtener productos</p>
+          <span className="text-sm text-red-500">{error}</span>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-5 py-2 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600 transition"
+          >
+            Reintentar
+          </button>
         </div>
       </div>
     );
