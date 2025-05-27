@@ -110,9 +110,13 @@ const ErrorModal = ({ open, onClose, message }) => {
 const AdminUsuarioDetalleModal = ({ isOpen, onClose, usuario }) => {
   if (!isOpen || !usuario) return null;
   const inicial = usuario.nombre?.[0]?.toUpperCase() || usuario.email?.[0]?.toUpperCase() || '?';
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget) onClose();
+  };
   return ReactDOM.createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40" onClick={handleOverlayClick}>
+      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center animate-fade-in relative">
+        <button onClick={onClose} className="absolute top-4 right-6 text-gray-400 hover:text-purple-600 text-2xl font-bold" aria-label="Cerrar">&times;</button>
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Detalle de Usuario</h2>
         <div className="flex flex-col items-center mb-4">
           {usuario.foto ? (
@@ -129,7 +133,6 @@ const AdminUsuarioDetalleModal = ({ isOpen, onClose, usuario }) => {
           <div><span className="font-semibold">Rol:</span> {usuario.role}</div>
           <div><span className="font-semibold">UID:</span> {usuario.uid || usuario.id}</div>
         </div>
-        <button onClick={onClose} className="mt-4 px-6 py-2 rounded-full bg-purple-600 text-white font-semibold shadow hover:bg-purple-700 transition">Cerrar</button>
       </div>
     </div>,
     document.body
