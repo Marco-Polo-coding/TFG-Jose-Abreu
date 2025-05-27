@@ -28,6 +28,49 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Modelo para estadísticas mensuales
+class EstadisticasMensuales(BaseModel):
+    fecha: str
+    total_usuarios: int
+    total_productos: int
+    total_articulos: int
+
+@app.post("/admin/estadisticas-mensuales")
+async def guardar_estadisticas_mensuales():
+    try:
+        # Obtener totales actuales
+        usuarios = len(list(db.collection("usuarios").stream()))
+        productos = len(list(db.collection("productos").stream()))
+        articulos = len(list(db.collection("articulos").stream()))
+        
+        # Crear documento con estadísticas
+        fecha_actual = datetime.now().strftime("%Y-%m")
+        estadisticas = {
+            "fecha": fecha_actual,
+            "total_usuarios": usuarios,
+            "total_productos": productos,
+            "total_articulos": articulos,
+            "fecha_creacion": datetime.now().isoformat()
+        }
+        
+        # Guardar en Firestore
+        db.collection("estadisticas_mensuales").document(fecha_actual).set(estadisticas)
+        
+        return {"message": "Estadísticas guardadas correctamente", "estadisticas": estadisticas}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/admin/estadisticas-mensuales", response_model=List[EstadisticasMensuales])
+async def obtener_estadisticas_mensuales():
+    try:
+        # Obtener todas las estadísticas ordenadas por fecha
+        stats_ref = db.collection("estadisticas_mensuales").order_by("fecha", direction=firestore.Query.DESCENDING)
+        stats = stats_ref.stream()
+        
+        return [{"fecha": doc.id, **doc.to_dict()} for doc in stats]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/")
 async def root():
     return {"message": "Bienvenido a la API"}
