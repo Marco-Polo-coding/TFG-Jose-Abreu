@@ -1,5 +1,5 @@
-import Sidebar from '../components/Sidebar.jsx';
-const { title } = Astro.props;
+<!-- import Sidebar from '../components/Sidebar.jsx'; -->
+<!-- const { title } = Astro.props; -->
 
 <!DOCTYPE html>
 <html lang="es">
@@ -8,14 +8,24 @@ const { title } = Astro.props;
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
-    <title>{title} - Panel de Administración</title>
+    <!-- <title>{title} - Panel de Administración</title> -->
   </head>
   <body class="bg-gray-100 dark:bg-gray-900">
-    <div class="min-h-screen flex">
-      <Sidebar client:load />
-      <main class="flex-1 p-8">
-        <slot />
-      </main>
+    <div class="min-h-screen flex flex-col">
+      <div class="w-full flex justify-end p-4">
+        <button
+          onclick="localStorage.clear();document.cookie='userRole=; path=/; max-age=0';window.location.href='/'"
+          class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow transition-colors"
+        >
+          Cerrar sesión
+        </button>
+      </div>
+      <div class="flex flex-1">
+        <!-- <Sidebar client:load /> -->
+        <main class="flex-1 p-8">
+          <slot />
+        </main>
+      </div>
     </div>
   </body>
 </html> 

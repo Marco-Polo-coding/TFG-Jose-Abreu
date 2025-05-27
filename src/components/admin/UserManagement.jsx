@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaTrash, FaEdit } from 'react-icons/fa';
+import LoadingSpinner from '../LoadingSpinner';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -68,11 +69,7 @@ const UserManagement = () => {
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (error) {

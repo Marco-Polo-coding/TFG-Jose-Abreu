@@ -1,5 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { FaUsers, FaBox, FaNewspaper, FaChartBar } from 'react-icons/fa';
+import { FaUsers, FaBox, FaNewspaper, FaChartPie } from 'react-icons/fa';
+import { Bar, Doughnut } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import LoadingSpinner from '../LoadingSpinner';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
+
+const cardClass =
+  'bg-white dark:bg-gray-900 rounded-2xl shadow-md p-6 flex flex-col justify-between min-h-[170px]';
+const iconCircle =
+  'flex items-center justify-center w-12 h-12 rounded-full bg-white border-2 shadow text-xl mb-3';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -9,6 +27,13 @@ const AdminDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Simulación de cambios porcentuales (puedes adaptar a tus datos reales)
+  const percent = {
+    users: 12.5,
+    products: -3.2,
+    articles: 8.1,
+  };
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -40,17 +65,68 @@ const AdminDashboard = () => {
     fetchStats();
   }, []);
 
+  // Datos para la gráfica de barras
+  const barData = {
+    labels: ['Usuarios', 'Productos', 'Artículos'],
+    datasets: [
+      {
+        label: 'Cantidad',
+        data: [stats.total_users, stats.total_products, stats.total_articles],
+        backgroundColor: [
+          'rgba(139,92,246,0.7)', // purple-500
+          'rgba(59,130,246,0.7)', // blue-500
+          'rgba(34,197,94,0.7)',  // green-500
+        ],
+        borderRadius: 8,
+        maxBarThickness: 40,
+      },
+    ],
+  };
+
+  const barOptions = {
+    plugins: {
+      legend: { display: false },
+    },
+    scales: {
+      x: { grid: { display: false } },
+      y: { grid: { color: '#f3f4f6' }, beginAtZero: true, ticks: { stepSize: 1 } },
+    },
+    responsive: true,
+    maintainAspectRatio: false,
+  };
+
+  // Datos para la gráfica tipo donut (distribución)
+  const donutData = {
+    labels: ['Usuarios', 'Productos', 'Artículos'],
+    datasets: [
+      {
+        data: [stats.total_users, stats.total_products, stats.total_articles],
+        backgroundColor: [
+          'rgba(139,92,246,0.8)',
+          'rgba(59,130,246,0.8)',
+          'rgba(34,197,94,0.8)',
+        ],
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  const donutOptions = {
+    plugins: {
+      legend: { display: true, position: 'bottom' },
+    },
+    cutout: '70%',
+    responsive: true,
+    maintainAspectRatio: false,
+  };
+
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-96">
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
           <p>{error}</p>
         </div>
@@ -59,77 +135,142 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Dashboard</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Tarjeta de Usuarios */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-          <div className="flex items-center">
-            <div className="p-3 rounded-full bg-purple-100 dark:bg-purple-900">
-              <FaUsers className="h-6 w-6 text-purple-600 dark:text-purple-300" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Usuarios</p>
-              <p className="text-2xl font-semibold text-gray-800 dark:text-white">{stats.total_users}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Tarjeta de Productos */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-          <div className="flex items-center">
-            <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900">
-              <FaBox className="h-6 w-6 text-blue-600 dark:text-blue-300" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Productos</p>
-              <p className="text-2xl font-semibold text-gray-800 dark:text-white">{stats.total_products}</p>
+    <div className="min-h-[80vh] bg-gray-100 dark:bg-gray-950 py-10 px-2 md:px-8">
+      <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white text-center mb-10 tracking-tight">
+        Dashboard
+      </h1>
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Usuarios */}
+        <div className={cardClass}>
+          <div className="flex items-center gap-3">
+            <span className={`${iconCircle} border-purple-400 text-purple-600`}>
+              <FaUsers />
+            </span>
+            <div>
+              <div className="text-xs text-gray-500">Total Usuarios</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total_users}</div>
             </div>
           </div>
-        </div>
-
-        {/* Tarjeta de Artículos */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-          <div className="flex items-center">
-            <div className="p-3 rounded-full bg-green-100 dark:bg-green-900">
-              <FaNewspaper className="h-6 w-6 text-green-600 dark:text-green-300" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Artículos</p>
-              <p className="text-2xl font-semibold text-gray-800 dark:text-white">{stats.total_articles}</p>
-            </div>
+          <div className="flex items-center mt-4">
+            <span className={`text-sm font-semibold ${percent.users >= 0 ? 'text-green-500' : 'text-red-500'}`}>{percent.users >= 0 ? '+' : ''}{percent.users}%</span>
+            <span className="ml-2 text-xs text-gray-400">vs mes anterior</span>
+          </div>
+          <div className="h-10 mt-2">
+            <Bar data={{
+              labels: [''],
+              datasets: [{
+                data: [stats.total_users],
+                backgroundColor: 'rgba(139,92,246,0.7)',
+                borderRadius: 6,
+                barPercentage: 0.5,
+                categoryPercentage: 0.5,
+              }],
+            }} options={{ plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } }, responsive: true, maintainAspectRatio: false }} height={40} />
           </div>
         </div>
-
-        {/* Tarjeta de Estadísticas */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-          <div className="flex items-center">
-            <div className="p-3 rounded-full bg-yellow-100 dark:bg-yellow-900">
-              <FaChartBar className="h-6 w-6 text-yellow-600 dark:text-yellow-300" />
+        {/* Productos */}
+        <div className={cardClass}>
+          <div className="flex items-center gap-3">
+            <span className={`${iconCircle} border-blue-400 text-blue-600`}>
+              <FaBox />
+            </span>
+            <div>
+              <div className="text-xs text-gray-500">Total Productos</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total_products}</div>
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Estadísticas</p>
-              <p className="text-2xl font-semibold text-gray-800 dark:text-white">Ver más</p>
+          </div>
+          <div className="flex items-center mt-4">
+            <span className={`text-sm font-semibold ${percent.products >= 0 ? 'text-green-500' : 'text-red-500'}`}>{percent.products >= 0 ? '+' : ''}{percent.products}%</span>
+            <span className="ml-2 text-xs text-gray-400">vs mes anterior</span>
+          </div>
+          <div className="h-10 mt-2">
+            <Bar data={{
+              labels: [''],
+              datasets: [{
+                data: [stats.total_products],
+                backgroundColor: 'rgba(59,130,246,0.7)',
+                borderRadius: 6,
+                barPercentage: 0.5,
+                categoryPercentage: 0.5,
+              }],
+            }} options={{ plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } }, responsive: true, maintainAspectRatio: false }} height={40} />
+          </div>
+        </div>
+        {/* Artículos */}
+        <div className={cardClass}>
+          <div className="flex items-center gap-3">
+            <span className={`${iconCircle} border-green-400 text-green-600`}>
+              <FaNewspaper />
+            </span>
+            <div>
+              <div className="text-xs text-gray-500">Total Artículos</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total_articles}</div>
+            </div>
+          </div>
+          <div className="flex items-center mt-4">
+            <span className={`text-sm font-semibold ${percent.articles >= 0 ? 'text-green-500' : 'text-red-500'}`}>{percent.articles >= 0 ? '+' : ''}{percent.articles}%</span>
+            <span className="ml-2 text-xs text-gray-400">vs mes anterior</span>
+          </div>
+          <div className="h-10 mt-2">
+            <Bar data={{
+              labels: [''],
+              datasets: [{
+                data: [stats.total_articles],
+                backgroundColor: 'rgba(34,197,94,0.7)',
+                borderRadius: 6,
+                barPercentage: 0.5,
+                categoryPercentage: 0.5,
+              }],
+            }} options={{ plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } }, responsive: true, maintainAspectRatio: false }} height={40} />
+          </div>
+        </div>
+        {/* Resumen General (Donut) */}
+        <div className={cardClass + ' col-span-1 md:col-span-2 lg:col-span-1 flex flex-col items-center justify-center'}>
+          <div className="w-full flex flex-col items-center">
+            <div className="text-xs text-gray-500 mb-2">Distribución General</div>
+            <div className="w-32 h-32">
+              <Doughnut data={donutData} options={donutOptions} />
+            </div>
+            <div className="flex justify-center gap-4 mt-4 w-full">
+              <div className="flex flex-col items-center">
+                <span className="w-3 h-3 rounded-full bg-purple-500 inline-block mr-1"></span>
+                <span className="text-xs text-gray-500">Usuarios</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <span className="w-3 h-3 rounded-full bg-blue-500 inline-block mr-1"></span>
+                <span className="text-xs text-gray-500">Productos</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <span className="w-3 h-3 rounded-full bg-green-500 inline-block mr-1"></span>
+                <span className="text-xs text-gray-500">Artículos</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Acciones Rápidas */}
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Acciones Rápidas</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <button className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
-            Gestionar Usuarios
-          </button>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
-            Gestionar Productos
-          </button>
-          <button className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
-            Gestionar Artículos
-          </button>
+      {/* Gráfica de barras general */}
+      <div className="max-w-7xl mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-md p-8 mb-10">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Resumen de Totales</h2>
+        <div className="h-64">
+          <Bar data={barData} options={barOptions} />
         </div>
+      </div>
+
+      {/* Acciones Rápidas */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+        <a href="/admin/users" className="flex items-center gap-2 justify-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl py-4 px-6 shadow hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+          <FaUsers className="text-purple-500" />
+          <span className="font-medium text-gray-700 dark:text-gray-200">Gestionar Usuarios</span>
+        </a>
+        <a href="/admin/products" className="flex items-center gap-2 justify-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl py-4 px-6 shadow hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+          <FaBox className="text-blue-500" />
+          <span className="font-medium text-gray-700 dark:text-gray-200">Gestionar Productos</span>
+        </a>
+        <a href="/admin/articles" className="flex items-center gap-2 justify-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl py-4 px-6 shadow hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+          <FaNewspaper className="text-green-500" />
+          <span className="font-medium text-gray-700 dark:text-gray-200">Gestionar Artículos</span>
+        </a>
       </div>
     </div>
   );

@@ -152,10 +152,11 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
       // Guardar el rol del usuario
       if (data.role) {
         localStorage.setItem('userRole', data.role);
-        document.cookie = `userRole=${data.role}; path=/; max-age=86400`; // 24 horas
+        // Establecer cookie sin HttpOnly para que sea accesible desde JavaScript
+        document.cookie = `userRole=${data.role}; path=/; max-age=86400; SameSite=Strict`;
       } else {
         localStorage.setItem('userRole', 'user');
-        document.cookie = `userRole=user; path=/; max-age=86400`;
+        document.cookie = `userRole=user; path=/; max-age=86400; SameSite=Strict`;
       }
       // Biografía: si viene en la respuesta, guardar; si no, limpiar
       if (data.biografia !== undefined && data.biografia !== null) {

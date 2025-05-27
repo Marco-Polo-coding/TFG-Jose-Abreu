@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaTrash, FaEdit, FaPlus } from 'react-icons/fa';
+import LoadingSpinner from '../LoadingSpinner';
 
 const ArticleManagement = () => {
   const [articles, setArticles] = useState([]);
@@ -62,17 +63,51 @@ const ArticleManagement = () => {
     }
   };
 
-  const filteredArticles = articles.filter(article =>
-    article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    article.content?.toLowerCase().includes(searchTerm.toLowerCase())
+  // Normaliza cada artículo para que tenga la estructura de Firestore
+  const normalizeArticle = (article) => {
+    if (!article || typeof article !== 'object') return null;
+    // Si el artículo está anidado, desanídalo
+    const keys = Object.keys(article);
+    if (keys.length === 2 && keys[0] === 'id') {
+      const inner = article[keys[1]];
+      if (inner && typeof inner === 'object') {
+        article = { id: article.id, ...inner };
+      }
+    }
+    // Estructura exacta esperada
+    return {
+      id: typeof article.id === 'string' ? article.id : '',
+      titulo: typeof article.titulo === 'string' ? article.titulo : '',
+      descripcion: typeof article.descripcion === 'string' ? article.descripcion : '',
+      contenido: typeof article.contenido === 'string' ? article.contenido : '',
+      autor: typeof article.autor === 'string' ? article.autor : '',
+      autor_email: typeof article.autor_email === 'string' ? article.autor_email : '',
+      categoria: typeof article.categoria === 'string' ? article.categoria : '',
+      fecha_publicacion: typeof article.fecha_publicacion === 'string' ? article.fecha_publicacion : '',
+      imagen: typeof article.imagen === 'string' ? article.imagen : '',
+      likes: typeof article.likes === 'number' ? article.likes : 0,
+      ...article
+    };
+  };
+
+  // Solo artículos válidos y bien formateados
+  const normalizedArticles = articles
+    .map(normalizeArticle)
+    .filter(
+      (article) =>
+        article &&
+        typeof article.titulo === 'string' &&
+        article.titulo.length > 0 &&
+        typeof article.contenido === 'string'
+    );
+
+  const filteredArticles = normalizedArticles.filter(article =>
+    article.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    article.contenido.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (error) {
@@ -131,36 +166,38 @@ const ArticleManagement = () => {
                 <td className="px-6 py-4">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-10 w-10">
-                      {article.image ? (
+                      {article.imagen ? (
                         <img
                           className="h-10 w-10 rounded-full object-cover"
-                          src={article.image}
-                          alt={article.title}
+                          src={article.imagen}
+                          alt={article.titulo}
                         />
                       ) : (
                         <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                           <span className="text-gray-500 dark:text-gray-400">
-                            {article.title[0].toUpperCase()}
+                            {typeof article.titulo === 'string' && article.titulo.length > 0
+                              ? article.titulo[0].toUpperCase()
+                              : '?'}
                           </span>
                         </div>
                       )}
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        {article.title}
+                        {article.titulo}
                       </div>
                       <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {article.content?.substring(0, 50)}...
+                        {article.descripcion?.substring(0, 50)}...
                       </div>
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900 dark:text-white">{article.author}</div>
+                  <div className="text-sm text-gray-900 dark:text-white">{article.autor}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900 dark:text-white">
-                    {new Date(article.created_at).toLocaleDateString('es-ES')}
+                    {article.fecha_publicacion ? new Date(article.fecha_publicacion).toLocaleDateString('es-ES') : '-'}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

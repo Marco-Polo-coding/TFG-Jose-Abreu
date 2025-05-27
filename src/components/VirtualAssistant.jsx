@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FaRobot, FaTimes, FaPaperPlane, FaSpinner } from 'react-icons/fa';
+import LoadingSpinner from './LoadingSpinner';
 
 const VirtualAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -155,7 +156,7 @@ const VirtualAssistant = () => {
             {isLoading && (
               <div className="flex justify-start">
                 <div className="bg-gray-100 rounded-2xl p-3">
-                  <FaSpinner className="w-5 h-5 animate-spin text-purple-600" />
+                  <LoadingSpinner />
                 </div>
               </div>
             )}

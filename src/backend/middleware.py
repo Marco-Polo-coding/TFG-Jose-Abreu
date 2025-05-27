@@ -1,8 +1,13 @@
-from fastapi import HTTPException, Depends
+from fastapi import HTTPException, Depends, Header
 from firebase_admin import auth
 from firebase_config import db
 
-async def verify_admin(token: str = Depends(lambda x: x.headers.get("Authorization", "").split("Bearer ")[-1])):
+async def get_token_header(Authorization: str = Header(...)):
+    if not Authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Formato de token inválido")
+    return Authorization.split("Bearer ")[-1]
+
+async def verify_admin(token: str = Depends(get_token_header)):
     try:
         # Verificar el token de Firebase
         decoded_token = auth.verify_id_token(token)

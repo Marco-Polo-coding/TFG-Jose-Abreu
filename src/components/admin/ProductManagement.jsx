@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaTrash, FaEdit, FaPlus } from 'react-icons/fa';
+import LoadingSpinner from '../LoadingSpinner';
 
 const ProductManagement = () => {
   const [products, setProducts] = useState([]);
@@ -62,17 +63,51 @@ const ProductManagement = () => {
     }
   };
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  // Normaliza cada producto para que tenga la estructura de Firestore
+  const normalizeProduct = (product) => {
+    if (!product || typeof product !== 'object') return null;
+    // Si el producto está anidado, desanídalo
+    const keys = Object.keys(product);
+    if (keys.length === 2 && keys[0] === 'id') {
+      const inner = product[keys[1]];
+      if (inner && typeof inner === 'object') {
+        product = { id: product.id, ...inner };
+      }
+    }
+    // Estructura exacta esperada
+    return {
+      id: typeof product.id === 'string' ? product.id : '',
+      nombre: typeof product.nombre === 'string' ? product.nombre : '',
+      descripcion: typeof product.descripcion === 'string' ? product.descripcion : '',
+      precio: typeof product.precio === 'number' ? product.precio : 0,
+      stock: typeof product.stock === 'number' ? product.stock : 0,
+      imagen: typeof product.imagen === 'string' ? product.imagen : '',
+      categoria: typeof product.categoria === 'string' ? product.categoria : '',
+      estado: typeof product.estado === 'string' ? product.estado : '',
+      fecha_creacion: typeof product.fecha_creacion === 'string' ? product.fecha_creacion : '',
+      usuario_email: typeof product.usuario_email === 'string' ? product.usuario_email : '',
+      ...product
+    };
+  };
+
+  // Solo productos válidos y bien formateados
+  const normalizedProducts = products
+    .map(normalizeProduct)
+    .filter(
+      (product) =>
+        product &&
+        typeof product.nombre === 'string' &&
+        product.nombre.length > 0 &&
+        typeof product.descripcion === 'string'
+    );
+
+  const filteredProducts = normalizedProducts.filter(product =>
+    product.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (error) {
@@ -131,26 +166,28 @@ const ProductManagement = () => {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-10 w-10">
-                      {product.image ? (
+                      {product.imagen ? (
                         <img
                           className="h-10 w-10 rounded-full object-cover"
-                          src={product.image}
-                          alt={product.name}
+                          src={product.imagen}
+                          alt={product.nombre}
                         />
                       ) : (
                         <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                           <span className="text-gray-500 dark:text-gray-400">
-                            {product.name[0].toUpperCase()}
+                            {typeof product.nombre === 'string' && product.nombre.length > 0
+                              ? product.nombre[0].toUpperCase()
+                              : '?'}
                           </span>
                         </div>
                       )}
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        {product.name}
+                        {product.nombre}
                       </div>
                       <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {product.description?.substring(0, 50)}...
+                        {product.descripcion?.substring(0, 50)}...
                       </div>
                     </div>
                   </div>
@@ -160,7 +197,7 @@ const ProductManagement = () => {
                     {new Intl.NumberFormat('es-ES', {
                       style: 'currency',
                       currency: 'EUR'
-                    }).format(product.price)}
+                    }).format(product.precio)}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

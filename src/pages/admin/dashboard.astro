@@ -1,41 +1,34 @@
 ---
-import Layout from '../../layouts/Layout.astro';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminDashboard from '../../components/admin/AdminDashboard';
 
 // Indicar que esta página debe ser renderizada en el servidor
 export const prerender = false;
 
-// Verificar si el usuario es administrador usando cookies
+// Verificar si el usuario es administrador usando cookies o localStorage
 const userRole = Astro.cookies.get('userRole')?.value;
-if (!userRole || userRole !== 'admin') {
-  return Astro.redirect('/');
+const isAdmin = userRole === 'admin';
+
+// Si no hay cookie de admin, verificar localStorage en el cliente
+if (!isAdmin) {
+  // Agregar script para verificar localStorage
+  const script = `
+    const userRole = localStorage.getItem('userRole');
+    if (userRole !== 'admin') {
+      window.location.href = '/';
+    }
+  `;
 }
 ---
 
-<Layout title="Admin Dashboard">
-  <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-8">Panel de Administración</h1>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- Tarjeta de Usuarios -->
-      <div class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-xl font-semibold mb-4">Usuarios</h2>
-        <p class="text-gray-600 mb-4">Gestiona los usuarios del sistema</p>
-        <a href="/admin/users" class="text-purple-600 hover:text-purple-700">Ver usuarios →</a>
-      </div>
-
-      <!-- Tarjeta de Productos -->
-      <div class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-xl font-semibold mb-4">Productos</h2>
-        <p class="text-gray-600 mb-4">Administra los productos disponibles</p>
-        <a href="/admin/products" class="text-purple-600 hover:text-purple-700">Ver productos →</a>
-      </div>
-
-      <!-- Tarjeta de Artículos -->
-      <div class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-xl font-semibold mb-4">Artículos</h2>
-        <p class="text-gray-600 mb-4">Gestiona los artículos del blog</p>
-        <a href="/admin/articles" class="text-purple-600 hover:text-purple-700">Ver artículos →</a>
-      </div>
-    </div>
-  </div>
-</Layout> 
+<AdminLayout title="Dashboard">
+  <script>
+    {`
+      const userRole = localStorage.getItem('userRole');
+      if (userRole !== 'admin') {
+        window.location.href = '/';
+      }
+    `}
+  </script>
+  <AdminDashboard client:load />
+</AdminLayout> 
