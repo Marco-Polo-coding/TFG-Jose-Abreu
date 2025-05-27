@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Body
 from typing import List, Dict
 from firebase_config import db
 from middleware import verify_admin
@@ -95,5 +95,47 @@ async def delete_article(article_id: str, admin: Dict = Depends(verify_admin)):
         # Eliminar artículo
         article_ref.delete()
         return {"message": "Artículo eliminado correctamente"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/users")
+async def create_user(data: Dict = Body(...), admin: Dict = Depends(verify_admin)):
+    try:
+        uid = data.get("uid")
+        nombre = data.get("nombre")
+        email = data.get("email")
+        role = data.get("role", "user")
+        if not uid or not nombre or not email:
+            raise HTTPException(status_code=400, detail="Faltan campos obligatorios")
+        user_data = {
+            "uid": uid,
+            "nombre": nombre,
+            "email": email,
+            "role": role
+        }
+        db.collection("usuarios").document(uid).set(user_data)
+        return user_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put("/users/{user_id}")
+async def update_user(user_id: str, data: Dict = Body(...), admin: Dict = Depends(verify_admin)):
+    try:
+        user_ref = db.collection("usuarios").document(user_id)
+        if not user_ref.get().exists:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        update_data = {}
+        if "nombre" in data:
+            update_data["nombre"] = data["nombre"]
+        if "email" in data:
+            update_data["email"] = data["email"]
+        if "role" in data:
+            update_data["role"] = data["role"]
+        if not update_data:
+            raise HTTPException(status_code=400, detail="No hay datos para actualizar")
+        user_ref.update(update_data)
+        updated_user = user_ref.get().to_dict()
+        updated_user["uid"] = user_id
+        return updated_user
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) 

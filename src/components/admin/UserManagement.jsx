@@ -1,12 +1,120 @@
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaTrash, FaEdit } from 'react-icons/fa';
+import { FaSearch, FaTrash, FaEdit, FaPlus, FaSortUp, FaSortDown, FaExclamationTriangle } from 'react-icons/fa';
 import LoadingSpinner from '../LoadingSpinner';
+import ConfirmModal from '../ConfirmModal';
+
+// Generador simple de UID si no hay uuid
+function generateUID() {
+  return Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+}
+
+const UserFormModal = ({ isOpen, onClose, onSubmit, initialData, mode }) => {
+  const [form, setForm] = React.useState({
+    nombre: initialData?.nombre || '',
+    email: initialData?.email || '',
+    role: initialData?.role || 'user',
+    password: ''
+  });
+  const [error, setError] = React.useState('');
+  const foto = initialData?.foto || '';
+
+  React.useEffect(() => {
+    setForm({
+      nombre: initialData?.nombre || '',
+      email: initialData?.email || '',
+      role: initialData?.role || 'user',
+      password: ''
+    });
+    setError('');
+  }, [isOpen, initialData]);
+
+  const handleChange = e => {
+    const { name, value } = e.target;
+    setForm(f => ({ ...f, [name]: value }));
+  };
+
+  const handleSubmit = async e => {
+    e.preventDefault();
+    if (!form.nombre || !form.email || !form.role || (mode === 'add' && !form.password)) {
+      setError('Todos los campos son obligatorios');
+      return;
+    }
+    setError('');
+    await onSubmit(form);
+  };
+
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center animate-fade-in">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">{mode === 'edit' ? 'Editar usuario' : 'Añadir usuario'}</h2>
+        {mode === 'edit' && foto && (
+          <div className="flex justify-center mb-4">
+            <img src={foto} alt="Foto de perfil" className="w-20 h-20 rounded-full object-cover border-4 border-purple-200 shadow" />
+          </div>
+        )}
+        <form onSubmit={handleSubmit} className="space-y-4 text-left">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+            <input type="text" name="nombre" value={form.nombre} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input type="email" name="email" value={form.email} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
+            <select name="role" value={form.role} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+              <option value="user">Usuario</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </div>
+          {mode === 'add' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+              <input type="password" name="password" value={form.password} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" />
+            </div>
+          )}
+          {error && <div className="text-red-500 text-sm mb-2">{error}</div>}
+          <div className="flex justify-end gap-2 mt-4">
+            <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition">Cancelar</button>
+            <button type="submit" className="px-4 py-2 rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 transition">{mode === 'edit' ? 'Guardar' : 'Añadir'}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+const ErrorModal = ({ open, onClose, message }) => {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center animate-fade-in">
+        <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
+        <p className="text-gray-700 mb-6">{message}</p>
+        <button
+          onClick={onClose}
+          className="px-6 py-2 rounded-full bg-red-500 text-white font-semibold shadow hover:bg-red-600 transition"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [deleteId, setDeleteId] = useState(null);
+  const [editUser, setEditUser] = useState(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [errorModal, setErrorModal] = useState("");
+  const [sortBy, setSortBy] = useState('');
+  const [sortOrder, setSortOrder] = useState('asc');
 
   useEffect(() => {
     fetchUsers();
@@ -18,17 +126,14 @@ const UserManagement = () => {
       if (!token) {
         throw new Error('No hay token de autenticación');
       }
-
       const response = await fetch('http://127.0.0.1:8000/admin/users', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-
       if (!response.ok) {
         throw new Error('Error al obtener usuarios');
       }
-
       const data = await response.json();
       setUsers(data);
     } catch (err) {
@@ -39,34 +144,119 @@ const UserManagement = () => {
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
-      return;
-    }
+    setDeleteId(userId);
+  };
 
+  const confirmDeleteUser = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://127.0.0.1:8000/admin/users/${userId}`, {
+      const response = await fetch(`http://127.0.0.1:8000/admin/users/${deleteId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-
       if (!response.ok) {
         throw new Error('Error al eliminar usuario');
       }
-
-      // Actualizar la lista de usuarios
-      setUsers(users.filter(user => user.id !== userId));
+      setUsers(users.filter(user => user.id !== deleteId));
+      setDeleteId(null);
     } catch (err) {
       setError(err.message);
     }
   };
 
+  const handleEditUser = (user) => {
+    setEditUser(user);
+  };
+
+  const handleUpdateUser = async (form) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://127.0.0.1:8000/admin/users/${editUser.uid || editUser.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          nombre: form.nombre,
+          email: form.email,
+          role: form.role
+        })
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || 'Error al actualizar usuario');
+      }
+      const updated = await response.json();
+      setUsers(users.map(u => (u.uid || u.id) === (editUser.uid || editUser.id) ? updated : u));
+      setEditUser(null);
+    } catch (err) {
+      setErrorModal(err.message);
+    }
+  };
+
+  const handleAddUser = () => {
+    setShowAdd(true);
+  };
+
+  const handleCreateUser = async (form) => {
+    try {
+      const token = localStorage.getItem('token');
+      const uid = generateUID();
+      const response = await fetch('http://127.0.0.1:8000/admin/users', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          nombre: form.nombre,
+          email: form.email,
+          role: form.role,
+          password: form.password,
+          uid
+        })
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || 'Error al crear usuario');
+      }
+      const created = await response.json();
+      setUsers([...users, created]);
+      setShowAdd(false);
+    } catch (err) {
+      setErrorModal(err.message);
+    }
+  };
+
+  const handleSort = (field) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+  };
+
   const filteredUsers = users.filter(user =>
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    user.nombre?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  let sortedUsers = [...filteredUsers];
+  if (sortBy) {
+    sortedUsers.sort((a, b) => {
+      let aValue = a[sortBy] || '';
+      let bValue = b[sortBy] || '';
+      if (typeof aValue === 'string') aValue = aValue.toLowerCase();
+      if (typeof bValue === 'string') bValue = bValue.toLowerCase();
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
 
   if (loading) {
     return <LoadingSpinner />;
@@ -75,8 +265,16 @@ const UserManagement = () => {
   if (error) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          <p>{error}</p>
+        <div className="bg-red-100 border border-red-400 text-red-700 px-8 py-6 rounded-2xl shadow-lg flex flex-col items-center animate-fade-in">
+          <FaExclamationTriangle className="text-4xl text-red-400 mb-2" />
+          <p className="text-lg font-semibold mb-1">Error al obtener usuarios</p>
+          <span className="text-sm text-red-500">{error}</span>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-5 py-2 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600 transition"
+          >
+            Reintentar
+          </button>
         </div>
       </div>
     );
@@ -86,15 +284,20 @@ const UserManagement = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Gestión de Usuarios</h1>
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Buscar usuarios..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
-          />
-          <FaSearch className="absolute left-3 top-3 text-gray-400" />
+        <div className="flex gap-2 items-center">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Buscar usuarios..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
+            />
+            <FaSearch className="absolute left-3 top-3 text-gray-400" />
+          </div>
+          <button onClick={handleAddUser} className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+            <FaPlus /> Añadir
+          </button>
         </div>
       </div>
 
@@ -102,14 +305,21 @@ const UserManagement = () => {
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead className="bg-gray-50 dark:bg-gray-700">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Usuario
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none" onClick={() => handleSort('nombre')}>
+                USUARIO
+                {sortBy === 'nombre' && (sortOrder === 'asc' ? <FaSortUp className="inline ml-1" /> : <FaSortDown className="inline ml-1" />)}
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Email
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none" onClick={() => handleSort('email')}>
+                EMAIL
+                {sortBy === 'email' && (sortOrder === 'asc' ? <FaSortUp className="inline ml-1" /> : <FaSortDown className="inline ml-1" />)}
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Rol
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none" onClick={() => handleSort('role')}>
+                ROL
+                {sortBy === 'role' && (sortOrder === 'asc' ? <FaSortUp className="inline ml-1" /> : <FaSortDown className="inline ml-1" />)}
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none" onClick={() => handleSort('uid')}>
+                UID
+                {sortBy === 'uid' && (sortOrder === 'asc' ? <FaSortUp className="inline ml-1" /> : <FaSortDown className="inline ml-1" />)}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Acciones
@@ -117,20 +327,24 @@ const UserManagement = () => {
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            {filteredUsers.map((user) => (
-              <tr key={user.id}>
+            {sortedUsers.map((user) => (
+              <tr key={user.uid || user.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-10 w-10">
-                      <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
-                        <span className="text-purple-600 dark:text-purple-300 font-medium">
-                          {user.name?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
-                        </span>
-                      </div>
+                      {user.foto ? (
+                        <img src={user.foto} alt="Foto de perfil" className="h-10 w-10 rounded-full object-cover border-2 border-purple-200" />
+                      ) : (
+                        <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                          <span className="text-purple-600 dark:text-purple-300 font-medium">
+                            {user.nombre?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        {user.name || 'Sin nombre'}
+                        {user.nombre || 'Sin nombre'}
                       </div>
                     </div>
                   </div>
@@ -147,14 +361,17 @@ const UserManagement = () => {
                     {user.role || 'usuario'}
                   </span>
                 </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-xs text-gray-500">{user.uid || user.id}</div>
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button
-                    onClick={() => handleDeleteUser(user.id)}
+                    onClick={() => handleDeleteUser(user.uid || user.id)}
                     className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 mr-4"
                   >
                     <FaTrash />
                   </button>
-                  <button className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
+                  <button onClick={() => handleEditUser(user)} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
                     <FaEdit />
                   </button>
                 </td>
@@ -163,6 +380,28 @@ const UserManagement = () => {
           </tbody>
         </table>
       </div>
+      {/* Modales */}
+      <ConfirmModal
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={confirmDeleteUser}
+        title="¿Eliminar usuario?"
+        message="Esta acción no se puede deshacer. ¿Seguro que quieres eliminar este usuario?"
+      />
+      <UserFormModal
+        isOpen={!!editUser}
+        onClose={() => setEditUser(null)}
+        onSubmit={handleUpdateUser}
+        initialData={editUser}
+        mode="edit"
+      />
+      <UserFormModal
+        isOpen={showAdd}
+        onClose={() => setShowAdd(false)}
+        onSubmit={handleCreateUser}
+        mode="add"
+      />
+      <ErrorModal open={!!errorModal} onClose={() => setErrorModal("")} message={errorModal} />
     </div>
   );
 };
