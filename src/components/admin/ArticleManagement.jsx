@@ -11,6 +11,8 @@ const ArticleManagement = () => {
   const [sortBy, setSortBy] = useState('');
   const [sortOrder, setSortOrder] = useState(null);
   const [deleteArticle, setDeleteArticle] = useState(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [editArticle, setEditArticle] = useState(null);
 
   useEffect(() => {
     fetchArticles();
@@ -138,6 +140,31 @@ const ArticleManagement = () => {
     sortedArticles = filteredArticles;
   }
 
+  const handleAddArticle = () => setShowAdd(true);
+  const handleEditArticle = (article) => setEditArticle(article);
+
+  const handleCreateArticle = async (form) => {
+    try {
+      // Aquí irá la llamada al endpoint correcto (luego se ajusta)
+      // Por ahora solo actualiza el estado local para pruebas visuales
+      const fakeId = Math.random().toString(36).substring(2, 10);
+      setArticles([...articles, { ...form, id: fakeId }]);
+      setShowAdd(false);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleUpdateArticle = async (form) => {
+    try {
+      // Aquí irá la llamada al endpoint correcto (luego se ajusta)
+      setArticles(articles.map(a => a.id === editArticle.id ? { ...editArticle, ...form } : a));
+      setEditArticle(null);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -167,7 +194,7 @@ const ArticleManagement = () => {
             />
             <FaSearch className="absolute left-3 top-3 text-gray-400" />
           </div>
-          <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2">
+          <button onClick={handleAddArticle} className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2">
             <FaPlus />
             <span>Nuevo Artículo</span>
           </button>
@@ -248,7 +275,10 @@ const ArticleManagement = () => {
                   >
                     <FaTrash />
                   </button>
-                  <button className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
+                  <button
+                    onClick={() => handleEditArticle(article)}
+                    className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                  >
                     <FaEdit />
                   </button>
                 </td>
@@ -265,6 +295,93 @@ const ArticleManagement = () => {
         message="¿Estás seguro de que quieres eliminar este artículo? Esta acción no se puede deshacer."
         itemName={deleteArticle?.titulo}
       />
+      <ArticleFormModal
+        isOpen={!!editArticle}
+        onClose={() => setEditArticle(null)}
+        onSubmit={handleUpdateArticle}
+        initialData={editArticle}
+        mode="edit"
+      />
+      <ArticleFormModal
+        isOpen={showAdd}
+        onClose={() => setShowAdd(false)}
+        onSubmit={handleCreateArticle}
+        mode="add"
+      />
+    </div>
+  );
+};
+
+// Modal para añadir/editar artículo
+const ArticleFormModal = ({ isOpen, onClose, onSubmit, initialData, mode }) => {
+  const [form, setForm] = React.useState({
+    titulo: initialData?.titulo || '',
+    descripcion: initialData?.descripcion || '',
+    contenido: initialData?.contenido || '',
+    categoria: initialData?.categoria || '',
+  });
+  const [error, setError] = React.useState('');
+
+  React.useEffect(() => {
+    setForm({
+      titulo: initialData?.titulo || '',
+      descripcion: initialData?.descripcion || '',
+      contenido: initialData?.contenido || '',
+      categoria: initialData?.categoria || '',
+    });
+    setError('');
+  }, [isOpen, initialData]);
+
+  const handleChange = e => {
+    const { name, value } = e.target;
+    setForm(f => ({ ...f, [name]: value }));
+  };
+
+  const handleSubmit = async e => {
+    e.preventDefault();
+    if (!form.titulo || !form.descripcion || !form.contenido || !form.categoria) {
+      setError('Todos los campos son obligatorios');
+      return;
+    }
+    setError('');
+    await onSubmit(form);
+  };
+
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center animate-fade-in">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">{mode === 'edit' ? 'Editar artículo' : 'Añadir artículo'}</h2>
+        <form onSubmit={handleSubmit} className="space-y-4 text-left">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
+            <input type="text" name="titulo" value={form.titulo} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+            <textarea name="descripcion" value={form.descripcion} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Contenido</label>
+            <textarea name="contenido" value={form.contenido} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-[80px]" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+            <select name="categoria" value={form.categoria} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+              <option value="">Selecciona una categoría</option>
+              <option value="noticia">noticia</option>
+              <option value="reseña">reseña</option>
+              <option value="analisis">analisis</option>
+              <option value="guia">guia</option>
+            </select>
+          </div>
+          {error && <div className="text-red-500 text-sm mb-2">{error}</div>}
+          <div className="flex justify-end gap-2 mt-4">
+            <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition">Cancelar</button>
+            <button type="submit" className="px-4 py-2 rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 transition">{mode === 'edit' ? 'Guardar' : 'Añadir'}</button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
