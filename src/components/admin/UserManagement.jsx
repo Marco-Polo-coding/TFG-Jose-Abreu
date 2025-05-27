@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaSearch, FaTrash, FaEdit, FaPlus, FaSortUp, FaSortDown, FaExclamationTriangle } from 'react-icons/fa';
 import LoadingSpinner from '../LoadingSpinner';
 import ConfirmModal from '../ConfirmModal';
+import AdminDeleteModal from './AdminDeleteModal';
 
 // Generador simple de UID si no hay uuid
 function generateUID() {
@@ -109,7 +110,7 @@ const UserManagement = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [deleteId, setDeleteId] = useState(null);
+  const [deleteUser, setDeleteUser] = useState(null);
   const [editUser, setEditUser] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [errorModal, setErrorModal] = useState("");
@@ -143,14 +144,20 @@ const UserManagement = () => {
     }
   };
 
-  const handleDeleteUser = async (userId) => {
-    setDeleteId(userId);
+  const handleDeleteUser = (userIdOrUser) => {
+    if (typeof userIdOrUser === 'object') {
+      setDeleteUser(userIdOrUser);
+    } else {
+      const user = users.find(u => (u.uid || u.id) === userIdOrUser);
+      setDeleteUser(user);
+    }
   };
 
   const confirmDeleteUser = async () => {
+    if (!deleteUser) return;
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://127.0.0.1:8000/admin/users/${deleteId}`, {
+      const response = await fetch(`http://127.0.0.1:8000/admin/users/${deleteUser.uid || deleteUser.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -159,8 +166,8 @@ const UserManagement = () => {
       if (!response.ok) {
         throw new Error('Error al eliminar usuario');
       }
-      setUsers(users.filter(user => user.id !== deleteId));
-      setDeleteId(null);
+      setUsers(users.filter(user => (user.uid || user.id) !== (deleteUser.uid || deleteUser.id)));
+      setDeleteUser(null);
     } catch (err) {
       setError(err.message);
     }
@@ -394,7 +401,7 @@ const UserManagement = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button
-                    onClick={() => handleDeleteUser(user.uid || user.id)}
+                    onClick={() => handleDeleteUser(user)}
                     className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 mr-4"
                   >
                     <FaTrash />
@@ -409,12 +416,13 @@ const UserManagement = () => {
         </table>
       </div>
       {/* Modales */}
-      <ConfirmModal
-        isOpen={!!deleteId}
-        onClose={() => setDeleteId(null)}
+      <AdminDeleteModal
+        isOpen={!!deleteUser}
+        onClose={() => setDeleteUser(null)}
         onConfirm={confirmDeleteUser}
         title="¿Eliminar usuario?"
-        message="Esta acción no se puede deshacer. ¿Seguro que quieres eliminar este usuario?"
+        message="¿Estás seguro de que quieres eliminar este usuario? Esta acción no se puede deshacer."
+        itemName={deleteUser ? `${deleteUser.nombre} (${deleteUser.email})` : ''}
       />
       <UserFormModal
         isOpen={!!editUser}

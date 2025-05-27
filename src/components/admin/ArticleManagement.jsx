@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaTrash, FaEdit, FaPlus } from 'react-icons/fa';
+import { FaSearch, FaTrash, FaEdit, FaPlus, FaSortUp, FaSortDown } from 'react-icons/fa';
 import LoadingSpinner from '../LoadingSpinner';
+import AdminDeleteModal from './AdminDeleteModal';
 
 const ArticleManagement = () => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('');
+  const [sortOrder, setSortOrder] = useState(null);
+  const [deleteArticle, setDeleteArticle] = useState(null);
 
   useEffect(() => {
     fetchArticles();
@@ -38,26 +42,25 @@ const ArticleManagement = () => {
     }
   };
 
-  const handleDeleteArticle = async (articleId) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este artículo?')) {
-      return;
-    }
+  const handleDeleteArticle = (article) => {
+    setDeleteArticle(article);
+  };
 
+  const confirmDeleteArticle = async () => {
+    if (!deleteArticle) return;
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://127.0.0.1:8000/admin/articles/${articleId}`, {
+      const response = await fetch(`http://127.0.0.1:8000/admin/articles/${deleteArticle.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-
       if (!response.ok) {
         throw new Error('Error al eliminar artículo');
       }
-
-      // Actualizar la lista de artículos
-      setArticles(articles.filter(article => article.id !== articleId));
+      setArticles(articles.filter(article => article.id !== deleteArticle.id));
+      setDeleteArticle(null);
     } catch (err) {
       setError(err.message);
     }
@@ -106,6 +109,35 @@ const ArticleManagement = () => {
     article.contenido.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleSort = (field) => {
+    if (sortBy !== field) {
+      setSortBy(field);
+      setSortOrder('asc');
+    } else if (sortOrder === 'asc') {
+      setSortOrder('desc');
+    } else if (sortOrder === 'desc') {
+      setSortBy('');
+      setSortOrder(null);
+    } else {
+      setSortOrder('asc');
+    }
+  };
+
+  let sortedArticles = [...filteredArticles];
+  if (sortBy && sortOrder) {
+    sortedArticles.sort((a, b) => {
+      let aValue = a[sortBy] || '';
+      let bValue = b[sortBy] || '';
+      if (typeof aValue === 'string') aValue = aValue.toLowerCase();
+      if (typeof bValue === 'string') bValue = bValue.toLowerCase();
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+  } else {
+    sortedArticles = filteredArticles;
+  }
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -146,14 +178,23 @@ const ArticleManagement = () => {
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead className="bg-gray-50 dark:bg-gray-700">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none" onClick={() => handleSort('titulo')}>
                 Artículo
+                {sortBy === 'titulo' && sortOrder === 'asc' && <FaSortUp className="inline ml-1" />}
+                {sortBy === 'titulo' && sortOrder === 'desc' && <FaSortDown className="inline ml-1" />}
+                {sortBy !== 'titulo' && <FaSortUp className="inline ml-1 opacity-20" />}
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none" onClick={() => handleSort('autor')}>
                 Autor
+                {sortBy === 'autor' && sortOrder === 'asc' && <FaSortUp className="inline ml-1" />}
+                {sortBy === 'autor' && sortOrder === 'desc' && <FaSortDown className="inline ml-1" />}
+                {sortBy !== 'autor' && <FaSortUp className="inline ml-1 opacity-20" />}
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none" onClick={() => handleSort('fecha_publicacion')}>
                 Fecha
+                {sortBy === 'fecha_publicacion' && sortOrder === 'asc' && <FaSortUp className="inline ml-1" />}
+                {sortBy === 'fecha_publicacion' && sortOrder === 'desc' && <FaSortDown className="inline ml-1" />}
+                {sortBy !== 'fecha_publicacion' && <FaSortUp className="inline ml-1 opacity-20" />}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Acciones
@@ -161,7 +202,7 @@ const ArticleManagement = () => {
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            {filteredArticles.map((article) => (
+            {sortedArticles.map((article) => (
               <tr key={article.id}>
                 <td className="px-6 py-4">
                   <div className="flex items-center">
@@ -202,7 +243,7 @@ const ArticleManagement = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button
-                    onClick={() => handleDeleteArticle(article.id)}
+                    onClick={() => handleDeleteArticle(article)}
                     className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 mr-4"
                   >
                     <FaTrash />
@@ -216,6 +257,14 @@ const ArticleManagement = () => {
           </tbody>
         </table>
       </div>
+      <AdminDeleteModal
+        isOpen={!!deleteArticle}
+        onClose={() => setDeleteArticle(null)}
+        onConfirm={confirmDeleteArticle}
+        title="¿Eliminar artículo?"
+        message="¿Estás seguro de que quieres eliminar este artículo? Esta acción no se puede deshacer."
+        itemName={deleteArticle?.titulo}
+      />
     </div>
   );
 };
