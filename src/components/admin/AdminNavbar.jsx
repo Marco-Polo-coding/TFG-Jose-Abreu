@@ -27,7 +27,9 @@ const AdminNavbar = () => {
     <header className="w-full bg-white dark:bg-gray-900 shadow flex items-center justify-between px-4 md:px-8 py-4 border-b border-gray-100 dark:border-gray-800 z-10 relative">
       {/* Título centrado */}
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center">
-        <span className="text-2xl font-extrabold text-black dark:text-purple-400 tracking-tight">Panel de Administración</span>
+        <span className="bg-purple-500 text-white font-bold px-6 py-2 rounded-lg text-2xl shadow transition select-none">
+          Panel de Administración
+        </span>
       </div>
       {/* Buscador a la derecha */}
       <div className="flex-1 flex justify-end items-center gap-6">
