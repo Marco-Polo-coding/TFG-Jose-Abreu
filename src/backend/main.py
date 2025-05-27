@@ -34,6 +34,7 @@ class EstadisticasMensuales(BaseModel):
     total_usuarios: int
     total_productos: int
     total_articulos: int
+    total_compras: int
 
 @app.post("/admin/estadisticas-mensuales")
 async def guardar_estadisticas_mensuales():
@@ -42,6 +43,7 @@ async def guardar_estadisticas_mensuales():
         usuarios = len(list(db.collection("usuarios").stream()))
         productos = len(list(db.collection("productos").stream()))
         articulos = len(list(db.collection("articulos").stream()))
+        compras = len(list(db.collection("compras").stream()))
         
         # Crear documento con estadísticas
         fecha_actual = datetime.now().strftime("%Y-%m")
@@ -50,6 +52,7 @@ async def guardar_estadisticas_mensuales():
             "total_usuarios": usuarios,
             "total_productos": productos,
             "total_articulos": articulos,
+            "total_compras": compras,
             "fecha_creacion": datetime.now().isoformat()
         }
         

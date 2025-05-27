@@ -1,11 +1,12 @@
 import React from 'react';
-import { FaUsers, FaBox, FaNewspaper, FaChartBar, FaSignOutAlt } from 'react-icons/fa';
+import { FaUsers, FaBox, FaNewspaper, FaChartBar, FaSignOutAlt, FaShoppingCart } from 'react-icons/fa';
 import { useLocation } from 'react-router-dom';
 
 const navItems = [
   { href: '/admin/dashboard', icon: <FaChartBar />, label: 'Dashboard' },
   { href: '/admin/users', icon: <FaUsers />, label: 'Usuarios' },
   { href: '/admin/products', icon: <FaBox />, label: 'Productos' },
+  { href: '/admin/compras', icon: <FaShoppingCart />, label: 'Compras' },
   { href: '/admin/articles', icon: <FaNewspaper />, label: 'Artículos' },
 ];
 

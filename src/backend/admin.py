@@ -45,11 +45,24 @@ async def get_stats(admin: Dict = Depends(verify_admin)):
         # Contar artículos
         articles_count = len(list(db.collection("articulos").stream()))
         
+        # Contar compras
+        compras_count = len(list(db.collection("compras").stream()))
+        
         return {
             "total_users": users_count,
             "total_products": products_count,
-            "total_articles": articles_count
+            "total_articles": articles_count,
+            "total_compras": compras_count
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Listar todas las compras
+@router.get("/compras")
+async def get_all_compras(admin: Dict = Depends(verify_admin)):
+    try:
+        compras = db.collection("compras").stream()
+        return [{"id": compra.id, **compra.to_dict()} for compra in compras]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -95,6 +108,18 @@ async def delete_article(article_id: str, admin: Dict = Depends(verify_admin)):
         # Eliminar artículo
         article_ref.delete()
         return {"message": "Artículo eliminado correctamente"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Eliminar una compra
+@router.delete("/compras/{compra_id}")
+async def delete_compra(compra_id: str, admin: Dict = Depends(verify_admin)):
+    try:
+        compra_ref = db.collection("compras").document(compra_id)
+        if not compra_ref.get().exists:
+            raise HTTPException(status_code=404, detail="Compra no encontrada")
+        compra_ref.delete()
+        return {"message": "Compra eliminada correctamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

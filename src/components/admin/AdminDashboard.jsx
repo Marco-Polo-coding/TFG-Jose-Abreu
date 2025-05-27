@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaUsers, FaBox, FaNewspaper, FaChartPie, FaExclamationTriangle } from 'react-icons/fa';
+import { FaUsers, FaBox, FaNewspaper, FaChartPie, FaExclamationTriangle, FaShoppingCart } from 'react-icons/fa';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -23,7 +23,8 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState({
     total_users: 0,
     total_products: 0,
-    total_articles: 0
+    total_articles: 0,
+    total_compras: 0
   });
   const [monthlyStats, setMonthlyStats] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,6 +40,7 @@ const AdminDashboard = () => {
     users: 0,
     products: 0,
     articles: 0,
+    compras: 0,
   };
 
   useEffect(() => {
@@ -85,6 +87,7 @@ const AdminDashboard = () => {
           percent.users = calculatePercentChange(current.total_usuarios, previous.total_usuarios);
           percent.products = calculatePercentChange(current.total_productos, previous.total_productos);
           percent.articles = calculatePercentChange(current.total_articulos, previous.total_articulos);
+          percent.compras = calculatePercentChange(current.total_compras, previous.total_compras);
         }
 
       } catch (err) {
@@ -99,15 +102,16 @@ const AdminDashboard = () => {
 
   // Datos para la gráfica de barras
   const barData = {
-    labels: ['Usuarios', 'Productos', 'Artículos'],
+    labels: ['Usuarios', 'Productos', 'Artículos', 'Compras'],
     datasets: [
       {
         label: 'Cantidad',
-        data: [stats.total_users, stats.total_products, stats.total_articles],
+        data: [stats.total_users, stats.total_products, stats.total_articles, stats.total_compras],
         backgroundColor: [
           'rgba(139,92,246,0.7)', // purple-500
           'rgba(59,130,246,0.7)', // blue-500
           'rgba(34,197,94,0.7)',  // green-500
+          'rgba(251,191,36,0.7)', // yellow-400
         ],
         borderRadius: 8,
         maxBarThickness: 40,
@@ -129,14 +133,15 @@ const AdminDashboard = () => {
 
   // Datos para la gráfica tipo donut (distribución)
   const donutData = {
-    labels: ['Usuarios', 'Productos', 'Artículos'],
+    labels: ['Usuarios', 'Productos', 'Artículos', 'Compras'],
     datasets: [
       {
-        data: [stats.total_users, stats.total_products, stats.total_articles],
+        data: [stats.total_users, stats.total_products, stats.total_articles, stats.total_compras],
         backgroundColor: [
           'rgba(139,92,246,0.8)',
           'rgba(59,130,246,0.8)',
           'rgba(34,197,94,0.8)',
+          'rgba(251,191,36,0.8)',
         ],
         borderWidth: 2,
       },
@@ -178,7 +183,7 @@ const AdminDashboard = () => {
     <div className="min-h-[80vh] bg-gray-100 dark:bg-gray-950 py-8 px-2 md:px-8 animate-slide-up">
       <h1 className="text-4xl font-extrabold text-black-700 dark:text-purple-300 text-center mb-10 tracking-tight drop-shadow">Dashboard</h1>
       <div className="w-full flex justify-center">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Usuarios */}
           <div className={cardClass + ' animate-slide-up'}>
             <div className="flex items-center gap-3">
@@ -262,6 +267,34 @@ const AdminDashboard = () => {
                 datasets: [{
                   data: [stats.total_articles],
                   backgroundColor: 'rgba(34,197,94,0.7)',
+                  borderRadius: 6,
+                  barPercentage: 0.5,
+                  categoryPercentage: 0.5,
+                }],
+              }} options={{ plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } }, responsive: true, maintainAspectRatio: false }} height={40} />
+            </div>
+          </div>
+          {/* Compras */}
+          <div className={cardClass + ' animate-slide-up'}>
+            <div className="flex items-center gap-3">
+              <span className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-yellow-100 to-yellow-50 dark:from-yellow-900 dark:to-gray-900 border-2 border-yellow-400 text-yellow-600 dark:text-yellow-300 shadow text-2xl mb-3">
+                <FaShoppingCart />
+              </span>
+              <div>
+                <div className="text-xs text-gray-500">Total Compras</div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total_compras}</div>
+              </div>
+            </div>
+            <div className="flex items-center mt-4">
+              <span className={`text-sm font-semibold ${percent.compras >= 0 ? 'text-green-500' : 'text-red-500'}`}>{percent.compras >= 0 ? '+' : ''}{percent.compras.toFixed(1)}%</span>
+              <span className="ml-2 text-xs text-gray-400">vs mes anterior</span>
+            </div>
+            <div className="h-10 mt-2">
+              <Bar data={{
+                labels: [''],
+                datasets: [{
+                  data: [stats.total_compras],
+                  backgroundColor: 'rgba(251,191,36,0.7)',
                   borderRadius: 6,
                   barPercentage: 0.5,
                   categoryPercentage: 0.5,
