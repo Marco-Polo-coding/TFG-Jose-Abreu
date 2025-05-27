@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaEye, FaTrash, FaSearch, FaShoppingCart, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
+import { FaEye, FaTrash, FaSearch, FaShoppingCart, FaSort, FaSortUp, FaSortDown, FaExclamationTriangle } from 'react-icons/fa';
 import AdminCompraDetalleModal from '../AdminCompraDetalleModal';
 import AdminDeleteModal from './AdminDeleteModal';
 import LoadingSpinner from '../LoadingSpinner';
@@ -121,102 +121,114 @@ const CompraManagement = () => {
   const sortedCompras = getSortedCompras();
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-2 md:px-8 animate-fade-in">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-        <h2 className="text-3xl font-bold flex items-center gap-2 text-grey-800 dark:text-purple-300 mb-0">
-          Gestión de Compras
-        </h2>
-        <div className="relative w-full max-w-xs">
-          <input
-            type="text"
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-purple-400"
-            placeholder="Buscar compras..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-          <FaSearch className="absolute left-3 top-3 text-gray-400" />
+    error ? (
+      <div className="flex min-h-screen justify-center items-center w-full">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-6 rounded-xl shadow flex flex-col items-center max-w-md animate-fade-in">
+          <FaExclamationTriangle className="text-4xl text-red-400 mb-2" />
+          <p className="text-xl font-semibold mb-1">Error al obtener compras</p>
+          <span className="text-sm text-red-500 mb-4">{error}</span>
+          <button
+            onClick={fetchCompras}
+            className="px-6 py-2 rounded-lg bg-red-500 text-white font-semibold shadow hover:bg-red-600 transition"
+          >
+            Reintentar
+          </button>
         </div>
       </div>
-      {loading ? (
-        <LoadingSpinner />
-      ) : error ? (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl shadow mb-4">
-          {error}
+    ) : (
+      <div className="max-w-7xl mx-auto py-8 px-2 md:px-8 animate-fade-in">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+          <h2 className="text-3xl font-bold flex items-center gap-2 text-grey-800 dark:text-purple-300 mb-0">
+            Gestión de Compras
+          </h2>
+          <div className="relative w-full max-w-xs">
+            <input
+              type="text"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-purple-400"
+              placeholder="Buscar compras..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+            <FaSearch className="absolute left-3 top-3 text-gray-400" />
+          </div>
         </div>
-      ) : (
-        <div className="overflow-x-auto rounded-2xl shadow border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-            <thead className="bg-gray-50 dark:bg-gray-800">
-              <tr>
-                {columns.map(col => (
-                  <th
-                    key={col.key}
-                    className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase cursor-pointer select-none hover:text-purple-600 transition"
-                    onClick={() => handleSort(col.key)}
-                  >
-                    {col.label} {sortBy === col.key ? getSortIcon(sortOrder) : getSortIcon('')}
-                  </th>
-                ))}
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">ACCIONES</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-800">
-              {sortedCompras.length === 0 ? (
+        {loading ? (
+          <LoadingSpinner />
+        ) : (
+          <div className="overflow-x-auto rounded-2xl shadow border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+              <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <td colSpan={5} className="text-center py-8 text-gray-400">No hay compras.</td>
+                  {columns.map(col => (
+                    <th
+                      key={col.key}
+                      className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase cursor-pointer select-none hover:text-purple-600 transition"
+                      onClick={() => handleSort(col.key)}
+                    >
+                      {col.label} {sortBy === col.key ? getSortIcon(sortOrder) : getSortIcon('')}
+                    </th>
+                  ))}
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">ACCIONES</th>
                 </tr>
-              ) : (
-                sortedCompras.map(compra => (
-                  <tr key={compra.id} className="hover:bg-purple-50 dark:hover:bg-purple-900/20 transition">
-                    <td className="px-4 py-3 whitespace-nowrap">{compra.fecha ? new Date(compra.fecha).toLocaleString('es-ES') : '-'}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">{compra.total ? compra.total + '€' : '-'}</td>
-                    <td className="px-4 py-3 whitespace-nowrap capitalize">{compra.metodo_pago?.tipo || '-'}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      {Array.isArray(compra.productos) && compra.productos.length > 0 ? (
-                        <span className="text-xs text-gray-700 dark:text-gray-200">
-                          {compra.productos.map(p => p.nombre).join(', ')}
-                        </span>
-                      ) : '-'}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap flex gap-2 justify-center">
-                      <button
-                        className="p-2 rounded-full bg-purple-100 hover:bg-purple-200 text-purple-700 transition"
-                        title="Ver detalle"
-                        onClick={() => { setSelectedCompra(compra); setShowDetalle(true); }}
-                      >
-                        <FaEye />
-                      </button>
-                      <button
-                        className="p-2 rounded-full bg-red-100 hover:bg-red-200 text-red-600 transition"
-                        title="Eliminar compra"
-                        onClick={() => { setCompraToDelete(compra); setShowDelete(true); }}
-                      >
-                        <FaTrash />
-                      </button>
-                    </td>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-800">
+                {sortedCompras.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="text-center py-8 text-gray-400">No hay compras.</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-      {/* Modal detalle */}
-      <AdminCompraDetalleModal
-        isOpen={showDetalle}
-        onClose={() => setShowDetalle(false)}
-        compra={selectedCompra}
-      />
-      {/* Modal eliminar */}
-      <AdminDeleteModal
-        isOpen={showDelete}
-        onClose={() => setShowDelete(false)}
-        onConfirm={handleDelete}
-        title="¿Eliminar compra?"
-        message="¿Estás seguro de que quieres eliminar esta compra? Esta acción no se puede deshacer."
-        itemName={compraToDelete ? (compraToDelete.fecha ? new Date(compraToDelete.fecha).toLocaleString('es-ES') : compraToDelete.id) : ''}
-      />
-    </div>
+                ) : (
+                  sortedCompras.map(compra => (
+                    <tr key={compra.id} className="hover:bg-purple-50 dark:hover:bg-purple-900/20 transition">
+                      <td className="px-4 py-3 whitespace-nowrap">{compra.fecha ? new Date(compra.fecha).toLocaleString('es-ES') : '-'}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">{compra.total ? compra.total + '€' : '-'}</td>
+                      <td className="px-4 py-3 whitespace-nowrap capitalize">{compra.metodo_pago?.tipo || '-'}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        {Array.isArray(compra.productos) && compra.productos.length > 0 ? (
+                          <span className="text-xs text-gray-700 dark:text-gray-200">
+                            {compra.productos.map(p => p.nombre).join(', ')}
+                          </span>
+                        ) : '-'}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap flex gap-2 justify-center">
+                        <button
+                          className="p-2 rounded-full bg-purple-100 hover:bg-purple-200 text-purple-700 transition"
+                          title="Ver detalle"
+                          onClick={() => { setSelectedCompra(compra); setShowDetalle(true); }}
+                        >
+                          <FaEye />
+                        </button>
+                        <button
+                          className="p-2 rounded-full bg-red-100 hover:bg-red-200 text-red-600 transition"
+                          title="Eliminar compra"
+                          onClick={() => { setCompraToDelete(compra); setShowDelete(true); }}
+                        >
+                          <FaTrash />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {/* Modal detalle */}
+        <AdminCompraDetalleModal
+          isOpen={showDetalle}
+          onClose={() => setShowDetalle(false)}
+          compra={selectedCompra}
+        />
+        {/* Modal eliminar */}
+        <AdminDeleteModal
+          isOpen={showDelete}
+          onClose={() => setShowDelete(false)}
+          onConfirm={handleDelete}
+          title="¿Eliminar compra?"
+          message="¿Estás seguro de que quieres eliminar esta compra? Esta acción no se puede deshacer."
+          itemName={compraToDelete ? (compraToDelete.fecha ? new Date(compraToDelete.fecha).toLocaleString('es-ES') : compraToDelete.id) : ''}
+        />
+      </div>
+    )
   );
 };
 

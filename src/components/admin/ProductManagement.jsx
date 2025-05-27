@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaTrash, FaEdit, FaPlus, FaSort, FaSortUp, FaSortDown, FaExclamationTriangle } from 'react-icons/fa';
+import { FaSearch, FaTrash, FaEdit, FaPlus, FaSort, FaSortUp, FaSortDown, FaExclamationTriangle, FaEye } from 'react-icons/fa';
 import LoadingSpinner from '../LoadingSpinner';
 import AdminDeleteModal from './AdminDeleteModal';
+import ReactDOM from 'react-dom';
 
 const ProductManagement = () => {
   const [products, setProducts] = useState([]);
@@ -13,6 +14,7 @@ const ProductManagement = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
   const [deleteProduct, setDeleteProduct] = useState(null);
+  const [detalleProducto, setDetalleProducto] = useState(null);
 
   useEffect(() => {
     fetchProducts();
@@ -275,7 +277,7 @@ const ProductManagement = () => {
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {sortedProducts.map((product) => (
-              <tr key={product.id} className="hover:bg-purple-50 dark:hover:bg-purple-900/20 transition">
+              <tr key={product.id} className="hover:bg-purple-50 dark:hover:bg-purple-900/20 transition cursor-pointer" onClick={e => { if (!e.target.closest('.acciones-btn')) setDetalleProducto(product); }}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-10 w-10">
@@ -324,7 +326,14 @@ const ProductManagement = () => {
                     {product.stock} unidades
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2 acciones-btn">
+                  <button
+                    onClick={e => { e.stopPropagation(); setDetalleProducto(product); }}
+                    className="p-2 rounded-full bg-purple-100 hover:bg-purple-200 text-purple-700 transition"
+                    title="Ver detalle"
+                  >
+                    <FaEye />
+                  </button>
                   <button
                     onClick={() => handleDeleteProduct(product)}
                     className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 mr-4"
@@ -364,6 +373,11 @@ const ProductManagement = () => {
         title="¿Eliminar producto?"
         message="¿Estás seguro de que quieres eliminar este producto? Esta acción no se puede deshacer."
         itemName={deleteProduct?.nombre}
+      />
+      <AdminProductoDetalleModal
+        isOpen={!!detalleProducto}
+        onClose={() => setDetalleProducto(null)}
+        producto={detalleProducto}
       />
     </div>
   );
@@ -464,6 +478,40 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData, mode }) => {
         </form>
       </div>
     </div>
+  );
+};
+
+// Modal de detalle de producto
+const AdminProductoDetalleModal = ({ isOpen, onClose, producto }) => {
+  if (!isOpen || !producto) return null;
+  const inicial = producto.nombre?.[0]?.toUpperCase() || '?';
+  return ReactDOM.createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center animate-fade-in">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Detalle de Producto</h2>
+        <div className="flex flex-col items-center mb-4">
+          {producto.imagen ? (
+            <img src={producto.imagen} alt="Imagen del producto" className="w-24 h-24 rounded-full object-cover border-4 border-purple-200 shadow mb-2" />
+          ) : (
+            <div className="w-24 h-24 rounded-full bg-purple-100 flex items-center justify-center mb-2">
+              <span className="text-4xl text-purple-600 font-bold">{inicial}</span>
+            </div>
+          )}
+          <div className="text-lg font-semibold text-gray-800">{producto.nombre}</div>
+          <div className="text-sm text-gray-500">{producto.categoria}</div>
+        </div>
+        <div className="text-left space-y-2 mb-4">
+          <div><span className="font-semibold">Descripción:</span> {producto.descripcion}</div>
+          <div><span className="font-semibold">Precio:</span> {producto.precio} €</div>
+          <div><span className="font-semibold">Stock:</span> {producto.stock} unidades</div>
+          <div><span className="font-semibold">Estado:</span> {producto.estado}</div>
+          <div><span className="font-semibold">ID:</span> {producto.id}</div>
+          {producto.usuario_email && <div><span className="font-semibold">Usuario email:</span> {producto.usuario_email}</div>}
+        </div>
+        <button onClick={onClose} className="mt-4 px-6 py-2 rounded-full bg-purple-600 text-white font-semibold shadow hover:bg-purple-700 transition">Cerrar</button>
+      </div>
+    </div>,
+    document.body
   );
 };
 
