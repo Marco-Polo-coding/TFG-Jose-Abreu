@@ -219,8 +219,8 @@ const CompraManagement = () => {
         </div>
       </div>
     ) : (
-      <div className="max-w-7xl mx-auto py-8 px-2 md:px-8 animate-fade-in">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+      <div className="max-w-7xl mx-auto py-6 px-1 sm:px-2 md:px-8 animate-fade-in">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-2 sm:gap-4">
           <h2 className="text-3xl font-bold flex items-center gap-2 text-grey-800 dark:text-purple-300 mb-0">
             Gestión de Compras
           </h2>
@@ -239,19 +239,19 @@ const CompraManagement = () => {
           <LoadingSpinner />
         ) : (
           <div className="overflow-x-auto rounded-2xl shadow border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+            <table className="min-w-full text-xs sm:text-sm divide-y divide-gray-200 dark:divide-gray-800">
               <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
                   {columns.map(col => (
                     <th
                       key={col.key}
-                      className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase cursor-pointer select-none hover:text-purple-600 transition"
+                      className="px-2 py-2 sm:px-4 sm:py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase cursor-pointer select-none hover:text-purple-600 transition"
                       onClick={() => handleSort(col.key)}
                     >
                       {col.label} {sortBy === col.key ? getSortIcon(sortOrder) : getSortIcon('')}
                     </th>
                   ))}
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">ACCIONES</th>
+                  <th className="px-2 py-2 sm:px-4 sm:py-3 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">ACCIONES</th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-800">
@@ -264,7 +264,7 @@ const CompraManagement = () => {
                     const usuario = usuarios.find(u => (u.uid || u.id) === compra.uid);
                     return (
                       <tr key={compra.id} className="hover:bg-purple-50 dark:hover:bg-purple-900/20 transition cursor-pointer" onClick={e => { if (!e.target.closest('.acciones-btn')) { setCompraDetalle({ compra, usuario }); setShowNuevoDetalle(true); } }}>
-                        <td className="px-4 py-3 whitespace-nowrap">{
+                        <td className="px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">{
                           compra.fecha ? (() => {
                             const fechaObj = new Date(compra.fecha);
                             const fechaStr = fechaObj.toLocaleDateString('es-ES');
@@ -272,17 +272,17 @@ const CompraManagement = () => {
                             return `${fechaStr}, ${horaStr}`;
                           })() : '-'
                         }</td>
-                        <td className="px-4 py-3 whitespace-nowrap">{compra.total ? compra.total + '€' : '-'}</td>
-                        <td className="px-4 py-3 whitespace-nowrap capitalize">{compra.metodo_pago?.tipo || '-'}</td>
-                        <td className="px-4 py-3 whitespace-nowrap">
+                        <td className="px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">{compra.total ? compra.total + '€' : '-'}</td>
+                        <td className="px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap capitalize">{compra.metodo_pago?.tipo || '-'}</td>
+                        <td className="px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
                           {Array.isArray(compra.productos) && compra.productos.length > 0 ? (
                             <span className="text-xs text-gray-700 dark:text-gray-200">
                               {compra.productos.map(p => p.nombre).join(', ')}
                             </span>
                           ) : '-'}
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap">{usuario ? usuario.email : <span className="text-gray-400 italic">Desconocido</span>}</td>
-                        <td className="px-4 py-3 whitespace-nowrap flex gap-2 justify-center acciones-btn">
+                        <td className="px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">{usuario ? usuario.email : <span className="text-gray-400 italic">Desconocido</span>}</td>
+                        <td className="px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap flex gap-2 justify-center acciones-btn">
                           <button
                             className="p-2 rounded-full bg-purple-100 hover:bg-purple-200 text-purple-700 transition"
                             title="Ver detalle"

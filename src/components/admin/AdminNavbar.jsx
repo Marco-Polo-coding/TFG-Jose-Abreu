@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaBell, FaUserCircle, FaSearch } from 'react-icons/fa';
+import { FaBell, FaUserCircle, FaSearch, FaSignOutAlt } from 'react-icons/fa';
 
 const AdminNavbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -27,9 +27,12 @@ const AdminNavbar = () => {
     <header className="w-full bg-white dark:bg-gray-900 shadow flex items-center justify-between px-4 md:px-8 py-4 border-b border-gray-100 dark:border-gray-800 z-10 relative">
       {/* Título centrado */}
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center">
-        <span className="bg-purple-500 text-white font-bold px-6 py-2 rounded-lg text-2xl shadow transition select-none">
+        <span className="bg-purple-500 text-white font-bold px-3 py-1 md:px-6 md:py-2 rounded-lg text-lg md:text-2xl shadow transition select-none">
           Panel de Administración
         </span>
+        <button className="ml-3 flex md:hidden items-center justify-center w-10 h-10 rounded-full bg-purple-100 hover:bg-purple-200 text-purple-600 transition" aria-label="Abrir menú lateral">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+        </button>
       </div>
       {/* Buscador a la derecha */}
       <div className="flex-1 flex justify-end items-center gap-6">
@@ -49,19 +52,22 @@ const AdminNavbar = () => {
         {/* Menú de usuario */}
         <div className="relative" ref={menuRef}>
           <button
-            className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 border-2 border-purple-400 overflow-hidden focus:outline-none focus:ring-2 focus:ring-purple-400"
+            className="bg-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 group border-2 border-transparent hover:border-purple-300"
             onClick={() => setMenuOpen((open) => !open)}
             aria-label="Abrir menú de usuario"
           >
-            <FaUserCircle className="text-3xl text-purple-400" />
+            <span className="w-10 h-10 rounded-full flex items-center justify-center text-white text-2xl font-bold bg-gradient-to-br from-purple-500 to-indigo-500 border-4 border-white shadow">
+              <FaUserCircle className="text-3xl text-white drop-shadow" />
+            </span>
           </button>
           {menuOpen && (
-            <div className="absolute right-0 mt-2 w-44 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 animate-slide-up">
+            <div className="absolute right-0 mt-2 w-56 bg-white/90 backdrop-blur-lg border border-purple-100 rounded-2xl shadow-2xl z-50 animate-fade-in p-4">
               <button
                 onClick={handleLogout}
-                className="w-full text-left px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors font-medium"
+                className="w-full flex items-center gap-3 px-4 py-3 text-base text-red-600 hover:bg-red-100/60 rounded-lg transition-all duration-200 group font-semibold"
               >
-                Cerrar sesión
+                <FaSignOutAlt className="w-5 h-5 text-red-500 group-hover:text-red-700 transition-colors animate-pulse" />
+                <span>Cerrar sesión</span>
               </button>
             </div>
           )}

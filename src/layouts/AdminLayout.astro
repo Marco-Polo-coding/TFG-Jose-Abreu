@@ -17,9 +17,9 @@ const { title } = Astro.props;
   <body class="bg-gray-100 dark:bg-gray-900">
     <div class="min-h-screen flex flex-col">
       <AdminNavbar client:load />
-      <div class="flex flex-1">
+      <div class="flex flex-1 flex-col md:flex-row">
         <AdminSidebar client:load />
-        <main class="flex-1 p-4 md:p-8">
+        <main class="flex-1 p-2 sm:p-4 md:p-8">
           <slot />
         </main>
       </div>

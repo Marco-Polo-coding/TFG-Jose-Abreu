@@ -180,10 +180,10 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-[80vh] bg-gray-100 dark:bg-gray-950 py-8 px-2 md:px-8 animate-slide-up">
+    <div className="min-h-[80vh] bg-gray-100 dark:bg-gray-950 py-6 px-1 sm:px-2 md:px-8 animate-slide-up">
       {/* <h1 className="text-4xl font-extrabold text-black-700 dark:text-purple-300 text-center mb-10 tracking-tight drop-shadow">Dashboard</h1> */}
       <div className="w-full flex justify-center">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
           {/* Usuarios */}
           <div className={cardClass + ' animate-slide-up'}>
             <div className="flex items-center gap-3">
@@ -305,7 +305,7 @@ const AdminDashboard = () => {
         </div>
       </div>
       {/* Gráficas */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 overflow-x-auto">
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 border border-gray-100 dark:border-gray-800">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Distribución de Contenido</h2>
           <div className="h-80">

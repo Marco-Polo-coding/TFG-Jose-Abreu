@@ -24,7 +24,7 @@ const AdminSidebar = () => {
   }, []);
 
   return (
-    <aside className="h-screen w-64 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col justify-between shadow-lg">
+    <aside className="hidden md:flex h-screen w-64 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col justify-between shadow-lg">
       <div>
         <div className="flex items-center gap-2 px-6 py-6">
           <span className="bg-purple-500 text-white rounded-xl px-3 py-1 font-bold text-lg tracking-wide">Admin Sidebar</span>
