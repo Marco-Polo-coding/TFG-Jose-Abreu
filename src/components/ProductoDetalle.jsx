@@ -17,6 +17,7 @@ const ProductoDetalle = ({ id }) => {
   const [toastType, setToastType] = useState('success');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const addItem = useCartStore(state => state.addItem);
+  const [addingToCart, setAddingToCart] = useState(false);
 
   useEffect(() => {
     const fetchProducto = async () => {
@@ -61,8 +62,23 @@ const ProductoDetalle = ({ id }) => {
   };
 
   const handleAddToCart = () => {
-    addItem(producto);
-    showNotification('Producto añadido al carrito', 'success');
+    if (addingToCart) return;
+    setAddingToCart(true);
+    setTimeout(() => {
+      const cartItems = useCartStore.getState().items;
+      if (cartItems.some(item => item.id === producto.id)) {
+        showNotification('El producto ya está en el carrito', 'warning');
+        setAddingToCart(false);
+        return;
+      }
+      try {
+        addItem(producto);
+        showNotification('Producto añadido al carrito', 'success');
+      } catch (e) {
+        showNotification('Error al añadir al carrito', 'error');
+      }
+      setAddingToCart(false);
+    }, 1200);
   };
 
   const nextImage = () => {
@@ -172,6 +188,20 @@ const ProductoDetalle = ({ id }) => {
                   alt={producto.nombre}
                   className="w-full h-full object-cover rounded-xl"
                 />
+                <button
+                  onClick={handleSaveProduct}
+                  disabled={isSaving}
+                  className="absolute top-4 right-4 w-12 h-12 flex items-center justify-center rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 shadow-lg z-20 transition-colors hover:scale-110 text-white disabled:opacity-50 disabled:cursor-not-allowed group"
+                  title="Guardar producto"
+                  style={{ boxShadow: '0 4px 24px 0 rgba(80,0,180,0.15)' }}
+                >
+                  {isSaving ? (
+                    <FaSpinner className="w-6 h-6 text-white animate-spin" />
+                  ) : (
+                    <FaHeart className="w-6 h-6 text-white transition-colors duration-200 group-hover:text-yellow-200" />
+                  )}
+                </button>
+
                 {imagenes.length > 1 && (
                   <>
                     <button
@@ -230,18 +260,6 @@ const ProductoDetalle = ({ id }) => {
                     <p className="text-gray-500">Precio final</p>
                   </div>
                   <div className="flex items-center gap-4">
-                    <button 
-                      onClick={handleSaveProduct}
-                      disabled={isSaving}
-                      className="bg-gradient-to-r from-purple-600 to-indigo-600 p-3 rounded-full text-white hover:text-yellow-200 transition-colors hover:scale-110 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Guardar producto"
-                    >
-                      {isSaving ? (
-                        <FaSpinner className="w-6 h-6 animate-spin" />
-                      ) : (
-                        <FaHeart className="w-6 h-6" />
-                      )}
-                    </button>
                   </div>
                 </div>
 
@@ -256,6 +274,20 @@ const ProductoDetalle = ({ id }) => {
                     <li>• Producto en excelente estado</li>
                   </ul>
                 </div>
+              </div>
+              <div className="flex justify-center mt-8">
+                <button
+                  onClick={handleAddToCart}
+                  disabled={addingToCart}
+                  className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-3 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 flex items-center gap-2 font-semibold shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {addingToCart ? (
+                    <FaSpinner className="animate-spin -ml-1 mr-3 h-5 w-5" />
+                  ) : (
+                    <FaShoppingCart className="mr-2 h-5 w-5" />
+                  )}
+                  {addingToCart ? 'Añadiendo...' : 'Añadir al carrito'}
+                </button>
               </div>
             </div>
           </div>
