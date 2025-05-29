@@ -151,7 +151,7 @@ const MyProducts = () => {
               <div key={producto.id} className="bg-gradient-to-br from-white via-purple-50 to-indigo-100 rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-white/60">
                 <div className="aspect-w-16 aspect-h-9 mb-4">
                   <img 
-                    src={producto.imagen || 'https://cataas.com/cat'} 
+                    src={producto.imagenes[0] || 'https://cataas.com/cat'} 
                     alt={producto.nombre}
                     className="object-cover rounded-xl w-full h-48"
                   />

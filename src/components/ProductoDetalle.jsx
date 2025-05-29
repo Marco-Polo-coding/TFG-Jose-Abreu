@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaHeart, FaShoppingCart, FaBookmark, FaArrowLeft, FaHome, FaSpinner } from "react-icons/fa";
+import { FaHeart, FaShoppingCart, FaBookmark, FaArrowLeft, FaHome, FaSpinner, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import LoadingSpinner from './LoadingSpinner';
 import CartButton from './CartButton';
 import UserButton from './UserButton';
@@ -15,26 +15,28 @@ const ProductoDetalle = ({ id }) => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const addItem = useCartStore(state => state.addItem);
 
   useEffect(() => {
-    fetch("http://localhost:8000/productos")
-      .then((res) => res.json())
-      .then((data) => {
-        const productoEncontrado = data.find(p => p.id === id);
-        setProducto(productoEncontrado);
+    const fetchProducto = async () => {
+      try {
+        const response = await fetch(`http://localhost:8000/productos/${id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setProducto(data);
+        } else {
+          throw new Error('Error al cargar el producto');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
         setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error al obtener el producto:", error);
-        setLoading(false);
-      });
-  }, [id]);
+      }
+    };
 
-  const showNotification = (message, type = 'success') => {
-    setToastMessage(message);
-    setToastType(type);
-    setShowToast(true);
-  };
+    fetchProducto();
+  }, [id]);
 
   const handleSaveProduct = async () => {
     try {
@@ -58,21 +60,32 @@ const ProductoDetalle = ({ id }) => {
     }
   };
 
-  const addItem = useCartStore((state) => state.addItem);
+  const handleAddToCart = () => {
+    addItem(producto);
+    showNotification('Producto añadido al carrito', 'success');
+  };
 
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => 
+      prev === producto.imagenes.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => 
+      prev === 0 ? producto.imagenes.length - 1 : prev - 1
+    );
+  };
+
+  const showNotification = (message, type = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+  };
 
   if (loading) {
     return <LoadingSpinner />;
   }
-
-  const handleAddToCart = () => {
-    if (!producto || !producto.id) {
-      showNotification('Error: producto no válido', 'error');
-      return;
-    }
-    addItem(producto);
-    showNotification('Producto añadido al carrito', 'success');
-  };
 
   if (!producto) {
     return (
@@ -147,36 +160,50 @@ const ProductoDetalle = ({ id }) => {
       <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Imagen del Producto */}
-            <div className="bg-gradient-to-br from-white via-purple-50 to-indigo-100 rounded-2xl shadow-2xl overflow-hidden transition-all duration-500 hover:shadow-3xl hover:-translate-y-1 group animate-fade-in">
-              <img
-                src={producto.imagen}
-                alt={producto.nombre}
-                className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-              />
-              <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                {/* <button 
-                  onClick={() => {
-                    // Lógica para dar like
-                  }}
-                  className="bg-gradient-to-r from-purple-600 to-indigo-600 p-3 rounded-full text-white hover:text-red-200 transition-colors hover:scale-110 shadow-lg"
-                  title="Me gusta"
-                >
-                  <FaHeart className="w-6 h-6" />
-                </button> */}
-                <button 
-                  onClick={handleSaveProduct}
-                  disabled={isSaving}
-                  className="bg-gradient-to-r from-purple-600 to-indigo-600 p-3 rounded-full text-white hover:text-yellow-200 transition-colors hover:scale-110 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Guardar producto"
-                >
-                  {isSaving ? (
-                    <FaSpinner className="w-6 h-6 animate-spin" />
-                  ) : (
-                    <FaHeart className="w-6 h-6" />
-                    )}
-                </button>
+            {/* Galería de Imágenes */}
+            <div className="bg-white rounded-2xl shadow-2xl p-6 transition-all duration-500 hover:shadow-3xl hover:-translate-y-1 animate-fade-in">
+              <div className="relative aspect-w-4 aspect-h-3 mb-4">
+                <img
+                  src={producto.imagenes[currentImageIndex]}
+                  alt={producto.nombre}
+                  className="w-full h-full object-cover rounded-xl"
+                />
+                {producto.imagenes.length > 1 && (
+                  <>
+                    <button
+                      onClick={prevImage}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full hover:bg-white transition-colors"
+                    >
+                      <FaChevronLeft className="w-6 h-6 text-gray-700" />
+                    </button>
+                    <button
+                      onClick={nextImage}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full hover:bg-white transition-colors"
+                    >
+                      <FaChevronRight className="w-6 h-6 text-gray-700" />
+                    </button>
+                  </>
+                )}
               </div>
+              {producto.imagenes.length > 1 && (
+                <div className="grid grid-cols-4 gap-2">
+                  {producto.imagenes.map((imagen, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={`aspect-w-1 aspect-h-1 rounded-lg overflow-hidden ${
+                        currentImageIndex === index ? 'ring-2 ring-purple-500' : ''
+                      }`}
+                    >
+                      <img
+                        src={imagen}
+                        alt={`${producto.nombre} - Imagen ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Información del Producto */}
@@ -200,11 +227,16 @@ const ProductoDetalle = ({ id }) => {
                   </div>
                   <div className="flex items-center gap-4">
                     <button 
-                      onClick={handleAddToCart}
-                      className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-3 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105 flex items-center gap-2 font-semibold shadow-lg"
+                      onClick={handleSaveProduct}
+                      disabled={isSaving}
+                      className="bg-gradient-to-r from-purple-600 to-indigo-600 p-3 rounded-full text-white hover:text-yellow-200 transition-colors hover:scale-110 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Guardar producto"
                     >
-                      <FaShoppingCart className="w-5 h-5" />
-                      Añadir al Carrito
+                      {isSaving ? (
+                        <FaSpinner className="w-6 h-6 animate-spin" />
+                      ) : (
+                        <FaHeart className="w-6 h-6" />
+                      )}
                     </button>
                   </div>
                 </div>

@@ -103,24 +103,29 @@ async def crear_producto(
     stock: int = Form(...),
     categoria: str = Form(...),
     estado: str = Form(...),
-    imagen: Optional[UploadFile] = File(None),
+    imagenes: List[UploadFile] = File(None),
     usuario_email: Optional[str] = Form(None)
 ):
-
     try:
-        url_imagen = "https://cataas.com/cat"  # Imagen por defecto
-        if imagen is not None:
-            try:
-                if hasattr(imagen, 'filename') and imagen.filename and hasattr(imagen, 'content_type') and imagen.content_type and imagen.content_type.startswith("image/"):
-                    contents = await imagen.read()
-                    result = cloudinary.uploader.upload(
-                        contents,
-                        folder="product_images",
-                        resource_type="auto"
-                    )
-                    url_imagen = result["secure_url"]
-            except Exception as img_err:
-                print("Error subiendo imagen a Cloudinary:", img_err)
+        urls_imagenes = []
+        if imagenes:
+            for imagen in imagenes:
+                try:
+                    if hasattr(imagen, 'filename') and imagen.filename and hasattr(imagen, 'content_type') and imagen.content_type and imagen.content_type.startswith("image/"):
+                        contents = await imagen.read()
+                        result = cloudinary.uploader.upload(
+                            contents,
+                            folder="product_images",
+                            resource_type="auto"
+                        )
+                        urls_imagenes.append(result["secure_url"])
+                except Exception as img_err:
+                    print(f"Error subiendo imagen a Cloudinary: {img_err}")
+                    continue
+
+        # Si no se subió ninguna imagen, usar la imagen por defecto
+        if not urls_imagenes:
+            urls_imagenes = ["https://cataas.com/cat"]
 
         producto_ref = db.collection("productos").document()
         producto = {
@@ -131,7 +136,7 @@ async def crear_producto(
             "stock": stock,
             "categoria": categoria,
             "estado": estado,
-            "imagen": url_imagen,
+            "imagenes": urls_imagenes,
             "fecha_creacion": datetime.now().isoformat()
         }
         if usuario_email:
@@ -151,7 +156,7 @@ async def actualizar_producto(
     stock: Optional[int] = Form(None),
     categoria: Optional[str] = Form(None),
     estado: Optional[str] = Form(None),
-    imagen: Optional[UploadFile] = File(None)
+    imagenes: List[UploadFile] = File(None)
 ):
     try:
         producto_ref = db.collection("productos").document(producto_id)
@@ -167,14 +172,19 @@ async def actualizar_producto(
         if categoria is not None: data["categoria"] = categoria
         if estado is not None: data["estado"] = estado
 
-        if imagen is not None and hasattr(imagen, 'filename') and imagen.filename and hasattr(imagen, 'content_type') and imagen.content_type and imagen.content_type.startswith("image/"):
-            contents = await imagen.read()
-            result = cloudinary.uploader.upload(
-                contents,
-                folder="product_images",
-                resource_type="auto"
-            )
-            data["imagen"] = result["secure_url"]
+        if imagenes:
+            urls_imagenes = []
+            for imagen in imagenes:
+                if hasattr(imagen, 'filename') and imagen.filename and hasattr(imagen, 'content_type') and imagen.content_type and imagen.content_type.startswith("image/"):
+                    contents = await imagen.read()
+                    result = cloudinary.uploader.upload(
+                        contents,
+                        folder="product_images",
+                        resource_type="auto"
+                    )
+                    urls_imagenes.append(result["secure_url"])
+            if urls_imagenes:
+                data["imagenes"] = urls_imagenes
 
         if not data:
             raise HTTPException(status_code=400, detail="No se proporcionaron datos para actualizar")
@@ -199,13 +209,14 @@ async def eliminar_producto(producto_id: str):
         producto_data = producto.to_dict()
         print(f"\n[ELIMINACIÓN] Iniciando eliminación del producto: {producto_data.get('nombre', 'Sin nombre')} (ID: {producto_id})")
         
-        if producto_data.get("imagen") and "cloudinary.com" in producto_data["imagen"]:
+        if producto_data.get("imagenes") and "cloudinary.com" in producto_data["imagenes"][0]:
             try:
-                url_parts = producto_data["imagen"].split("/")
-                upload_index = url_parts.index("upload") + 1
-                public_id = "/".join(url_parts[upload_index + 1:]).split(".")[0]
-                result = cloudinary.uploader.destroy(public_id)
-                print(f"[ELIMINACIÓN] Resultado de eliminación de imagen: {result}")
+                for url in producto_data["imagenes"]:
+                    url_parts = url.split("/")
+                    upload_index = url_parts.index("upload") + 1
+                    public_id = "/".join(url_parts[upload_index + 1:]).split(".")[0]
+                    result = cloudinary.uploader.destroy(public_id)
+                    print(f"[ELIMINACIÓN] Resultado de eliminación de imagen: {result}")
             except Exception as img_err:
                 print(f"[ERROR] Error eliminando imagen de Cloudinary: {str(img_err)}")
         

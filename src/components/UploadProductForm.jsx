@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaImage, FaSpinner, FaPaperPlane } from 'react-icons/fa';
+import { FaImage, FaSpinner, FaPaperPlane, FaTrash } from 'react-icons/fa';
 import LoadingSpinner from './LoadingSpinner';
 
 const UploadProductForm = () => {
@@ -9,14 +9,15 @@ const UploadProductForm = () => {
     precio: '',
     categoria: 'juego',
     estado: 'nuevo',
-    imagen: null
+    imagenes: []
   });
   const [loading, setLoading] = useState(false);
-  const [previewImage, setPreviewImage] = useState(null);
+  const [previewImages, setPreviewImages] = useState([]);
   const [initialLoading, setInitialLoading] = useState(true);
 
   const NAME_LIMIT = 100;
   const DESC_LIMIT = 300;
+  const MAX_IMAGES = 5;
 
   useEffect(() => {
     // Simular una carga inicial rápida
@@ -39,18 +40,50 @@ const UploadProductForm = () => {
   };
 
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData(prev => ({
-        ...prev,
-        imagen: file
-      }));
+    const files = Array.from(e.target.files);
+    
+    // Verificar si excedemos el límite de imágenes
+    if (formData.imagenes.length + files.length > MAX_IMAGES) {
+      alert(`Solo puedes subir un máximo de ${MAX_IMAGES} imágenes`);
+      return;
+    }
+
+    // Verificar duplicados
+    const newFiles = files.filter(file => {
+      return !formData.imagenes.some(existingFile => 
+        existingFile.name === file.name && 
+        existingFile.size === file.size
+      );
+    });
+
+    if (newFiles.length !== files.length) {
+      alert('Se han ignorado algunas imágenes duplicadas');
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      imagenes: [...prev.imagenes, ...newFiles]
+    }));
+
+    // Crear previsualizaciones
+    newFiles.forEach(file => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPreviewImage(reader.result);
+        setPreviewImages(prev => [...prev, {
+          url: reader.result,
+          name: file.name
+        }]);
       };
       reader.readAsDataURL(file);
-    }
+    });
+  };
+
+  const removeImage = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      imagenes: prev.imagenes.filter((_, i) => i !== index)
+    }));
+    setPreviewImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
@@ -60,8 +93,10 @@ const UploadProductForm = () => {
     try {
       const formDataToSend = new FormData();
       Object.keys(formData).forEach(key => {
-        if (key === 'imagen') {
-          if (formData[key]) formDataToSend.append('imagen', formData[key]);
+        if (key === 'imagenes') {
+          formData.imagenes.forEach(imagen => {
+            formDataToSend.append('imagenes', imagen);
+          });
         } else if (key !== 'stock') {
           formDataToSend.append(key, formData[key]);
         }
@@ -196,55 +231,74 @@ const UploadProductForm = () => {
           </select>
         </div>
 
-        {/* Imagen */}
+        {/* Imágenes */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Imagen del producto
+            Imágenes del producto ({formData.imagenes.length}/{MAX_IMAGES})
           </label>
           <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-purple-500 transition-colors duration-300">
             <div className="space-y-1 text-center">
-              {previewImage ? (
-                <div className="relative">
-                  <img
-                    src={previewImage}
-                    alt="Preview"
-                    className="mx-auto h-48 w-auto rounded-lg object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPreviewImage(null);
-                      setFormData(prev => ({ ...prev, imagen: null }));
-                    }}
-                    className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors duration-300"
-                  >
-                    ×
-                  </button>
+              {previewImages.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {previewImages.map((preview, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={preview.url}
+                        alt={`Preview ${index + 1}`}
+                        className="h-32 w-full object-cover rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors duration-300 opacity-0 group-hover:opacity-100"
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
+                  ))}
+                  {formData.imagenes.length < MAX_IMAGES && (
+                    <div className="h-32 w-full border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+                      <label className="cursor-pointer">
+                        <FaImage className="mx-auto h-8 w-8 text-gray-400" />
+                        <span className="mt-2 block text-sm text-gray-600">
+                          Añadir más
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="sr-only"
+                          multiple
+                        />
+                      </label>
+                    </div>
+                  )}
                 </div>
               ) : (
-                <>
+                <div className="text-center">
                   <FaImage className="mx-auto h-12 w-12 text-gray-400" />
                   <div className="flex text-sm text-gray-600">
                     <label
-                      htmlFor="imagen"
+                      htmlFor="imagenes"
                       className="relative cursor-pointer bg-white rounded-md font-medium text-purple-600 hover:text-purple-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500"
                     >
-                      <span>Subir una imagen</span>
+                      <span>Subir imágenes</span>
                       <input
-                        id="imagen"
-                        name="imagen"
+                        id="imagenes"
+                        name="imagenes"
                         type="file"
                         accept="image/*"
                         onChange={handleImageChange}
                         className="sr-only"
+                        multiple
                       />
                     </label>
                     <p className="pl-1">o arrastra y suelta</p>
                   </div>
                   <p className="text-xs text-gray-500">
-                    PNG, JPG, GIF hasta 10MB
+                    PNG, JPG, GIF hasta 10MB (máximo {MAX_IMAGES} imágenes)
                   </p>
-                </>
+                </div>
               )}
             </div>
           </div>

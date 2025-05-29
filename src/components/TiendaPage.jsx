@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaHeart, FaBookmark, FaHome, FaShoppingCart, FaArrowRight, FaBoxOpen, FaSearch, FaSortAlphaDown, FaFilter, FaSpinner } from "react-icons/fa";
+import { FaHeart, FaBookmark, FaHome, FaShoppingCart, FaArrowRight, FaBoxOpen, FaSearch, FaSortAlphaDown, FaFilter, FaSpinner, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import CartButton from './CartButton';
 import UserButton from './UserButton';
 import LoadingSpinner from './LoadingSpinner';
@@ -20,6 +20,7 @@ const TiendaPage = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
+  const [imageIndexes, setImageIndexes] = useState({}); // { [productoId]: index }
 
   const addItem = useCartStore((state) => state.addItem);
 
@@ -95,6 +96,20 @@ const TiendaPage = () => {
     } finally {
       setIsSaving(prev => ({ ...prev, [productoId]: false }));
     }
+  };
+
+  // Funciones para el slider
+  const handlePrevImage = (productoId, total) => {
+    setImageIndexes(prev => ({
+      ...prev,
+      [productoId]: prev[productoId] > 0 ? prev[productoId] - 1 : total - 1
+    }));
+  };
+  const handleNextImage = (productoId, total) => {
+    setImageIndexes(prev => ({
+      ...prev,
+      [productoId]: prev[productoId] < total - 1 ? prev[productoId] + 1 : 0
+    }));
   };
 
   if (loading) {
@@ -233,66 +248,91 @@ const TiendaPage = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-              {productosFiltrados.map((producto) => (
-                <div
-                  key={producto.id}
-                  className="bg-gradient-to-br from-white via-purple-50 to-indigo-100 rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-white/60"
-                >
-                  <div className="relative h-48 bg-gray-200 group">
-                    <img
-                      src={producto.imagen}
-                      alt={producto.nombre}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <button
-                        onClick={() => handleSaveProduct(producto.id)}
-                        disabled={isSaving[producto.id]}
-                        className="bg-white/90 p-3 rounded-full text-gray-500 hover:text-red-500 transition-colors hover:scale-110 shadow disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Guardar producto"
-                      >
-                        {isSaving[producto.id] ? (
-                          <FaSpinner className="w-5 h-5 animate-spin" />
-                        ) : (
-                          <FaHeart className="w-5 h-5" />
-                        )}
-                      </button>
+              {productosFiltrados.map((producto) => {
+                const imagenes = producto.imagenes && producto.imagenes.length > 0 ? producto.imagenes : ['https://cataas.com/cat'];
+                const currentIndex = imageIndexes[producto.id] || 0;
+                return (
+                  <div
+                    key={producto.id}
+                    className="bg-gradient-to-br from-white via-purple-50 to-indigo-100 rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-white/60"
+                  >
+                    <div className="relative h-48 bg-gray-200 group flex items-center justify-center">
+                      <img
+                        src={imagenes[currentIndex]}
+                        alt={producto.nombre}
+                        className="w-full h-full object-cover"
+                      />
+                      {imagenes.length > 1 && (
+                        <>
+                          <button
+                            onClick={() => handlePrevImage(producto.id, imagenes.length)}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 p-1 rounded-full hover:bg-white transition-colors z-10"
+                          >
+                            <FaChevronLeft className="w-5 h-5 text-gray-700" />
+                          </button>
+                          <button
+                            onClick={() => handleNextImage(producto.id, imagenes.length)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 p-1 rounded-full hover:bg-white transition-colors z-10"
+                          >
+                            <FaChevronRight className="w-5 h-5 text-gray-700" />
+                          </button>
+                          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                            {imagenes.map((_, idx) => (
+                              <span key={idx} className={`w-2 h-2 rounded-full ${currentIndex === idx ? 'bg-purple-600' : 'bg-gray-300'} inline-block`}></span>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                      <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <button
+                          onClick={() => handleSaveProduct(producto.id)}
+                          disabled={isSaving[producto.id]}
+                          className="bg-white/90 p-3 rounded-full text-gray-500 hover:text-red-500 transition-colors hover:scale-110 shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Guardar producto"
+                        >
+                          {isSaving[producto.id] ? (
+                            <FaSpinner className="w-5 h-5 animate-spin" />
+                          ) : (
+                            <FaHeart className="w-5 h-5" />
+                          )}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold mb-2 text-gray-900 truncate" title={producto.nombre}>{producto.nombre}</h3>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="inline-block bg-purple-100 text-purple-700 text-xs font-semibold px-3 py-1 rounded-full">{producto.categoria || 'Sin categoría'}</span>
-                    </div>
-                    <p className="text-gray-600 mb-4 line-clamp-2">
-                      {producto.descripcion}
-                    </p>
-                    <div className="flex items-center justify-between mb-4">
-                      <p className="text-2xl font-extrabold text-purple-700">
-                        {producto.precio}€
+                    <div className="p-6">
+                      <h3 className="text-xl font-bold mb-2 text-gray-900 truncate" title={producto.nombre}>{producto.nombre}</h3>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="inline-block bg-purple-100 text-purple-700 text-xs font-semibold px-3 py-1 rounded-full">{producto.categoria || 'Sin categoría'}</span>
+                      </div>
+                      <p className="text-gray-600 mb-4 line-clamp-2">
+                        {producto.descripcion}
                       </p>
-                    </div>
-                    <div className="flex gap-4">
-                      <a
-                        href={`/producto/${producto.id}`}
-                        className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-center py-3 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 font-semibold shadow"
-                      >
-                        Ver más <FaArrowRight className="w-4 h-4" />
-                      </a>
-                      <button
-                        onClick={() => {
-                          addItem(producto);
-                          showNotification('Producto añadido al carrito', 'success');
-                        }}
-                        className="bg-purple-100 text-purple-600 p-3 rounded-full hover:bg-purple-200 transition-all duration-300 hover:scale-110 shadow"
-                        title="Añadir al carrito"
-                      >
-                        <FaShoppingCart className="w-5 h-5" />
-                      </button>
+                      <div className="flex items-center justify-between mb-4">
+                        <p className="text-2xl font-extrabold text-purple-700">
+                          {producto.precio}€
+                        </p>
+                      </div>
+                      <div className="flex gap-4">
+                        <a
+                          href={`/producto/${producto.id}`}
+                          className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-center py-3 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 font-semibold shadow"
+                        >
+                          Ver más <FaArrowRight className="w-4 h-4" />
+                        </a>
+                        <button
+                          onClick={() => {
+                            addItem(producto);
+                            showNotification('Producto añadido al carrito', 'success');
+                          }}
+                          className="bg-purple-100 text-purple-600 p-3 rounded-full hover:bg-purple-200 transition-all duration-300 hover:scale-110 shadow"
+                          title="Añadir al carrito"
+                        >
+                          <FaShoppingCart className="w-5 h-5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

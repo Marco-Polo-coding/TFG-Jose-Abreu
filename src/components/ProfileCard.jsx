@@ -264,7 +264,11 @@ const ProfileCard = () => {
               <div className="grid grid-cols-1 gap-4 w-full">
                 {ventas.slice(0, 3).map(producto => (
                   <div key={producto.id} className="flex items-center gap-4 bg-white/80 rounded-xl shadow p-4 border border-white/60 hover:shadow-lg transition-all">
-                    <img src={producto.imagen && producto.imagen !== '/default-product.jpg' ? producto.imagen : 'https://cataas.com/cat'} alt={producto.nombre} className="w-16 h-16 object-cover rounded-lg border border-purple-100" />
+                    <img 
+                      src={producto.imagenes[0] && producto.imagenes[0] !== '/default-product.jpg' ? producto.imagenes[0] : 'https://cataas.com/cat'} 
+                      alt={producto.nombre} 
+                      className="w-16 h-16 object-cover rounded-lg border border-purple-100" 
+                    />
                     <div className="flex-1">
                       <h4 className="text-lg font-semibold text-gray-900 mb-1 truncate max-w-[180px]">{producto.nombre}</h4>
                       <p className="text-xs text-gray-500 mb-1">{new Date(producto.fecha_publicacion).toLocaleDateString()}</p>
