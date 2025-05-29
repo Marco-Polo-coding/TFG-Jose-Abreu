@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import useCartStore from '../store/cartStore';
-import { FaCreditCard, FaPaypal, FaMoneyBillWave, FaCheckCircle } from 'react-icons/fa';
+import { FaCreditCard, FaPaypal, FaMoneyBillWave, FaCheckCircle, FaLock, FaSignInAlt } from 'react-icons/fa';
 import LoadingSpinner from './LoadingSpinner';
 import { getMetodosPago, saveMetodoPago, deleteMetodoPago, registrarCompra } from '../utils/api';
+import useAuthUser from '../hooks/useAuthUser';
 
 const paymentMethods = [
   { value: 'tarjeta', label: 'Tarjeta', icon: <FaCreditCard className="inline mr-2" /> },
@@ -31,6 +32,7 @@ function validateForm(tipo, datos) {
 
 function CheckoutComponent() {
   const { items, clearCart } = useCartStore();
+  const uid = useAuthUser();
   const [selectedMethod, setSelectedMethod] = useState('tarjeta');
   const [form, setForm] = useState(initialForms['tarjeta']);
   const [loading, setLoading] = useState(false);
@@ -39,7 +41,6 @@ function CheckoutComponent() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
-  const uid = typeof window !== 'undefined' ? localStorage.getItem('uid') : null;
   const [metodosGuardados, setMetodosGuardados] = useState({});
 
   const total = items.reduce((sum, item) => sum + (item.precio * item.quantity), 0);
@@ -132,9 +133,35 @@ function CheckoutComponent() {
 
   if (!uid) {
     return (
-      <div className="flex flex-col items-center justify-center py-16">
-        <p className="text-2xl font-bold text-red-600 mb-4">Debes iniciar sesión para poder realizar una compra.</p>
-        <a href="/tienda" className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-full font-semibold shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 mt-4">Volver a la tienda</a>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center transform transition-all duration-300 hover:scale-105">
+          <div className="mb-6 flex justify-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center">
+              <FaLock className="w-10 h-10 text-purple-600" />
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Acceso Requerido
+          </h2>
+          <p className="text-gray-600 mb-8">
+            Para continuar con tu compra, necesitas iniciar sesión o crear una cuenta.
+          </p>
+          <div className="space-y-4">
+            <a
+              href="/tienda"
+              className="block w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-full font-semibold shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 flex items-center justify-center gap-2"
+            >
+              <FaSignInAlt className="w-5 h-5" />
+              Iniciar Sesión
+            </a>
+            <a
+              href="/tienda"
+              className="block w-full bg-white border-2 border-purple-600 text-purple-600 px-6 py-3 rounded-full font-semibold hover:bg-purple-50 transition-all duration-300"
+            >
+              Volver a la tienda
+            </a>
+          </div>
+        </div>
       </div>
     );
   }
@@ -160,7 +187,20 @@ function CheckoutComponent() {
   }
 
   if (items.length === 0) {
-    return <p className="text-center text-gray-500">Tu carrito está vacío.</p>;
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center bg-white rounded-2xl shadow-xl mx-auto mt-12 max-w-xl p-10 animate-fade-in">
+        <div className="mb-6 flex justify-center">
+          <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 text-purple-400">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3.75h1.386c.51 0 .96.343 1.09.836l.272 1.017m0 0L6.75 9.75m-1.952-4.147h15.404c.86 0 1.47.86 1.21 1.68l-2.1 6.3a1.125 1.125 0 01-1.07.77H7.01m0 0L5.25 4.5m1.76 5.25l1.5 6.75m0 0a2.25 2.25 0 104.24 0m-4.24 0h4.24" />
+            </svg>
+          </div>
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Tu carrito está vacío</h2>
+        <p className="text-gray-600 mb-6">Añade productos para poder realizar una compra.</p>
+        <a href="/tienda" className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-full font-semibold shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-300">Ir a la tienda</a>
+      </div>
+    );
   }
 
   return (

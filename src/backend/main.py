@@ -1,10 +1,10 @@
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import FastAPI, HTTPException, Body, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Form, File, UploadFile
 from firebase_config import db
 from auth import router as auth_router
 from admin import router as admin_router
-from firebase_admin import firestore
+from firebase_admin import firestore, auth
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from cloudinary_config import *  # Importar la configuración
@@ -683,8 +683,7 @@ class MetodoPago(BaseModel):
     tipo: str
     datos: dict
 
-class Compra(BaseModel):
-    uid: str
+class CompraSinUid(BaseModel):
     productos: list
     total: float
     metodo_pago: dict
@@ -733,10 +732,25 @@ async def obtener_metodos_pago(uid: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/compras")
-async def guardar_compra(compra: Compra):
+async def get_token_header(Authorization: str = Header(...)):
+    if not Authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Formato de token inválido")
+    return Authorization.split("Bearer ")[-1]
+
+async def verify_user(token: str = Depends(get_token_header)):
     try:
-        db.collection("compras").add(compra.dict())
+        decoded_token = auth.verify_id_token(token)
+        uid = decoded_token['uid']
+        return uid
+    except Exception:
+        raise HTTPException(status_code=401, detail="Token inválido o expirado")
+
+@app.post("/compras")
+async def guardar_compra(compra: CompraSinUid, uid: str = Depends(verify_user)):
+    try:
+        compra_dict = compra.dict()
+        compra_dict['uid'] = uid
+        db.collection("compras").add(compra_dict)
         return {"message": "Compra guardada correctamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

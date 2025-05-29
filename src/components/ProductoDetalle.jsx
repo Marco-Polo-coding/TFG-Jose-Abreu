@@ -63,6 +63,12 @@ const ProductoDetalle = ({ id }) => {
 
   const handleAddToCart = () => {
     if (addingToCart) return;
+    const userEmail = localStorage.getItem('userEmail');
+    const uid = localStorage.getItem('uid');
+    if (!userEmail && !uid) {
+      showNotification('Debes iniciar sesión para añadir productos al carrito', 'error');
+      return;
+    }
     setAddingToCart(true);
     setTimeout(() => {
       const cartItems = useCartStore.getState().items;

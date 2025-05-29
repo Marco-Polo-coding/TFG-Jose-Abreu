@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaTimes, FaUser, FaLock, FaEnvelope, FaSignOutAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
 import Toast from './Toast';
 import { GoogleLogin } from '@react-oauth/google';
+import useCartStore from '../store/cartStore';
 
 const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
   const [isLoginMode, setIsLoginMode] = useState(mode === 'login');
@@ -24,6 +25,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showResetPassword1, setShowResetPassword1] = useState(false);
   const [showResetPassword2, setShowResetPassword2] = useState(false);
+  const clearCartOnLogout = useCartStore(state => state.clearCartOnLogout);
 
   useEffect(() => {
     setIsLoginMode(mode === 'login');
@@ -72,23 +74,14 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userName');
+    localStorage.removeItem('userPhoto');
     localStorage.removeItem('uid');
-    localStorage.removeItem('userBio');
-    // Eliminar datos recordados al cerrar sesión
-    localStorage.removeItem('rememberedEmail');
-    localStorage.removeItem('rememberedPassword');
-    // Eliminar el rol del usuario
-    localStorage.removeItem('userRole');
-    setIsAuthenticated(false);
-    // Eliminar la cookie de rol
     document.cookie = 'userRole=; path=/; max-age=0';
-    showNotification('Has cerrado sesión correctamente', 'info');
-    onClose();
-    setTimeout(() => {
-      window.location.href = '/';
-    }, 1500);
+    clearCartOnLogout();
+    window.location.href = '/';
   };
 
   const handleSubmit = async (e) => {

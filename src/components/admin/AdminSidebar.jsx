@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FaUsers, FaBox, FaNewspaper, FaChartBar, FaSignOutAlt, FaShoppingCart } from 'react-icons/fa';
+import useCartStore from '../../store/cartStore';
 
 const navItems = [
   { href: '/admin/dashboard', icon: <FaChartBar />, label: 'Dashboard' },
@@ -10,6 +11,7 @@ const navItems = [
 ];
 
 const handleLogout = () => {
+  const clearCartOnLogout = useCartStore.getState().clearCartOnLogout;
   localStorage.removeItem('token');
   localStorage.removeItem('userRole');
   localStorage.removeItem('userEmail');
@@ -17,6 +19,7 @@ const handleLogout = () => {
   localStorage.removeItem('userPhoto');
   localStorage.removeItem('uid');
   document.cookie = 'userRole=; path=/; max-age=0';
+  clearCartOnLogout();
   window.location.href = '/';
 };
 
