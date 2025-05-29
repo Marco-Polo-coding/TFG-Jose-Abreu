@@ -3,7 +3,7 @@ import { FaArrowRight, FaBookmark, FaTrash, FaSpinner } from 'react-icons/fa';
 import axios from 'axios';
 import LoadingSpinner from './LoadingSpinner';
 import useLoadingState from '../hooks/useLoadingState';
-import Notification from './Notification';
+import Toast from './Toast';
 
 // Datos de ejemplo (reemplazar por fetch a la API en el futuro)
 const savedArticles = [];
@@ -16,7 +16,9 @@ const SavedArticlesList = () => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useLoadingState();
   const [error, setError] = useState(null);
-  const [notification, setNotification] = useState(null);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success');
   const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
@@ -47,24 +49,21 @@ const SavedArticlesList = () => {
       setDeletingId(articleId);
       const userEmail = localStorage.getItem('userEmail');
       if (!userEmail) {
-        setNotification({
-          type: 'error',
-          message: 'No se ha encontrado el email del usuario'
-        });
+        setToastMessage('No se ha encontrado el email del usuario');
+        setToastType('error');
+        setShowToast(true);
         return;
       }
 
       await axios.delete(`http://localhost:8000/usuarios/${userEmail}/articulos-guardados/${articleId}`);
       setArticles(prev => prev.filter(article => article.id !== articleId));
-      setNotification({
-        type: 'success',
-        message: 'Artículo eliminado de guardados'
-      });
+      setToastMessage('Artículo eliminado de guardados');
+      setToastType('success');
+      setShowToast(true);
     } catch (error) {
-      setNotification({
-        type: 'error',
-        message: error.response?.data?.detail || 'Error al eliminar el artículo'
-      });
+      setToastMessage('Error al eliminar el artículo');
+      setToastType('error');
+      setShowToast(true);
     } finally {
       setDeletingId(null);
     }
@@ -127,12 +126,12 @@ const SavedArticlesList = () => {
         </div>
       ))}
 
-      {/* Notificación */}
-      {notification && (
-        <Notification
-          type={notification.type}
-          message={notification.message}
-          onClose={() => setNotification(null)}
+      {/* Toast de notificación */}
+      {showToast && (
+        <Toast
+          message={toastMessage}
+          type={toastType}
+          onClose={() => setShowToast(false)}
         />
       )}
     </div>

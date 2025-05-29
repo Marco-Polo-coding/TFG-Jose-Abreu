@@ -61,7 +61,11 @@ const AdminCompraDetalleModal = ({ isOpen, onClose, compra }) => {
                 ) : (
                   productos.map((prod, idx) => (
                     <div key={prod.id || idx} className="flex items-center gap-4 bg-purple-50 rounded-xl p-3 border border-purple-100 shadow-sm">
-                      <img src={prod.imagen || 'https://cataas.com/cat'} alt={prod.nombre} className="w-14 h-14 object-cover rounded-lg border border-purple-200" />
+                      <div className="flex gap-1">
+                        {(Array.isArray(prod.imagenes) && prod.imagenes.length > 0 ? prod.imagenes : [prod.imagen || 'https://cataas.com/cat']).map((img, i) => (
+                          <img key={i} src={img} alt={prod.nombre} className="w-14 h-14 object-cover rounded-lg border border-purple-200" />
+                        ))}
+                      </div>
                       <div className="flex-1 text-left">
                         <div className="font-semibold text-gray-900 truncate max-w-[160px]">{prod.nombre}</div>
                         <div className="text-xs text-gray-500">Cantidad: {prod.quantity || 1}</div>

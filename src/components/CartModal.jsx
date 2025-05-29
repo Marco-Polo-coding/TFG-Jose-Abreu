@@ -5,7 +5,7 @@ import useCartStore from '../store/cartStore';
 import Toast from './Toast';
 import LoadingSpinner from './LoadingSpinner';
 
-const CartModal = ({ isOpen, onClose }) => {
+const CartModal = ({ isOpen, onClose, onOpenLoginModal }) => {
   const { items, removeItem, updateQuantity, clearCart } = useCartStore();
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -136,6 +136,12 @@ const CartModal = ({ isOpen, onClose }) => {
               {items.length > 0 && (
                 <button
                   onClick={() => {
+                    const uid = localStorage.getItem('uid');
+                    const userEmail = localStorage.getItem('userEmail');
+                    if (!uid && !userEmail) {
+                      showNotification('Debes registrarte o iniciar sesión antes de poder comprar un producto', 'error');
+                      return;
+                    }
                     setLoadingCheckout(true);
                     setTimeout(() => {
                       window.location.href = '/checkout';

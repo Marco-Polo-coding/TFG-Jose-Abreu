@@ -6,6 +6,7 @@ import LoadingSpinner from './LoadingSpinner';
 import axios from 'axios';
 import Toast from './Toast';
 import useCartStore from '../store/cartStore';
+import AuthModal from './AuthModal';
 
 const TiendaPage = () => {
   const [productos, setProductos] = useState([]);
@@ -21,6 +22,8 @@ const TiendaPage = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
   const [imageIndexes, setImageIndexes] = useState({}); // { [productoId]: index }
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState('login');
 
   const addItem = useCartStore((state) => state.addItem);
 
@@ -77,14 +80,14 @@ const TiendaPage = () => {
   };
 
   const handleSaveProduct = async (productoId) => {
+    const userEmail = localStorage.getItem('userEmail');
+    const uid = localStorage.getItem('uid');
+    if (!userEmail && !uid) {
+      showNotification('Debes iniciar sesión para guardar productos en favoritos', 'error');
+      return;
+    }
     try {
       setIsSaving(prev => ({ ...prev, [productoId]: true }));
-      const userEmail = localStorage.getItem('userEmail');
-      if (!userEmail) {
-        showNotification('Debes iniciar sesión para guardar productos', 'error');
-        return;
-      }
-
       await axios.post(`http://localhost:8000/usuarios/${userEmail}/productos-favoritos/${productoId}`);
       showNotification('Producto guardado correctamente', 'success');
     } catch (error) {
@@ -112,6 +115,17 @@ const TiendaPage = () => {
     }));
   };
 
+  const handleAddToCart = (producto) => {
+    const userEmail = localStorage.getItem('userEmail');
+    const uid = localStorage.getItem('uid');
+    if (!userEmail && !uid) {
+      showNotification('Debes iniciar sesión para añadir productos al carrito', 'error');
+      return;
+    }
+    addItem(producto);
+    showNotification('Producto añadido al carrito', 'success');
+  };
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -119,7 +133,7 @@ const TiendaPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="fixed top-4 right-4 z-50 flex items-center gap-8">
-        <CartButton />
+        <CartButton onOpenLoginModal={() => { setAuthMode('login'); setShowAuthModal(true); }} />
         <UserButton />
       </div>
       {/* Botón flotante para subir producto */}
@@ -319,10 +333,7 @@ const TiendaPage = () => {
                           Ver más <FaArrowRight className="w-4 h-4" />
                         </a>
                         <button
-                          onClick={() => {
-                            addItem(producto);
-                            showNotification('Producto añadido al carrito', 'success');
-                          }}
+                          onClick={() => handleAddToCart(producto)}
                           className="bg-purple-100 text-purple-600 p-3 rounded-full hover:bg-purple-200 transition-all duration-300 hover:scale-110 shadow"
                           title="Añadir al carrito"
                         >
@@ -346,6 +357,12 @@ const TiendaPage = () => {
           onClose={() => setShowToast(false)}
         />
       )}
+
+      <AuthModal 
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        mode={authMode}
+      />
     </div>
   );
 };

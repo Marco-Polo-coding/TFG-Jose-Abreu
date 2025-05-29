@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { FaComment, FaReply } from 'react-icons/fa';
 import axios from 'axios';
-import Notification from './Notification';
+import Toast from './Toast';
 
 const Comments = ({ articuloId }) => {
   const [comentarios, setComentarios] = useState([]);
   const [nuevoComentario, setNuevoComentario] = useState('');
   const [respuestaComentario, setRespuestaComentario] = useState('');
   const [comentarioRespondiendo, setComentarioRespondiendo] = useState(null);
-  const [notification, setNotification] = useState(null);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,10 +23,9 @@ const Comments = ({ articuloId }) => {
       setComentarios(response.data);
       setLoading(false);
     } catch (error) {
-      setNotification({
-        type: 'error',
-        message: 'Error al cargar los comentarios'
-      });
+      setToastMessage('Error al cargar los comentarios');
+      setToastType('error');
+      setShowToast(true);
       setLoading(false);
     }
   };
@@ -34,10 +35,9 @@ const Comments = ({ articuloId }) => {
     try {
       const userEmail = localStorage.getItem('userEmail');
       if (!userEmail) {
-        setNotification({
-          type: 'error',
-          message: 'Debes iniciar sesión para comentar'
-        });
+        setToastMessage('Debes iniciar sesión para comentar');
+        setToastType('error');
+        setShowToast(true);
         return;
       }
 
@@ -50,15 +50,13 @@ const Comments = ({ articuloId }) => {
       await axios.post(`http://localhost:8000/articulos/${articuloId}/comentarios`, comentario);
       setNuevoComentario('');
       cargarComentarios();
-      setNotification({
-        type: 'success',
-        message: 'Comentario publicado correctamente'
-      });
+      setToastMessage('Comentario publicado correctamente');
+      setToastType('success');
+      setShowToast(true);
     } catch (error) {
-      setNotification({
-        type: 'error',
-        message: 'Error al publicar el comentario'
-      });
+      setToastMessage('Error al publicar el comentario');
+      setToastType('error');
+      setShowToast(true);
     }
   };
 
@@ -67,10 +65,9 @@ const Comments = ({ articuloId }) => {
     try {
       const userEmail = localStorage.getItem('userEmail');
       if (!userEmail) {
-        setNotification({
-          type: 'error',
-          message: 'Debes iniciar sesión para responder'
-        });
+        setToastMessage('Debes iniciar sesión para responder');
+        setToastType('error');
+        setShowToast(true);
         return;
       }
 
@@ -87,15 +84,13 @@ const Comments = ({ articuloId }) => {
       setRespuestaComentario('');
       setComentarioRespondiendo(null);
       cargarComentarios();
-      setNotification({
-        type: 'success',
-        message: 'Respuesta publicada correctamente'
-      });
+      setToastMessage('Respuesta publicada correctamente');
+      setToastType('success');
+      setShowToast(true);
     } catch (error) {
-      setNotification({
-        type: 'error',
-        message: 'Error al publicar la respuesta'
-      });
+      setToastMessage('Error al publicar la respuesta');
+      setToastType('error');
+      setShowToast(true);
     }
   };
 
@@ -205,12 +200,12 @@ const Comments = ({ articuloId }) => {
         ))}
       </div>
 
-      {/* Notificación */}
-      {notification && (
-        <Notification
-          type={notification.type}
-          message={notification.message}
-          onClose={() => setNotification(null)}
+      {/* Toast de notificación */}
+      {showToast && (
+        <Toast
+          message={toastMessage}
+          type={toastType}
+          onClose={() => setShowToast(false)}
         />
       )}
     </div>

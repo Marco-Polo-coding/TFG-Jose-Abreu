@@ -130,6 +130,15 @@ function CheckoutComponent() {
     setLoading(false);
   };
 
+  if (!uid) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16">
+        <p className="text-2xl font-bold text-red-600 mb-4">Debes iniciar sesión para poder realizar una compra.</p>
+        <a href="/tienda" className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-full font-semibold shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 mt-4">Volver a la tienda</a>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-16">

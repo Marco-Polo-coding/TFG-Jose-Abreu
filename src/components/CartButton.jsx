@@ -3,7 +3,7 @@ import { FaShoppingCart } from 'react-icons/fa';
 import CartModal from './CartModal';
 import useCartStore from '../store/cartStore';
 
-const CartButton = () => {
+const CartButton = ({ onOpenLoginModal }) => {
   const [isOpen, setIsOpen] = useState(false);
   const items = useCartStore((state) => state.items);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -25,6 +25,7 @@ const CartButton = () => {
       <CartModal 
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
+        onOpenLoginModal={onOpenLoginModal}
       />
     </>
   );

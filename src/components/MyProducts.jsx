@@ -6,7 +6,7 @@ import CartButton from './CartButton';
 import UserButton from './UserButton';
 import EditProductModal from './EditProductModal';
 import ConfirmDeleteModal from './ConfirmDeleteModal';
-import Notification from './Notification';
+import Toast from './Toast';
 import LoadingSpinner from './LoadingSpinner';
 import useLoadingState from '../hooks/useLoadingState';
 
@@ -18,7 +18,9 @@ const MyProducts = () => {
   const [productoToDelete, setProductoToDelete] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [productoToEdit, setProductoToEdit] = useState(null);
-  const [notification, setNotification] = useState(null);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success');
 
   useEffect(() => {
     fetchProductos();
@@ -49,30 +51,32 @@ const MyProducts = () => {
     try {
       await axios.delete(`http://localhost:8000/productos/${productoToDelete.id}`);
       setProductos(prev => prev.filter(p => p.id !== productoToDelete.id));
-      setModalOpen(false);
-      setProductoToDelete(null);
-      setNotification({
-        type: 'success',
-        message: 'Producto eliminado correctamente'
-      });
-    } catch (err) {
-      setNotification({
-        type: 'error',
-        message: 'Error al eliminar el producto. Por favor, intenta de nuevo.'
-      });
-      console.error('Error deleting product:', err);
+      setToastMessage('Producto eliminado correctamente');
+      setToastType('success');
+      setShowToast(true);
+    } catch (error) {
+      setToastMessage('Error al eliminar el producto');
+      setToastType('error');
+      setShowToast(true);
     }
+    setModalOpen(false);
+    setProductoToDelete(null);
   };
 
-  const handleEditSave = async (updatedProduct) => {
-    setProductos(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+  const handleEditSave = async (editedProduct) => {
+    try {
+      await axios.put(`http://localhost:8000/productos/${editedProduct.id}`, editedProduct);
+      setProductos(prev => prev.map(p => p.id === editedProduct.id ? editedProduct : p));
+      setToastMessage('Producto actualizado correctamente');
+      setToastType('success');
+      setShowToast(true);
+    } catch (error) {
+      setToastMessage('Error al actualizar el producto');
+      setToastType('error');
+      setShowToast(true);
+    }
     setEditModalOpen(false);
     setProductoToEdit(null);
-    setNotification({
-      type: 'success',
-      message: '¡Producto editado correctamente!'
-    });
-    setTimeout(() => setNotification(null), 3000);
   };
 
   if (loading) {
@@ -199,12 +203,12 @@ const MyProducts = () => {
         initialData={productoToEdit || {}}
       />
 
-      {/* Notificación */}
-      {notification && (
-        <Notification
-          type={notification.type}
-          message={notification.message}
-          onClose={() => setNotification(null)}
+      {/* Toast de notificación */}
+      {showToast && (
+        <Toast
+          message={toastMessage}
+          type={toastType}
+          onClose={() => setShowToast(false)}
         />
       )}
     </div>

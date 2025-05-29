@@ -42,16 +42,16 @@ const ArticuloDetalle = ({ id }) => {
   };
 
   const handleSaveArticle = async () => {
+    const userEmail = localStorage.getItem('userEmail');
+    const uid = localStorage.getItem('uid');
+    if (!userEmail && !uid) {
+      setNotification({
+        type: 'error',
+        message: 'Debes iniciar sesión para guardar artículos'
+      });
+      return;
+    }
     try {
-      const userEmail = localStorage.getItem('userEmail');
-      if (!userEmail) {
-        setNotification({
-          type: 'error',
-          message: 'Debes iniciar sesión para guardar artículos'
-        });
-        return;
-      }
-
       setLoading(true);
       if (isSaved) {
         await axios.delete(`http://localhost:8000/usuarios/${userEmail}/articulos-guardados/${id}`);

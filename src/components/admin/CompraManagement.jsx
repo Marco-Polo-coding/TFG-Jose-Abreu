@@ -55,11 +55,12 @@ const AdminCompraDetalleNuevoModal = ({ isOpen, onClose, compra, usuario }) => {
           <div className="space-y-2">
             {Array.isArray(compra.productos) && compra.productos.length > 0 ? compra.productos.map((p, idx) => (
               <div key={idx} className="flex items-center gap-3 bg-purple-50 rounded-xl p-3">
-                {p.imagen ? (
-                  <img src={p.imagen} alt={p.nombre} className="w-14 h-14 rounded-lg object-cover border-2 border-purple-200" />
-                ) : (
-                  <div className="w-14 h-14 rounded-lg bg-purple-100 flex items-center justify-center text-lg font-bold text-purple-600">{p.nombre ? p.nombre[0].toUpperCase() : '?'}</div>
-                )}
+                <div className="flex gap-1">
+                  {(() => {
+                    const imgs = Array.isArray(p.imagenes) && p.imagenes.length > 0 ? p.imagenes : [p.imagen || 'https://cataas.com/cat'];
+                    return <img src={imgs[0]} alt={p.nombre} className="w-14 h-14 rounded-lg object-cover border-2 border-purple-200" />;
+                  })()}
+                </div>
                 <div>
                   <div className="font-semibold text-gray-800 truncate max-w-[180px]">{p.nombre}</div>
                   <div className="text-xs text-gray-500">Cantidad: {p.quantity || 1}</div>

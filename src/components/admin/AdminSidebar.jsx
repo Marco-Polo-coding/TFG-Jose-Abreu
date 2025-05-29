@@ -12,6 +12,10 @@ const navItems = [
 const handleLogout = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('userRole');
+  localStorage.removeItem('userEmail');
+  localStorage.removeItem('userName');
+  localStorage.removeItem('userPhoto');
+  localStorage.removeItem('uid');
   document.cookie = 'userRole=; path=/; max-age=0';
   window.location.href = '/';
 };

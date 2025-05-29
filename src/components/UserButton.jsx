@@ -83,8 +83,8 @@ const UserButton = () => {
     setUserName('');
     setUserPhoto('');
     setShowConfirmModal(false);
-    // Recargar la página después de cerrar sesión
-    window.location.reload();
+    // Redirigir a la homepage después de cerrar sesión
+    window.location.href = '/';
   };
 
   const getInitials = (email) => {

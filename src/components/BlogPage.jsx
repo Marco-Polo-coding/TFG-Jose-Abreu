@@ -4,7 +4,7 @@ import CartButton from './CartButton';
 import UserButton from './UserButton';
 import LoadingSpinner from './LoadingSpinner';
 import axios from 'axios';
-import Notification from './Notification';
+import Toast from './Toast';
 
 const BlogPage = () => {
   const [articulos, setArticulos] = useState([]);
@@ -13,7 +13,9 @@ const BlogPage = () => {
   const [order, setOrder] = useState("az"); // az, za
   const [category, setCategory] = useState("");
   const [dateOrder, setDateOrder] = useState("desc"); // desc, asc
-  const [notification, setNotification] = useState(null);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success');
   const [savedArticles, setSavedArticles] = useState([]);
 
   useEffect(() => {
@@ -45,39 +47,34 @@ const BlogPage = () => {
   };
 
   const handleSaveArticle = async (articleId) => {
+    const userEmail = localStorage.getItem('userEmail');
+    const uid = localStorage.getItem('uid');
+    if (!userEmail && !uid) {
+      setToastMessage('Debes iniciar sesión para guardar artículos');
+      setToastType('error');
+      setShowToast(true);
+      return;
+    }
     try {
-      const userEmail = localStorage.getItem('userEmail');
-      if (!userEmail) {
-        setNotification({
-          type: 'error',
-          message: 'Debes iniciar sesión para guardar artículos'
-        });
-        return;
-      }
-
       const isSaved = savedArticles.some(article => article.id === articleId);
-      
       if (isSaved) {
         await axios.delete(`http://localhost:8000/usuarios/${userEmail}/articulos-guardados/${articleId}`);
         setSavedArticles(prev => prev.filter(article => article.id !== articleId));
-        setNotification({
-          type: 'success',
-          message: 'Artículo eliminado de guardados'
-        });
+        setToastMessage('Artículo eliminado de guardados');
+        setToastType('success');
+        setShowToast(true);
       } else {
         await axios.post(`http://localhost:8000/usuarios/${userEmail}/articulos-guardados/${articleId}`);
         const article = articulos.find(a => a.id === articleId);
         setSavedArticles(prev => [...prev, article]);
-        setNotification({
-          type: 'success',
-          message: 'Artículo guardado correctamente'
-        });
+        setToastMessage('Artículo guardado correctamente');
+        setToastType('success');
+        setShowToast(true);
       }
     } catch (error) {
-      setNotification({
-        type: 'error',
-        message: error.response?.data?.detail || 'Error al guardar el artículo'
-      });
+      setToastMessage(error.response?.data?.detail || 'Error al guardar el artículo');
+      setToastType('error');
+      setShowToast(true);
     }
   };
 
@@ -289,12 +286,12 @@ const BlogPage = () => {
         </div>
       </section>
 
-      {/* Notificación */}
-      {notification && (
-        <Notification
-          type={notification.type}
-          message={notification.message}
-          onClose={() => setNotification(null)}
+      {/* Toast de notificación */}
+      {showToast && (
+        <Toast
+          message={toastMessage}
+          type={toastType}
+          onClose={() => setShowToast(false)}
         />
       )}
     </div>

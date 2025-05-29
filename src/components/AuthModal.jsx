@@ -87,7 +87,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
     showNotification('Has cerrado sesión correctamente', 'info');
     onClose();
     setTimeout(() => {
-      window.location.reload();
+      window.location.href = '/';
     }, 1500);
   };
 
