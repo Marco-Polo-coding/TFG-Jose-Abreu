@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaTrash, FaEdit, FaPlus, FaSort, FaSortUp, FaSortDown, FaExclamationTriangle, FaEye } from 'react-icons/fa';
+import { FaSearch, FaTrash, FaEdit, FaPlus, FaSort, FaSortUp, FaSortDown, FaExclamationTriangle, FaEye, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import LoadingSpinner from '../LoadingSpinner';
 import AdminDeleteModal from './AdminDeleteModal';
 import ReactDOM from 'react-dom';
@@ -281,7 +281,13 @@ const ProductManagement = () => {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-10 w-10">
-                      {product.imagen ? (
+                      {Array.isArray(product.imagenes) && product.imagenes.length > 0 ? (
+                        <img
+                          className="h-10 w-10 rounded-full object-cover"
+                          src={product.imagenes[0]}
+                          alt={product.nombre}
+                        />
+                      ) : product.imagen ? (
                         <img
                           className="h-10 w-10 rounded-full object-cover"
                           src={product.imagen}
@@ -483,8 +489,10 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData, mode }) => {
 
 // Modal de detalle de producto
 const AdminProductoDetalleModal = ({ isOpen, onClose, producto }) => {
+  const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
   if (!isOpen || !producto) return null;
   const inicial = producto.nombre?.[0]?.toUpperCase() || '?';
+  const imagenes = Array.isArray(producto.imagenes) && producto.imagenes.length > 0 ? producto.imagenes : (producto.imagen ? [producto.imagen] : []);
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) onClose();
   };
@@ -494,8 +502,31 @@ const AdminProductoDetalleModal = ({ isOpen, onClose, producto }) => {
         <button onClick={onClose} className="absolute top-4 right-6 text-gray-400 hover:text-purple-600 text-2xl font-bold" aria-label="Cerrar">&times;</button>
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Detalle de Producto</h2>
         <div className="flex flex-col items-center mb-4">
-          {producto.imagen ? (
-            <img src={producto.imagen} alt="Imagen del producto" className="w-24 h-24 rounded-full object-cover border-4 border-purple-200 shadow mb-2" />
+          {imagenes.length > 0 ? (
+            <div className="relative mb-2">
+              <img src={imagenes[currentImageIndex]} alt="Imagen del producto" className="w-24 h-24 rounded-full object-cover border-4 border-purple-200 shadow" />
+              {imagenes.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setCurrentImageIndex(currentImageIndex > 0 ? currentImageIndex - 1 : imagenes.length - 1)}
+                    className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/80 p-1 rounded-full hover:bg-white transition-colors z-10"
+                  >
+                    <FaChevronLeft className="w-4 h-4 text-gray-700" />
+                  </button>
+                  <button
+                    onClick={() => setCurrentImageIndex(currentImageIndex < imagenes.length - 1 ? currentImageIndex + 1 : 0)}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/80 p-1 rounded-full hover:bg-white transition-colors z-10"
+                  >
+                    <FaChevronRight className="w-4 h-4 text-gray-700" />
+                  </button>
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-1">
+                    {imagenes.map((_, idx) => (
+                      <span key={idx} className={`w-2 h-2 rounded-full ${currentImageIndex === idx ? 'bg-purple-600' : 'bg-gray-300'} inline-block`}></span>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           ) : (
             <div className="w-24 h-24 rounded-full bg-purple-100 flex items-center justify-center mb-2">
               <span className="text-4xl text-purple-600 font-bold">{inicial}</span>

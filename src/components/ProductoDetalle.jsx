@@ -110,6 +110,10 @@ const ProductoDetalle = ({ id }) => {
     );
   }
 
+  const imagenes = Array.isArray(producto.imagenes) && producto.imagenes.length > 0
+    ? producto.imagenes
+    : (producto.imagen ? [producto.imagen] : ['https://cataas.com/cat']);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="fixed top-4 right-4 z-50 flex items-center gap-8">
@@ -164,11 +168,11 @@ const ProductoDetalle = ({ id }) => {
             <div className="bg-white rounded-2xl shadow-2xl p-6 transition-all duration-500 hover:shadow-3xl hover:-translate-y-1 animate-fade-in">
               <div className="relative aspect-w-4 aspect-h-3 mb-4">
                 <img
-                  src={producto.imagenes[currentImageIndex]}
+                  src={imagenes[currentImageIndex]}
                   alt={producto.nombre}
                   className="w-full h-full object-cover rounded-xl"
                 />
-                {producto.imagenes.length > 1 && (
+                {imagenes.length > 1 && (
                   <>
                     <button
                       onClick={prevImage}
@@ -185,9 +189,9 @@ const ProductoDetalle = ({ id }) => {
                   </>
                 )}
               </div>
-              {producto.imagenes.length > 1 && (
+              {imagenes.length > 1 && (
                 <div className="grid grid-cols-4 gap-2">
-                  {producto.imagenes.map((imagen, index) => (
+                  {imagenes.map((imagen, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentImageIndex(index)}

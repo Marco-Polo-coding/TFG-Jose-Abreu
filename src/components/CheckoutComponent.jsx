@@ -161,7 +161,7 @@ function CheckoutComponent() {
         {items.map(item => (
           <li key={item.id} className="flex items-center justify-between py-4">
             <div className="flex items-center gap-4">
-              <img src={item.imagen} alt={item.nombre} className="w-16 h-16 object-cover rounded" />
+              <img src={Array.isArray(item.imagenes) && item.imagenes.length > 0 ? item.imagenes[0] : (item.imagen || 'https://cataas.com/cat')} alt={item.nombre} className="w-16 h-16 object-cover rounded" />
               <div>
                 <h4 className="font-medium">{item.nombre.length > 18 ? item.nombre.slice(0, 18) + '...' : item.nombre}</h4>
                 <p className="text-gray-500">Cantidad: {item.quantity}</p>

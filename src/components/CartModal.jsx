@@ -73,7 +73,7 @@ const CartModal = ({ isOpen, onClose }) => {
                   <div key={item.id} className="flex items-center justify-between border-b pb-4">
                     <div className="flex items-center space-x-4">
                       <img
-                        src={item.imagen}
+                        src={Array.isArray(item.imagenes) && item.imagenes.length > 0 ? item.imagenes[0] : (item.imagen || 'https://cataas.com/cat')}
                         alt={item.nombre}
                         className="w-16 h-16 object-cover rounded"
                       />
