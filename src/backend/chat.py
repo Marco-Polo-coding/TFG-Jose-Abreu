@@ -1,8 +1,9 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 import ollama
 from fastapi.middleware.cors import CORSMiddleware
+import re
 
 
 app = FastAPI()
@@ -18,37 +19,68 @@ app.add_middleware(
 class ChatMessage(BaseModel):
     message: str
     context: Optional[str] = None
+    history: Optional[List[dict]] = None  # [{"role": "user"/"assistant", "content": "..."}]
 
 # Contexto del asistente
 ASSISTANT_CONTEXT = """
-Eres un asistente virtual amigable y servicial para una tienda online. Tu objetivo es ayudar a los usuarios con:
-1. Preguntas sobre productos
-2. Ayuda con el proceso de compra
-3. Resolución de problemas técnicos
-4. Información sobre envíos y devoluciones
-5. Cualquier otra consulta relacionada con la tienda
+Eres un asistente virtual profesional, breve y servicial para una tienda online. Tu objetivo es ayudar a los usuarios SOLO con dudas sobre productos, compras, envíos, devoluciones o problemas técnicos relacionados con la tienda.
 
-IMPORTANTE: SIEMPRE debes responder en español, sin excepciones. Mantén un tono profesional pero amigable. Si no sabes la respuesta a algo, sé honesto y sugiere contactar con el servicio de atención al cliente.
+INSTRUCCIONES IMPORTANTES:
+- RESPONDE SIEMPRE en español, de forma clara, directa y profesional.
+- NO incluyas texto en inglés, ni ejemplos, ni roleplay, ni historias inventadas.
+- Si el usuario pregunta en inglés o mezcla idiomas, responde: "Solo puedo responder en español."
+- Si no sabes la respuesta, di: "No lo sé, por favor contacta con soporte."
+- Sé breve y no repitas información innecesaria.
 """
 
 @app.post("/chat")
 async def chat(message: ChatMessage):
     try:
+        # Construir historial para el modelo (máximo 3 previos)
+        history_msgs = []
+        if message.history:
+            # Solo los últimos 3 mensajes previos
+            history_msgs = message.history[-3:]
+        # Mensajes para el modelo: contexto, historial y mensaje actual
+        model_messages = [
+            {"role": "system", "content": ASSISTANT_CONTEXT},
+            *history_msgs,
+            {"role": "user", "content": message.message}
+        ]
         response = ollama.chat(
-            model='phi',  # Cambiamos a phi que es más rápido
-            messages=[
-                {"role": "system", "content": ASSISTANT_CONTEXT},
-                {"role": "user", "content": message.message}
-            ],
+            model='phi',
+            messages=model_messages,
             options={
-                "num_predict": 100,  # Limitamos la longitud de la respuesta
-                "temperature": 0.5,  # Reducimos la temperatura para respuestas más consistentes
-                "top_k": 40,        # Optimización de rendimiento
-                "top_p": 0.9,       # Optimización de rendimiento
-                "repeat_penalty": 1.2  # Penalización para evitar repeticiones
+                "num_predict": 60,
+                "temperature": 0.5,
+                "top_k": 40,
+                "top_p": 0.9,
+                "repeat_penalty": 1.2
             }
         )
         assistant_response = response['message']['content']
+
+        # --- FILTRO Y RECORTE DE RESPUESTA (menos estricto) ---
+        def contiene_ingles(texto):
+            # Solo bloquea si hay 5 o más palabras en inglés seguidas
+            palabras_ingles = r"the|and|you|for|with|that|this|have|from|are|your|example|help|issue|user|question|answer|doubt|imagine|each|unique|week|day|days|english|spanish|hello|hi|please|thank you|sorry|yes|no|can|could|would|should|will|may|might|must|shall|do|does|did|done|has|had|having|been|being|was|were|am|is|it|its|they|them|their|there|here|how|what|when|where|who|why|which|about|because|but|if|or|as|at|by|on|in|to|of|not|so|just|now|then|than|also|too|very|really|still|even|only|again|always|never|sometimes|often|usually|ever|once|twice|first|second|third|next|last|before|after|since|until|while|during|through|across|over|under|between|among|against|toward|upon|within|without|along|around|behind|beside|beyond|except|inside|outside|above|below|near|far|off|onto|into|upon|via|per|plus|minus|versus|vs|etc|etc\."
+            return bool(re.search(rf"((?:{palabras_ingles})[\s,.!?]*){5,}", texto, re.IGNORECASE))
+
+        def contiene_roleplay(texto):
+            # Solo bloquea si detecta frases muy claras de roleplay
+            return bool(re.search(r"imagine that you are|supongamos que eres|act as|actúa como|let's pretend|escenario:|scenario:", texto, re.IGNORECASE))
+
+        # Limitar la respuesta a 300 caracteres (más estricto)
+        if len(assistant_response) > 300:
+            assistant_response = assistant_response[:300] + "..."
+
+        if contiene_ingles(assistant_response) or contiene_roleplay(assistant_response):
+            assistant_response = "Lo siento, solo puedo responder en español y de forma directa. ¿Puedes reformular tu pregunta?"
+
+        # --- MENSAJE DE FALLBACK SI LA RESPUESTA NO ES VÁLIDA ---
+        if not assistant_response or assistant_response.strip() == '' or assistant_response.strip().lower() in ['no lo sé', 'no se', 'no sé', 'no tengo respuesta', 'no puedo responder', 'null', 'none']:
+            assistant_response = "Lo siento, no he podido generar una respuesta válida. Por favor, intenta de nuevo o contacta con soporte."
+
         return {"response": assistant_response}
     except Exception as e:
         print("ERROR EN /chat:", e)
