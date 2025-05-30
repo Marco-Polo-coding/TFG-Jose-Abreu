@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { FaArrowRight, FaHeart, FaTrash, FaSpinner, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import axios from 'axios';
 import LoadingSpinner from './LoadingSpinner';
 import useLoadingState from '../hooks/useLoadingState';
 import Toast from './Toast';
+import { apiManager } from '../utils/apiManager';
 
 // Datos de ejemplo (reemplazar por fetch a la API en el futuro)
 const favoriteProducts = [];
@@ -40,8 +40,8 @@ const FavoriteProductsList = () => {
         setError('No se ha encontrado el email del usuario. Por favor, inicia sesión.');
         return;
       }
-      const response = await axios.get(`http://localhost:8000/usuarios/${userEmail}/productos-favoritos`);
-      setProducts(response.data);
+      const data = await apiManager.get(`/usuarios/${userEmail}/productos-favoritos`);
+      setProducts(data);
       setError(null);
     } catch (err) {
       setError('Error al cargar los productos favoritos. Por favor, intenta de nuevo.');
@@ -60,7 +60,7 @@ const FavoriteProductsList = () => {
         return;
       }
 
-      await axios.delete(`http://localhost:8000/usuarios/${userEmail}/productos-favoritos/${productoId}`);
+      await apiManager.delete(`/usuarios/${userEmail}/productos-favoritos/${productoId}`);
       setProducts(prev => prev.filter(p => p.id !== productoId));
       showNotification('Producto eliminado de favoritos', 'success');
     } catch (error) {

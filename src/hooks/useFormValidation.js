@@ -1,25 +1,39 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { sanitizeInput, createRateLimiter } from '../utils/security';
 
 const useFormValidation = (initialState = {}, validate) => {
   const [values, setValues] = useState(initialState);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [attempts, setAttempts] = useState(0);
 
-  const handleChange = (e) => {
+  // Crear rate limiter: 5 intentos por minuto
+  const rateLimiter = createRateLimiter(5, 60000);
+
+  const handleChange = useCallback((e) => {
     const { name, value } = e.target;
-    setValues({
-      ...values,
-      [name]: value
-    });
-  };
+    // Sanitizar el input antes de guardarlo
+    const sanitizedValue = sanitizeInput(value);
+    setValues(prev => ({
+      ...prev,
+      [name]: sanitizedValue
+    }));
+  }, []);
 
-  const handleBlur = () => {
+  const handleBlur = useCallback(() => {
     const validationErrors = validate(values);
     setErrors(validationErrors);
-  };
+  }, [validate, values]);
 
-  const handleSubmit = (callback) => async (e) => {
+  const handleSubmit = useCallback((callback) => async (e) => {
     e.preventDefault();
+    
+    // Verificar rate limiting
+    if (!rateLimiter('form_submit')) {
+      setErrors({ submit: 'Demasiados intentos. Por favor, espera un momento.' });
+      return;
+    }
+
     const validationErrors = validate(values);
     setErrors(validationErrors);
 
@@ -27,13 +41,16 @@ const useFormValidation = (initialState = {}, validate) => {
       setIsSubmitting(true);
       try {
         await callback(values);
+        // Resetear intentos después de un envío exitoso
+        setAttempts(0);
       } catch (error) {
         setErrors({ submit: error.message });
+        setAttempts(prev => prev + 1);
       } finally {
         setIsSubmitting(false);
       }
     }
-  };
+  }, [validate, values, rateLimiter]);
 
   return {
     values,
@@ -42,7 +59,8 @@ const useFormValidation = (initialState = {}, validate) => {
     handleChange,
     handleBlur,
     handleSubmit,
-    setValues
+    setValues,
+    attempts
   };
 };
 

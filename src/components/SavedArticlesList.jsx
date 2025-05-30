@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { FaArrowRight, FaBookmark, FaTrash, FaSpinner } from 'react-icons/fa';
-import axios from 'axios';
 import LoadingSpinner from './LoadingSpinner';
 import useLoadingState from '../hooks/useLoadingState';
 import Toast from './Toast';
+import { apiManager } from '../utils/apiManager';
 
 // Datos de ejemplo (reemplazar por fetch a la API en el futuro)
 const savedArticles = [];
@@ -33,8 +33,8 @@ const SavedArticlesList = () => {
         setError('No se ha encontrado el email del usuario. Por favor, inicia sesión.');
         return;
       }
-      const response = await axios.get(`http://localhost:8000/usuarios/${userEmail}/articulos-guardados`);
-      setArticles(response.data);
+      const data = await apiManager.get(`/usuarios/${userEmail}/articulos-guardados`);
+      setArticles(data);
       setError(null);
     } catch (err) {
       setError('Error al cargar los artículos guardados. Por favor, intenta de nuevo.');
@@ -54,16 +54,16 @@ const SavedArticlesList = () => {
         setShowToast(true);
         return;
       }
-
-      await axios.delete(`http://localhost:8000/usuarios/${userEmail}/articulos-guardados/${articleId}`);
-      setArticles(prev => prev.filter(article => article.id !== articleId));
+      await apiManager.delete(`/usuarios/${userEmail}/articulos-guardados/${articleId}`);
+      setArticles(articles.filter(article => article.id !== articleId));
       setToastMessage('Artículo eliminado de guardados');
       setToastType('success');
       setShowToast(true);
-    } catch (error) {
+    } catch (err) {
       setToastMessage('Error al eliminar el artículo');
       setToastType('error');
       setShowToast(true);
+      console.error('Error deleting article:', err);
     } finally {
       setDeletingId(null);
     }

@@ -120,7 +120,19 @@ const VirtualAssistant = () => {
 
       {/* Ventana del chat */}
       {isOpen && (
-        <div className={`fixed bottom-24 right-6 w-[calc(100%-3rem)] sm:w-96 h-[calc(100vh-8rem)] sm:h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col ${getZIndex()}`}>
+        <div
+          className={`fixed 
+            left-1/2 -translate-x-1/2 
+            bottom-0 
+            w-[95vw] max-w-full 
+            h-[80vh] max-h-[95vh]
+            sm:left-auto sm:translate-x-0 sm:bottom-6 sm:right-6 
+            sm:w-[320px] sm:h-[450px] sm:max-w-[320px] sm:max-h-[450px]
+            bg-white rounded-2xl shadow-2xl flex flex-col ${getZIndex()}`}
+          style={{
+            boxSizing: 'border-box',
+          }}
+        >
           {/* Header */}
           <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 rounded-t-2xl flex justify-between items-center">
             <div className="flex items-center gap-3">
@@ -154,9 +166,12 @@ const VirtualAssistant = () => {
               </div>
             ))}
             {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-gray-100 rounded-2xl p-3">
-                  <LoadingSpinner />
+              <div className="flex justify-start w-full">
+                <div className="w-full flex flex-col items-center justify-center py-8">
+                  <div className="animate-bounce mb-2">
+                    <FaRobot className="w-10 h-10 text-purple-500 opacity-80" />
+                  </div>
+                  <span className="text-purple-600 font-semibold text-base">El asistente está pensando...</span>
                 </div>
               </div>
             )}

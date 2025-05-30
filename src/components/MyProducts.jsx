@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { FaBox, FaEdit, FaTrash, FaPlus, FaSpinner, FaHome } from 'react-icons/fa';
-import axios from 'axios';
 import PropTypes from 'prop-types';
 import CartButton from './CartButton';
 import UserButton from './UserButton';
@@ -9,6 +8,7 @@ import ConfirmDeleteModal from './ConfirmDeleteModal';
 import Toast from './Toast';
 import LoadingSpinner from './LoadingSpinner';
 import useLoadingState from '../hooks/useLoadingState';
+import { apiManager } from '../utils/apiManager';
 
 const MyProducts = () => {
   const [productos, setProductos] = useState([]);
@@ -35,8 +35,8 @@ const MyProducts = () => {
         setProductos([]);
         return;
       }
-      const response = await axios.get(`http://localhost:8000/usuarios/${userEmail}/productos`);
-      setProductos(response.data);
+      const data = await apiManager.get(`/usuarios/${userEmail}/productos`);
+      setProductos(data);
       setError(null);
     } catch (err) {
       setError('Error al cargar los productos. Por favor, intenta de nuevo.');
@@ -46,26 +46,27 @@ const MyProducts = () => {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteProduct = async () => {
     if (!productoToDelete) return;
     try {
-      await axios.delete(`http://localhost:8000/productos/${productoToDelete.id}`);
+      await apiManager.delete(`/productos/${productoToDelete.id}`);
       setProductos(prev => prev.filter(p => p.id !== productoToDelete.id));
+      setModalOpen(false);
+      setProductoToDelete(null);
       setToastMessage('Producto eliminado correctamente');
       setToastType('success');
       setShowToast(true);
-    } catch (error) {
+    } catch (err) {
       setToastMessage('Error al eliminar el producto');
       setToastType('error');
       setShowToast(true);
+      console.error('Error deleting product:', err);
     }
-    setModalOpen(false);
-    setProductoToDelete(null);
   };
 
   const handleEditSave = async (editedProduct) => {
     try {
-      await axios.put(`http://localhost:8000/productos/${editedProduct.id}`, editedProduct);
+      await apiManager.put(`/productos/${editedProduct.id}`, editedProduct);
       setProductos(prev => prev.map(p => p.id === editedProduct.id ? editedProduct : p));
       setToastMessage('Producto actualizado correctamente');
       setToastType('success');
@@ -191,7 +192,7 @@ const MyProducts = () => {
       <ConfirmDeleteModal
         open={modalOpen}
         onClose={() => { setModalOpen(false); setProductoToDelete(null); }}
-        onConfirm={handleDelete}
+        onConfirm={handleDeleteProduct}
         articleTitle={productoToDelete?.nombre || ''}
       />
 

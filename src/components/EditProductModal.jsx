@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaSpinner, FaSave, FaImage, FaTimes, FaTrash } from 'react-icons/fa';
+import { apiManager } from '../utils/apiManager';
 
 const EditProductModal = ({ open, onClose, onSave, initialData }) => {
   const [formData, setFormData] = useState({
@@ -114,7 +115,6 @@ const EditProductModal = ({ open, onClose, onSave, initialData }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       const formDataToSend = new FormData();
       
@@ -141,26 +141,12 @@ const EditProductModal = ({ open, onClose, onSave, initialData }) => {
         }
       }
 
-      // Añadir el token de autorización
-      const token = localStorage.getItem('token');
-      const headers = {
-        'Authorization': `Bearer ${token}`
-      };
-
-      const response = await fetch(`http://localhost:8000/productos/${formData.id}`, {
-        method: 'PUT',
-        headers: headers,
-        body: formDataToSend
+      const updatedProduct = await apiManager.put(`/productos/${formData.id}`, formDataToSend, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
-
-      if (response.ok) {
-        const updatedProduct = await response.json();
-        onSave(updatedProduct);
-        onClose();
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Error al actualizar el producto');
-      }
+      
+      onSave(updatedProduct);
+      onClose();
     } catch (error) {
       console.error('Error:', error);
       alert(error.message || 'Error al actualizar el producto. Por favor, intenta de nuevo.');

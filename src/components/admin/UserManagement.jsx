@@ -5,6 +5,7 @@ import ConfirmModal from '../ConfirmModal';
 import AdminDeleteModal from './AdminDeleteModal';
 import ReactDOM from 'react-dom';
 import PasswordRequirements from '../PasswordRequirements';
+import apiManager from '../../services/apiManager';
 
 // Generador simple de UID si no hay uuid
 function generateUID() {
@@ -184,19 +185,7 @@ const UserManagement = () => {
 
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No hay token de autenticación');
-      }
-      const response = await fetch('http://127.0.0.1:8000/admin/users', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) {
-        throw new Error('Error al obtener usuarios');
-      }
-      const data = await response.json();
+      const data = await apiManager.get('/admin/users');
       setUsers(data);
     } catch (err) {
       setError(err.message);
@@ -205,29 +194,11 @@ const UserManagement = () => {
     }
   };
 
-  const handleDeleteUser = (userIdOrUser) => {
-    if (typeof userIdOrUser === 'object') {
-      setDeleteUser(userIdOrUser);
-    } else {
-      const user = users.find(u => (u.uid || u.id) === userIdOrUser);
-      setDeleteUser(user);
-    }
-  };
-
-  const confirmDeleteUser = async () => {
-    if (!deleteUser) return;
+  const handleDeleteUser = async (userIdOrUser) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://127.0.0.1:8000/admin/users/${deleteUser.uid || deleteUser.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) {
-        throw new Error('Error al eliminar usuario');
-      }
-      setUsers(users.filter(user => (user.uid || user.id) !== (deleteUser.uid || deleteUser.id)));
+      const userId = typeof userIdOrUser === 'object' ? userIdOrUser.uid : userIdOrUser;
+      await apiManager.delete(`/admin/users/${userId}`);
+      setUsers(prev => prev.filter(u => u.uid !== userId));
       setDeleteUser(null);
     } catch (err) {
       setError(err.message);
@@ -240,24 +211,12 @@ const UserManagement = () => {
 
   const handleUpdateUser = async (form) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://127.0.0.1:8000/admin/users/${editUser.uid || editUser.id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          nombre: form.nombre,
-          email: form.email,
-          role: form.role
-        })
+      await apiManager.put(`/admin/users/${editUser.uid || editUser.id}`, {
+        nombre: form.nombre,
+        email: form.email,
+        role: form.role
       });
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.detail || 'Error al actualizar usuario');
-      }
-      const updated = await response.json();
+      const updated = await apiManager.get(`/admin/users/${editUser.uid || editUser.id}`);
       setUsers(users.map(u => (u.uid || u.id) === (editUser.uid || editUser.id) ? updated : u));
       setEditUser(null);
     } catch (err) {
@@ -271,27 +230,14 @@ const UserManagement = () => {
 
   const handleCreateUser = async (form) => {
     try {
-      const token = localStorage.getItem('token');
       const uid = generateUID();
-      const response = await fetch('http://127.0.0.1:8000/admin/users', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          nombre: form.nombre,
-          email: form.email,
-          role: form.role,
-          password: form.password,
-          uid
-        })
+      const created = await apiManager.post('/admin/users', {
+        nombre: form.nombre,
+        email: form.email,
+        role: form.role,
+        password: form.password,
+        uid
       });
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.detail || 'Error al crear usuario');
-      }
-      const created = await response.json();
       setUsers([...users, created]);
       setShowAdd(false);
     } catch (err) {
@@ -482,7 +428,7 @@ const UserManagement = () => {
       <AdminDeleteModal
         isOpen={!!deleteUser}
         onClose={() => setDeleteUser(null)}
-        onConfirm={confirmDeleteUser}
+        onConfirm={handleDeleteUser}
         title="¿Eliminar usuario?"
         message="¿Estás seguro de que quieres eliminar este usuario? Esta acción no se puede deshacer."
         itemName={deleteUser ? `${deleteUser.nombre} (${deleteUser.email})` : ''}

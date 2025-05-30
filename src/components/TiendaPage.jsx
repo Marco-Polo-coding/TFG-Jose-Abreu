@@ -3,7 +3,7 @@ import { FaHeart, FaBookmark, FaHome, FaShoppingCart, FaArrowRight, FaBoxOpen, F
 import CartButton from './CartButton';
 import UserButton from './UserButton';
 import LoadingSpinner from './LoadingSpinner';
-import axios from 'axios';
+import { apiManager } from '../utils/apiManager';
 import Toast from './Toast';
 import useCartStore from '../store/cartStore';
 import AuthModal from './AuthModal';
@@ -28,16 +28,18 @@ const TiendaPage = () => {
   const addItem = useCartStore((state) => state.addItem);
 
   useEffect(() => {
-    fetch("http://localhost:8000/productos")
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchProducts = async () => {
+      try {
+        const data = await apiManager.getProducts();
         setProductos(data);
         setLoading(false);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Error al obtener productos:", error);
         setLoading(false);
-      });
+      }
+    };
+    
+    fetchProducts();
   }, []);
 
   // Obtener categorías únicas
@@ -88,7 +90,7 @@ const TiendaPage = () => {
     }
     try {
       setIsSaving(prev => ({ ...prev, [productoId]: true }));
-      await axios.post(`http://localhost:8000/usuarios/${userEmail}/productos-favoritos/${productoId}`);
+      await apiManager.addFavoriteProduct(userEmail, productoId);
       showNotification('Producto guardado correctamente', 'success');
     } catch (error) {
       if (error.response?.status === 400) {

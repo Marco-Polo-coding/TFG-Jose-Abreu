@@ -3,7 +3,7 @@ import { FaHeart, FaBookmark, FaHome, FaArrowRight, FaPen, FaSearch, FaSortAlpha
 import CartButton from './CartButton';
 import UserButton from './UserButton';
 import LoadingSpinner from './LoadingSpinner';
-import axios from 'axios';
+import { apiManager } from '../utils/apiManager';
 import Toast from './Toast';
 
 const BlogPage = () => {
@@ -25,8 +25,8 @@ const BlogPage = () => {
 
   const fetchArticles = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/articulos');
-      setArticulos(response.data);
+      const data = await apiManager.getArticles();
+      setArticulos(data);
       setLoading(false);
     } catch (err) {
       console.error('Error fetching articles:', err);
@@ -39,8 +39,8 @@ const BlogPage = () => {
       const userEmail = localStorage.getItem('userEmail');
       if (!userEmail) return;
 
-      const response = await axios.get(`http://localhost:8000/usuarios/${userEmail}/articulos-guardados`);
-      setSavedArticles(response.data);
+      const data = await apiManager.get(`/usuarios/${userEmail}/articulos-guardados`);
+      setSavedArticles(data);
     } catch (error) {
       console.error('Error fetching saved articles:', error);
     }
@@ -58,13 +58,13 @@ const BlogPage = () => {
     try {
       const isSaved = savedArticles.some(article => article.id === articleId);
       if (isSaved) {
-        await axios.delete(`http://localhost:8000/usuarios/${userEmail}/articulos-guardados/${articleId}`);
+        await apiManager.delete(`/usuarios/${userEmail}/articulos-guardados/${articleId}`);
         setSavedArticles(prev => prev.filter(article => article.id !== articleId));
         setToastMessage('Artículo eliminado de guardados');
         setToastType('success');
         setShowToast(true);
       } else {
-        await axios.post(`http://localhost:8000/usuarios/${userEmail}/articulos-guardados/${articleId}`);
+        await apiManager.post(`/usuarios/${userEmail}/articulos-guardados/${articleId}`);
         const article = articulos.find(a => a.id === articleId);
         setSavedArticles(prev => [...prev, article]);
         setToastMessage('Artículo guardado correctamente');

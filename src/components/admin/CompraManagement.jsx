@@ -4,6 +4,7 @@ import AdminCompraDetalleModal from '../AdminCompraDetalleModal';
 import AdminDeleteModal from './AdminDeleteModal';
 import LoadingSpinner from '../LoadingSpinner';
 import ReactDOM from 'react-dom';
+import apiManager from '../../services/apiManager';
 
 const columns = [
   { key: 'fecha', label: 'FECHA' },
@@ -100,12 +101,7 @@ const CompraManagement = () => {
     setLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('http://127.0.0.1:8000/admin/compras', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error('Error al obtener compras');
-      const data = await res.json();
+      const data = await apiManager.get('/admin/compras');
       setCompras(data);
     } catch (err) {
       setError(err.message);
@@ -116,12 +112,7 @@ const CompraManagement = () => {
 
   const fetchUsuarios = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('http://127.0.0.1:8000/admin/users', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error('Error al obtener usuarios');
-      const data = await res.json();
+      const data = await apiManager.get('/admin/users');
       setUsuarios(data);
     } catch (err) {
       // No bloquea la vista de compras si falla
@@ -131,12 +122,7 @@ const CompraManagement = () => {
   const handleDelete = async () => {
     if (!compraToDelete) return;
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`http://127.0.0.1:8000/admin/compras/${compraToDelete.id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error('Error al eliminar compra');
+      await apiManager.delete(`/admin/compras/${compraToDelete.id}`);
       setShowDelete(false);
       setCompraToDelete(null);
       fetchCompras();

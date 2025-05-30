@@ -3,6 +3,7 @@ import { FaSearch, FaTrash, FaEdit, FaPlus, FaSort, FaSortUp, FaSortDown, FaExcl
 import LoadingSpinner from '../LoadingSpinner';
 import AdminDeleteModal from './AdminDeleteModal';
 import ReactDOM from 'react-dom';
+import { apiManager } from '../../utils/apiManager';
 
 const ArticleManagement = () => {
   const [articles, setArticles] = useState([]);
@@ -22,22 +23,7 @@ const ArticleManagement = () => {
 
   const fetchArticles = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No hay token de autenticación');
-      }
-
-      const response = await fetch('http://127.0.0.1:8000/admin/articles', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al obtener artículos');
-      }
-
-      const data = await response.json();
+      const data = await apiManager.get('/admin/articles');
       setArticles(data);
     } catch (err) {
       setError(err.message);
@@ -46,24 +32,10 @@ const ArticleManagement = () => {
     }
   };
 
-  const handleDeleteArticle = (article) => {
-    setDeleteArticle(article);
-  };
-
-  const confirmDeleteArticle = async () => {
-    if (!deleteArticle) return;
+  const handleDeleteArticle = async (article) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://127.0.0.1:8000/admin/articles/${deleteArticle.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) {
-        throw new Error('Error al eliminar artículo');
-      }
-      setArticles(articles.filter(article => article.id !== deleteArticle.id));
+      await apiManager.delete(`/admin/articles/${article.id}`);
+      setArticles(prev => prev.filter(a => a.id !== article.id));
       setDeleteArticle(null);
     } catch (err) {
       setError(err.message);
@@ -341,7 +313,7 @@ const ArticleManagement = () => {
       <AdminDeleteModal
         isOpen={!!deleteArticle}
         onClose={() => setDeleteArticle(null)}
-        onConfirm={confirmDeleteArticle}
+        onConfirm={() => handleDeleteArticle(deleteArticle)}
         title="¿Eliminar artículo?"
         message="¿Estás seguro de que quieres eliminar este artículo? Esta acción no se puede deshacer."
         itemName={deleteArticle?.titulo}

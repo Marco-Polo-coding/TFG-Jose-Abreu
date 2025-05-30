@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { FaTimes, FaUser, FaLock, FaEnvelope, FaSignOutAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaTimes, FaUser, FaLock, FaEnvelope, FaSignOutAlt, FaEye, FaEyeSlash, FaGoogle } from 'react-icons/fa';
 import Toast from './Toast';
 import { GoogleLogin } from '@react-oauth/google';
 import useCartStore from '../store/cartStore';
 import PasswordRequirements from './PasswordRequirements';
+import { apiManager } from '../utils/apiManager';
 
 const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
   const [isLoginMode, setIsLoginMode] = useState(mode === 'login');
@@ -638,46 +639,14 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                             return;
                           }
                           try {
-                            const response = await fetch('http://127.0.0.1:8000/auth/google', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ id_token }),
-                            });
-                            const data = await response.json();
-                            if (response.ok) {
-                              localStorage.setItem('token', data.idToken);
-                              localStorage.setItem('userEmail', data.email);
-                              localStorage.setItem('userName', data.nombre || data.email);
-                              if (data.uid) {
-                                localStorage.setItem('uid', data.uid);
-                              }
-                              if (data.foto) {
-                                localStorage.setItem('userPhoto', data.foto);
-                              } else {
-                                localStorage.removeItem('userPhoto');
-                              }
-                              // Biografía: si viene en la respuesta, guardar; si no, limpiar
-                              if (data.biografia !== undefined && data.biografia !== null) {
-                                localStorage.setItem('userBio', data.biografia);
-                              } else {
-                                localStorage.removeItem('userBio');
-                              }
-                              setIsAuthenticated(true);
-                              onLoginSuccess?.(data.email, data.nombre || data.email, data.uid);
-                              showNotification('¡Inicio de sesión con Google exitoso!', 'success');
-                              onClose();
-                              setTimeout(() => {
-                                window.location.reload();
-                              }, 1500);
-                            } else {
-                              showNotification(data.detail || 'Error al iniciar sesión con Google', 'error');
-                            }
-                          } catch (err) {
-                            showNotification('Error al conectar con el servidor', 'error');
+                            const data = await apiManager.post('/auth/google', { id_token });
+                            handleAuthSuccess(data);
+                          } catch (error) {
+                            showNotification(error.message || 'Error en la autenticación con Google', 'error');
                           }
                         }}
                         onError={() => {
-                          showNotification('Error al iniciar sesión con Google', 'error');
+                          showNotification('Error en la autenticación con Google', 'error');
                         }}
                       />
                     </div>

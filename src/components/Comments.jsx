@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaComment, FaReply } from 'react-icons/fa';
-import axios from 'axios';
 import Toast from './Toast';
+import { apiManager } from '../utils/apiManager';
 
 const Comments = ({ articuloId }) => {
   const [comentarios, setComentarios] = useState([]);
@@ -19,8 +19,8 @@ const Comments = ({ articuloId }) => {
 
   const cargarComentarios = async () => {
     try {
-      const response = await axios.get(`http://localhost:8000/articulos/${articuloId}/comentarios`);
-      setComentarios(response.data);
+      const data = await apiManager.get(`/articulos/${articuloId}/comentarios`);
+      setComentarios(data);
       setLoading(false);
     } catch (error) {
       setToastMessage('Error al cargar los comentarios');
@@ -47,7 +47,7 @@ const Comments = ({ articuloId }) => {
         fecha: new Date().toISOString()
       };
 
-      await axios.post(`http://localhost:8000/articulos/${articuloId}/comentarios`, comentario);
+      await apiManager.post(`/articulos/${articuloId}/comentarios`, comentario);
       setNuevoComentario('');
       cargarComentarios();
       setToastMessage('Comentario publicado correctamente');
@@ -74,13 +74,11 @@ const Comments = ({ articuloId }) => {
       const respuesta = {
         usuario: userEmail,
         texto: respuestaComentario,
-        fecha: new Date().toISOString()
+        fecha: new Date().toISOString(),
+        comentario_padre: comentarioRespondiendo.id
       };
 
-      await axios.post(
-        `http://localhost:8000/articulos/${articuloId}/comentarios/${comentarioRespondiendo.id}/respuestas`,
-        respuesta
-      );
+      await apiManager.post(`/articulos/${articuloId}/comentarios`, respuesta);
       setRespuestaComentario('');
       setComentarioRespondiendo(null);
       cargarComentarios();

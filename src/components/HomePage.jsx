@@ -4,8 +4,7 @@ import LoadingSpinner from './LoadingSpinner';
 import CartButton from './CartButton';
 import UserButton from './UserButton';
 import Slider from './Slider';
-
-
+import { apiManager } from '../utils/apiManager';
 
 const HomePage = () => {
   const [productos, setProductos] = useState([]);
@@ -34,22 +33,25 @@ const HomePage = () => {
   }, []);
 
   useEffect(() => {
-    Promise.all([
-      fetch("http://localhost:8000/productos").then(res => res.json()),
-      fetch("http://localhost:8000/articulos").then(res => res.json())
-    ])
-      .then(([productosData, articulosData]) => {
+    const fetchData = async () => {
+      try {
+        const [productosData, articulosData] = await Promise.all([
+          apiManager.get('/productos'),
+          apiManager.get('/articulos')
+        ]);
         setProductos(productosData);
         setArticulos(articulosData);
         setLoading(false);
         setTimeout(() => {
           setShowContent(true);
         }, 100);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Error al cargar datos:", error);
         setLoading(false);
-      });
+      }
+    };
+
+    fetchData();
   }, []);
 
   const handleNewsletterSubmit = (e) => {
@@ -262,8 +264,6 @@ const HomePage = () => {
           </div>
         </div>
       </section>
-
-
 
       {/* Footer */}
       <footer className={`bg-gray-900 text-white relative overflow-hidden transition-all duration-1000 delay-1000 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>

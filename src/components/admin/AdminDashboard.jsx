@@ -11,6 +11,7 @@ import {
   Legend,
 } from 'chart.js';
 import LoadingSpinner from '../LoadingSpinner';
+import apiManager from '../../services/apiManager';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 
@@ -43,60 +44,38 @@ const AdminDashboard = () => {
     compras: 0,
   };
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          throw new Error('No hay token de autenticación');
-        }
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        // Obtener estadísticas actuales
-        const statsResponse = await fetch('http://127.0.0.1:8000/admin/stats', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+      // Obtener estadísticas actuales
+      const statsData = await apiManager.get('/admin/stats');
+      setStats(statsData);
 
-        if (!statsResponse.ok) {
-          throw new Error('Error al obtener estadísticas');
-        }
+      // Obtener estadísticas mensuales
+      const monthlyData = await apiManager.get('/admin/estadisticas-mensuales');
+      setMonthlyStats(monthlyData);
 
-        const statsData = await statsResponse.json();
-        setStats(statsData);
-
-        // Obtener estadísticas mensuales
-        const monthlyResponse = await fetch('http://127.0.0.1:8000/admin/estadisticas-mensuales', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (!monthlyResponse.ok) {
-          throw new Error('Error al obtener estadísticas mensuales');
-        }
-
-        const monthlyData = await monthlyResponse.json();
-        setMonthlyStats(monthlyData);
-
-        // Calcular porcentajes de variación
-        if (monthlyData.length >= 2) {
-          const current = monthlyData[0];
-          const previous = monthlyData[1];
-          
-          percent.users = calculatePercentChange(current.total_usuarios, previous.total_usuarios);
-          percent.products = calculatePercentChange(current.total_productos, previous.total_productos);
-          percent.articles = calculatePercentChange(current.total_articulos, previous.total_articulos);
-          percent.compras = calculatePercentChange(current.total_compras, previous.total_compras);
-        }
-
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+      // Calcular porcentajes de variación
+      if (monthlyData.length >= 2) {
+        const current = monthlyData[0];
+        const previous = monthlyData[1];
+        
+        percent.users = calculatePercentChange(current.total_usuarios, previous.total_usuarios);
+        percent.products = calculatePercentChange(current.total_productos, previous.total_productos);
+        percent.articles = calculatePercentChange(current.total_articulos, previous.total_articulos);
+        percent.compras = calculatePercentChange(current.total_compras, previous.total_compras);
       }
-    };
 
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchStats();
   }, []);
 

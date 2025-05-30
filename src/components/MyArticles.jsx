@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { FaNewspaper, FaEdit, FaTrash, FaPlus, FaSpinner, FaHome } from 'react-icons/fa';
-import axios from 'axios';
+import LoadingSpinner from './LoadingSpinner';
 import CartButton from './CartButton';
 import UserButton from './UserButton';
 import ConfirmDeleteModal from './ConfirmDeleteModal';
 import EditArticleModal from './EditArticleModal';
 import Toast from './Toast';
-import LoadingSpinner from './LoadingSpinner';
 import useLoadingState from '../hooks/useLoadingState';
+import { apiManager } from '../utils/apiManager';
 
 const MyArticles = () => {
   const [articles, setArticles] = useState([]);
@@ -37,13 +37,13 @@ const MyArticles = () => {
       if (!userEmail) {
         throw new Error('No se ha encontrado el email del usuario');
       }
-      const response = await axios.get(`http://localhost:8000/articulos`);
+      const data = await apiManager.get('/articulos');
       // Filtrar artículos por autor_email
-      const filtered = response.data.filter(a => a.autor_email === userEmail);
+      const filtered = data.filter(a => a.autor_email === userEmail);
       setArticles(filtered);
       setError(null);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Error al cargar los artículos. Por favor, intenta de nuevo.');
+      setError(err.message || 'Error al cargar los artículos. Por favor, intenta de nuevo.');
       console.error('Error fetching articles:', err);
     } finally {
       setLoading(false);
@@ -54,7 +54,7 @@ const MyArticles = () => {
   const handleDelete = async () => {
     if (!articleToDelete) return;
     try {
-      await axios.delete(`http://localhost:8000/articulos/${articleToDelete.id}`);
+      await apiManager.delete(`/articulos/${articleToDelete.id}`);
       setArticles(prev => prev.filter(a => a.id !== articleToDelete.id));
       setModalOpen(false);
       setArticleToDelete(null);
@@ -84,8 +84,8 @@ const MyArticles = () => {
       if (formData.imagen instanceof File) {
         data.append('imagen', formData.imagen);
       }
-      const response = await axios.put(
-        `http://localhost:8000/articulos/${formData.id}`,
+      const response = await apiManager.put(
+        `/articulos/${formData.id}`,
         data,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );

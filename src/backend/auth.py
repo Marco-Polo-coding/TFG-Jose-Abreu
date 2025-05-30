@@ -13,8 +13,22 @@ import cloudinary
 from firebase_config import db
 
 # Configurar logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('auth.log'),
+        logging.StreamHandler()
+    ]
+)
+
 logger = logging.getLogger(__name__)
+
+# Función para sanitizar datos sensibles en logs
+def sanitize_log_data(data):
+    if isinstance(data, dict):
+        return {k: '***' if k in ['password', 'token', 'api_key'] else v for k, v in data.items()}
+    return data
 
 load_dotenv()
 
@@ -87,7 +101,6 @@ async def register_user(user: UserRegister):
 @router.post("/login")
 async def login_user(user: UserLogin) -> Dict[str, str]:
     try:
-        # Log para depuración
         logger.info(f"Intento de login para email: {user.email}")
         
         # Verificar que FIREBASE_API_KEY esté configurada
@@ -109,32 +122,30 @@ async def login_user(user: UserLogin) -> Dict[str, str]:
                 }
             )
             
-            # Log de la respuesta de Firebase para depuración
-            logger.info(f"Respuesta de Firebase: {response.text}")
-            
             if response.status_code != 200:
                 error_data = response.json()
                 error_message = error_data.get('error', {}).get('message', 'Error de autenticación')
                 logger.error(f"Error de Firebase: {error_message}")
                 
-                # Mapear códigos de error comunes de Firebase a códigos HTTP apropiados
                 if 'INVALID_PASSWORD' in error_message or 'EMAIL_NOT_FOUND' in error_message:
                     raise HTTPException(
                         status_code=401,
-                        detail="Credenciales inválidas"
+                        detail="Email o contraseña incorrectos"
                     )
                 elif 'TOO_MANY_ATTEMPTS_TRY_LATER' in error_message:
                     raise HTTPException(
                         status_code=429,
-                        detail="Demasiados intentos. Por favor, intente más tarde"
+                        detail="Demasiados intentos fallidos. Por favor, espera unos minutos antes de intentarlo de nuevo"
                     )
                 else:
                     raise HTTPException(
                         status_code=400,
-                        detail=error_message
+                        detail="Error al iniciar sesión. Por favor, inténtalo de nuevo"
                     )
             
             data = response.json()
+            logger.info(f"Login exitoso para usuario: {user.email}")
+            
             # Obtener el usuario de Firebase
             user_record = auth.get_user_by_email(user.email)
             # Obtener la foto de perfil y rol desde Firestore
@@ -156,15 +167,15 @@ async def login_user(user: UserLogin) -> Dict[str, str]:
                 "foto": foto_url,
                 "role": role
             }
-            logger.info(f"Datos de respuesta: {response_data}")  # Log de la respuesta completa
+            logger.info(f"Datos de respuesta: {sanitize_log_data(response_data)}")  # Log de la respuesta completa
             return response_data
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error inesperado en login: {str(e)}")
+        logger.error(f"Error inesperado en login: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail="Error interno del servidor"
+            detail="Ha ocurrido un error inesperado. Por favor, inténtalo de nuevo más tarde"
         )
 
 @router.post("/google")

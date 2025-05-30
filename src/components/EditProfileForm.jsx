@@ -3,6 +3,7 @@ import Toast from './Toast';
 import { validateEmail, validateName, validatePassword } from '../utils/validation';
 import { FaCreditCard, FaPaypal, FaMoneyBillWave } from 'react-icons/fa';
 import { getMetodosPago, saveMetodoPago, deleteMetodoPago } from '../utils/api';
+import { apiManager } from '../utils/apiManager';
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -135,12 +136,11 @@ const EditProfileForm = () => {
       formData.append('biografia', form.biografia);
       if (form.foto) formData.append('foto', form.foto);
       if (form.deletePhoto) formData.append('delete_photo', 'true');
-      const res = await fetch('http://127.0.0.1:8000/auth/update-profile', {
-        method: 'PUT',
-        body: formData
+      
+      const data = await apiManager.put('/auth/update-profile', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Error al actualizar el perfil');
+      
       // Actualizar localStorage
       localStorage.setItem('userName', form.nombre);
       localStorage.setItem('userEmail', form.email);
@@ -184,13 +184,10 @@ const EditProfileForm = () => {
     setPasswordLoading(true);
     try {
       const email = localStorage.getItem('userEmail');
-      const res = await fetch('http://127.0.0.1:8000/auth/direct-reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, newPassword: passwordForm.password })
+      await apiManager.post('/auth/direct-reset-password', {
+        email,
+        newPassword: passwordForm.password
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Error al cambiar la contraseña');
       setToast({ open: true, message: 'Contraseña actualizada con éxito', type: 'success' });
       setPasswordForm({ password: '', confirmPassword: '' });
     } catch (err) {
@@ -216,13 +213,10 @@ const EditProfileForm = () => {
         throw new Error('No se encontraron los datos del usuario');
       }
 
-      const res = await fetch('http://127.0.0.1:8000/auth/delete-account', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uid, email })
+      await apiManager.delete('/auth/delete-account', {
+        uid,
+        email
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Error al eliminar la cuenta');
       
       // Limpiar localStorage
       localStorage.clear();

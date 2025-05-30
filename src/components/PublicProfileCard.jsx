@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FaBook, FaShoppingBag, FaHome } from 'react-icons/fa';
-import axios from 'axios';
 import LoadingSpinner from './LoadingSpinner';
+import { apiManager } from '../utils/apiManager';
 
 function getInitials(email) {
   if (!email) return '';
@@ -35,8 +35,8 @@ const PublicProfileCard = ({ userEmail }) => {
     const fetchUserData = async () => {
       try {
         const encodedEmail = encodeURIComponent(userEmail);
-        const response = await axios.get(`http://localhost:8000/usuarios/${encodedEmail}`);
-        setUserData(response.data);
+        const data = await apiManager.get(`/usuarios/${encodedEmail}`);
+        setUserData(data);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -48,39 +48,37 @@ const PublicProfileCard = ({ userEmail }) => {
   }, [userEmail]);
 
   useEffect(() => {
-    const fetchArticles = async () => {
+    const fetchUserArticles = async () => {
       try {
-        setLoadingArticles(true);
-        const response = await axios.get('http://localhost:8000/articulos');
-        const filtered = response.data.filter(a => a.autor_email === userEmail);
-        setArticles(filtered);
-        setErrorArticles(null);
-      } catch (err) {
-        setErrorArticles('Error al cargar los artículos.');
-      } finally {
+        const encodedEmail = encodeURIComponent(userEmail);
+        const data = await apiManager.get(`/usuarios/${encodedEmail}/articulos`);
+        setArticles(data);
+        setLoadingArticles(false);
+      } catch (error) {
+        console.error('Error fetching user articles:', error);
+        setErrorArticles('Error al cargar los artículos');
         setLoadingArticles(false);
       }
     };
 
-    fetchArticles();
+    fetchUserArticles();
   }, [userEmail]);
 
   useEffect(() => {
-    const fetchVentas = async () => {
+    const fetchUserVentas = async () => {
       try {
-        setLoadingVentas(true);
-        const response = await axios.get('http://localhost:8000/productos');
-        const ventasUsuario = response.data.filter(p => p.usuario_email === userEmail);
-        setVentas(ventasUsuario);
-        setErrorVentas(null);
-      } catch (err) {
-        setErrorVentas('Error al cargar las ventas.');
-      } finally {
+        const encodedEmail = encodeURIComponent(userEmail);
+        const data = await apiManager.get(`/usuarios/${encodedEmail}/ventas`);
+        setVentas(data);
+        setLoadingVentas(false);
+      } catch (error) {
+        console.error('Error fetching user sales:', error);
+        setErrorVentas('Error al cargar las ventas');
         setLoadingVentas(false);
       }
     };
 
-    fetchVentas();
+    fetchUserVentas();
   }, [userEmail]);
 
   if (loading) {

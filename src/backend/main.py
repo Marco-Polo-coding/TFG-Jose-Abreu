@@ -10,6 +10,26 @@ from datetime import datetime
 from cloudinary_config import *  # Importar la configuración
 import cloudinary.uploader
 from pydantic import BaseModel
+import logging
+import json
+
+# Configuración de logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('app.log'),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger(__name__)
+
+# Función para sanitizar datos sensibles en logs
+def sanitize_log_data(data):
+    if isinstance(data, dict):
+        return {k: '***' if k in ['password', 'token', 'api_key'] else v for k, v in data.items()}
+    return data
 
 app = FastAPI(title="API de la Aplicación")
 
@@ -22,7 +42,7 @@ app.include_router(admin_router, prefix="/admin")
 # Configuración de CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # En producción, especificar los orígenes permitidos
+    allow_origins=["http://localhost:4321"],  # Permitir solo el frontend
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -61,6 +81,7 @@ async def guardar_estadisticas_mensuales():
         
         return {"message": "Estadísticas guardadas correctamente", "estadisticas": estadisticas}
     except Exception as e:
+        logger.error(f"Error al guardar estadísticas mensuales: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/admin/estadisticas-mensuales", response_model=List[EstadisticasMensuales])
@@ -72,6 +93,7 @@ async def obtener_estadisticas_mensuales():
         
         return [{"fecha": doc.id, **doc.to_dict()} for doc in stats]
     except Exception as e:
+        logger.error(f"Error al obtener estadísticas mensuales: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/")
@@ -87,13 +109,18 @@ async def get_productos():
 @app.get("/productos/{producto_id}", response_model=Dict[str, Any])
 async def obtener_producto(producto_id: str):
     try:
+        logger.info(f"Búsqueda de producto: {producto_id}")
         producto_ref = db.collection("productos").document(producto_id)
         producto = producto_ref.get()
         if not producto.exists:
             raise HTTPException(status_code=404, detail="Producto no encontrado")
         return {"id": producto.id, **producto.to_dict()}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error al obtener producto {producto_id}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Ha ocurrido un error al obtener el producto. Por favor, inténtalo de nuevo más tarde."
+        )
 
 @app.post("/productos", response_model=Dict[str, Any])
 async def crear_producto(
@@ -107,6 +134,7 @@ async def crear_producto(
     usuario_email: Optional[str] = Form(None)
 ):
     try:
+        logger.info(f"Intento de creación de producto: {sanitize_log_data({'nombre': nombre, 'categoria': categoria, 'usuario': usuario_email})}")
         urls_imagenes = []
         if imagenes:
             for imagen in imagenes:
@@ -144,8 +172,11 @@ async def crear_producto(
         producto_ref.set(producto)
         return {"id": producto_ref.id, **producto}
     except Exception as e:
-        print("Error en crear_producto:", e)
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error en crear_producto: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Ha ocurrido un error al crear el producto. Por favor, inténtalo de nuevo más tarde."
+        )
 
 @app.put("/productos/{producto_id}", response_model=Dict[str, Any])
 async def actualizar_producto(

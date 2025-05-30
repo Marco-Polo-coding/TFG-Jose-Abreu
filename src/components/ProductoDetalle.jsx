@@ -4,9 +4,8 @@ import LoadingSpinner from './LoadingSpinner';
 import CartButton from './CartButton';
 import UserButton from './UserButton';
 import Toast from './Toast';
-import axios from 'axios';
 import useCartStore from '../store/cartStore';
-
+import { apiManager } from '../utils/apiManager';
 
 const ProductoDetalle = ({ id }) => {
   const [producto, setProducto] = useState(null);
@@ -22,13 +21,8 @@ const ProductoDetalle = ({ id }) => {
   useEffect(() => {
     const fetchProducto = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/productos/${id}`);
-        if (response.ok) {
-          const data = await response.json();
-          setProducto(data);
-        } else {
-          throw new Error('Error al cargar el producto');
-        }
+        const data = await apiManager.get(`/productos/${id}`);
+        setProducto(data);
       } catch (error) {
         console.error('Error:', error);
       } finally {
@@ -48,51 +42,26 @@ const ProductoDetalle = ({ id }) => {
         return;
       }
 
-      await axios.post(`http://localhost:8000/usuarios/${userEmail}/productos-favoritos/${producto.id}`);
+      await apiManager.post(`/usuarios/${userEmail}/productos-favoritos/${producto.id}`);
       showNotification('Producto guardado correctamente', 'success');
     } catch (error) {
-      if (error.response?.status === 400) {
-        showNotification('Este producto ya está en tus favoritos', 'warning');
-      } else {
-        showNotification('Error al guardar el producto', 'error');
-      }
+      showNotification('Error al guardar el producto', 'error');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleAddToCart = () => {
-    if (addingToCart) return;
-    const userEmail = localStorage.getItem('userEmail');
-    const uid = localStorage.getItem('uid');
-    if (!userEmail && !uid) {
-      setToastMessage('Debes iniciar sesión para añadir productos al carrito');
-      setToastType('error');
-      setShowToast(true);
-      return;
-    }
+  const handleAddToCart = async () => {
+    if (!producto) return;
     setAddingToCart(true);
-    setTimeout(() => {
-      const cartItems = useCartStore.getState().items;
-      if (cartItems.some(item => item.id === producto.id)) {
-        setToastMessage('El producto ya está en el carrito');
-        setToastType('warning');
-        setShowToast(true);
-        setAddingToCart(false);
-        return;
-      }
-      try {
-        addItem(producto);
-        setToastMessage('Producto añadido al carrito');
-        setToastType('success');
-        setShowToast(true);
-      } catch (error) {
-        setToastMessage(error.message);
-        setToastType('error');
-        setShowToast(true);
-      }
+    try {
+      addItem(producto);
+      showNotification('Producto añadido al carrito', 'success');
+    } catch (error) {
+      showNotification('Error al añadir al carrito', 'error');
+    } finally {
       setAddingToCart(false);
-    }, 1200);
+    }
   };
 
   const nextImage = () => {
