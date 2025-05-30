@@ -66,22 +66,30 @@ const ProductoDetalle = ({ id }) => {
     const userEmail = localStorage.getItem('userEmail');
     const uid = localStorage.getItem('uid');
     if (!userEmail && !uid) {
-      showNotification('Debes iniciar sesión para añadir productos al carrito', 'error');
+      setToastMessage('Debes iniciar sesión para añadir productos al carrito');
+      setToastType('error');
+      setShowToast(true);
       return;
     }
     setAddingToCart(true);
     setTimeout(() => {
       const cartItems = useCartStore.getState().items;
       if (cartItems.some(item => item.id === producto.id)) {
-        showNotification('El producto ya está en el carrito', 'warning');
+        setToastMessage('El producto ya está en el carrito');
+        setToastType('warning');
+        setShowToast(true);
         setAddingToCart(false);
         return;
       }
       try {
         addItem(producto);
-        showNotification('Producto añadido al carrito', 'success');
-      } catch (e) {
-        showNotification('Error al añadir al carrito', 'error');
+        setToastMessage('Producto añadido al carrito');
+        setToastType('success');
+        setShowToast(true);
+      } catch (error) {
+        setToastMessage(error.message);
+        setToastType('error');
+        setShowToast(true);
       }
       setAddingToCart(false);
     }, 1200);

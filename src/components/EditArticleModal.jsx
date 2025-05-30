@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FaImage, FaSpinner, FaSave, FaTimes } from 'react-icons/fa';
-import Notification from './Notification';
+import Toast from './Toast';
 
 const EditArticleModal = ({ open, onClose, onSave, initialData }) => {
   const [formData, setFormData] = useState({ ...initialData });
   const [previewImage, setPreviewImage] = useState(initialData.imagen || null);
   const [loading, setLoading] = useState(false);
-  const [notification, setNotification] = useState(null);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success');
   const modalRef = useRef(null);
 
   const TITLE_LIMIT = 100;
@@ -55,10 +57,9 @@ const EditArticleModal = ({ open, onClose, onSave, initialData }) => {
     try {
       await onSave(formData, () => setLoading(false));
     } catch (error) {
-      setNotification({
-        type: 'error',
-        message: 'Error al guardar los cambios. Por favor, intenta de nuevo.'
-      });
+      setToastMessage('Error al guardar los cambios. Por favor, intenta de nuevo.');
+      setToastType('error');
+      setShowToast(true);
       setLoading(false);
     }
   };
@@ -67,10 +68,9 @@ const EditArticleModal = ({ open, onClose, onSave, initialData }) => {
     // Verificar si hay cambios sin guardar
     const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialData);
     if (hasChanges) {
-      setNotification({
-        type: 'warning',
-        message: 'Tienes cambios sin guardar. ¿Estás seguro de que quieres cerrar?'
-      });
+      setToastMessage('Tienes cambios sin guardar. ¿Estás seguro de que quieres cerrar?');
+      setToastType('warning');
+      setShowToast(true);
     }
     onClose();
   };
@@ -235,12 +235,12 @@ const EditArticleModal = ({ open, onClose, onSave, initialData }) => {
           </form>
         </div>
       </div>
-      {/* Notificación */}
-      {notification && (
-        <Notification
-          type={notification.type}
-          message={notification.message}
-          onClose={() => setNotification(null)}
+      {/* Toast de notificación */}
+      {showToast && (
+        <Toast
+          message={toastMessage}
+          type={toastType}
+          onClose={() => setShowToast(false)}
         />
       )}
     </div>

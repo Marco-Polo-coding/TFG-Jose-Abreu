@@ -3,6 +3,7 @@ import { FaTimes, FaUser, FaLock, FaEnvelope, FaSignOutAlt, FaEye, FaEyeSlash } 
 import Toast from './Toast';
 import { GoogleLogin } from '@react-oauth/google';
 import useCartStore from '../store/cartStore';
+import PasswordRequirements from './PasswordRequirements';
 
 const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
   const [isLoginMode, setIsLoginMode] = useState(mode === 'login');
@@ -25,6 +26,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showResetPassword1, setShowResetPassword1] = useState(false);
   const [showResetPassword2, setShowResetPassword2] = useState(false);
+  const [showPasswordErrors, setShowPasswordErrors] = useState(false);
   const clearCartOnLogout = useCartStore(state => state.clearCartOnLogout);
 
   useEffect(() => {
@@ -84,10 +86,27 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
     window.location.href = '/';
   };
 
+  const validatePassword = (password) => {
+    const minLength = 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+    return password.length >= minLength && hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
+
+    // Validar contraseña solo en registro
+    if (!isLoginMode && !validatePassword(formData.password)) {
+      setShowPasswordErrors(true);
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const endpoint = isLoginMode 
@@ -199,6 +218,16 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
     e.preventDefault();
     const errors = validateResetForm(resetForm);
     setResetErrors(errors);
+    
+    // Validar contraseña
+    if (!validatePassword(resetForm.password)) {
+      setResetErrors(prev => ({
+        ...prev,
+        password: 'La contraseña no cumple con los requisitos mínimos'
+      }));
+      return;
+    }
+    
     if (Object.keys(errors).length > 0) return;
     setResetLoading(true);
     setError(null);
@@ -386,6 +415,10 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                         )}
                       </button>
                     </div>
+                    <PasswordRequirements 
+                      password={resetForm.password} 
+                      showErrors={!!resetErrors.password} 
+                    />
                     {resetErrors.password && <p className="text-red-600 text-sm mt-1">{resetErrors.password}</p>}
                   </div>
                   <div>
@@ -521,7 +554,10 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                             type={showPassword ? 'text' : 'password'}
                             name="password"
                             value={formData.password}
-                            onChange={handleInputChange}
+                            onChange={(e) => {
+                              handleInputChange(e);
+                              setShowPasswordErrors(false);
+                            }}
                             required
                             className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl shadow focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base"
                             placeholder="••••••••"
@@ -541,6 +577,11 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                             )}
                           </button>
                         </div>
+                        <PasswordRequirements 
+                          password={formData.password} 
+                          showErrors={showPasswordErrors} 
+                          mostrar={!isLoginMode}
+                        />
                       </div>
 
                       {isLoginMode && (

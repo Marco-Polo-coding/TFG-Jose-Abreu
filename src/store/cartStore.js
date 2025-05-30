@@ -17,6 +17,12 @@ const useCartStore = create(
         if (!userEmail && !uid) {
           throw new Error('Debes iniciar sesión para añadir productos al carrito');
         }
+
+        // Verificar si el usuario actual es el vendedor
+        if (item.usuario_email === userEmail) {
+          throw new Error('No puedes comprar tus propios productos');
+        }
+
         set((state) => {
           // Verificar si el item ya existe en el carrito
           const existingItem = state.items.find(i => i.id === item.id);

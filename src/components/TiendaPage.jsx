@@ -119,11 +119,21 @@ const TiendaPage = () => {
     const userEmail = localStorage.getItem('userEmail');
     const uid = localStorage.getItem('uid');
     if (!userEmail && !uid) {
-      showNotification('Debes iniciar sesión para añadir productos al carrito', 'error');
+      setToastMessage('Debes iniciar sesión para añadir productos al carrito');
+      setToastType('error');
+      setShowToast(true);
       return;
     }
-    addItem(producto);
-    showNotification('Producto añadido al carrito', 'success');
+    try {
+      addItem(producto);
+      setToastMessage('Producto añadido al carrito');
+      setToastType('success');
+      setShowToast(true);
+    } catch (error) {
+      setToastMessage(error.message);
+      setToastType('error');
+      setShowToast(true);
+    }
   };
 
   if (loading) {

@@ -5,7 +5,7 @@ import CartButton from './CartButton';
 import UserButton from './UserButton';
 import ConfirmDeleteModal from './ConfirmDeleteModal';
 import EditArticleModal from './EditArticleModal';
-import Notification from './Notification';
+import Toast from './Toast';
 import LoadingSpinner from './LoadingSpinner';
 import useLoadingState from '../hooks/useLoadingState';
 
@@ -17,7 +17,9 @@ const MyArticles = () => {
   const [articleToDelete, setArticleToDelete] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [articleToEdit, setArticleToEdit] = useState(null);
-  const [notification, setNotification] = useState(null);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success');
 
   useEffect(() => {
     const userEmail = localStorage.getItem('userEmail');
@@ -56,15 +58,13 @@ const MyArticles = () => {
       setArticles(prev => prev.filter(a => a.id !== articleToDelete.id));
       setModalOpen(false);
       setArticleToDelete(null);
-      setNotification({
-        type: 'success',
-        message: 'Artículo eliminado correctamente'
-      });
+      setToastMessage('Artículo eliminado correctamente');
+      setToastType('success');
+      setShowToast(true);
     } catch (err) {
-      setNotification({
-        type: 'error',
-        message: 'Error al eliminar el artículo. Por favor, intenta de nuevo.'
-      });
+      setToastMessage('Error al eliminar el artículo. Por favor, intenta de nuevo.');
+      setToastType('error');
+      setShowToast(true);
       console.error('Error deleting article:', err);
     }
   };
@@ -93,15 +93,13 @@ const MyArticles = () => {
       setArticles(prev => prev.map(a => a.id === updatedArticle.id ? updatedArticle : a));
       setEditModalOpen(false);
       setArticleToEdit(null);
-      setNotification({
-        type: 'success',
-        message: 'Artículo actualizado correctamente'
-      });
+      setToastMessage('Artículo actualizado correctamente');
+      setToastType('success');
+      setShowToast(true);
     } catch (err) {
-      setNotification({
-        type: 'error',
-        message: 'Error al guardar los cambios. Por favor, intenta de nuevo.'
-      });
+      setToastMessage('Error al guardar los cambios. Por favor, intenta de nuevo.');
+      setToastType('error');
+      setShowToast(true);
       console.error('Error editing article:', err);
     } finally {
       stopLoading();
@@ -224,12 +222,12 @@ const MyArticles = () => {
         onSave={handleEditSave}
         initialData={articleToEdit || {}}
       />
-      {/* Notificación */}
-      {notification && (
-        <Notification
-          type={notification.type}
-          message={notification.message}
-          onClose={() => setNotification(null)}
+      {/* Toast de notificación */}
+      {showToast && (
+        <Toast
+          message={toastMessage}
+          type={toastType}
+          onClose={() => setShowToast(false)}
         />
       )}
     </div>

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaTrash, FaEdit, FaPlus, FaSort, FaSortUp, FaSortDown, FaExclamationTriangle, FaEye } from 'react-icons/fa';
+import { FaSearch, FaTrash, FaEdit, FaPlus, FaSort, FaSortUp, FaSortDown, FaExclamationTriangle, FaEye, FaEyeSlash } from 'react-icons/fa';
 import LoadingSpinner from '../LoadingSpinner';
 import ConfirmModal from '../ConfirmModal';
 import AdminDeleteModal from './AdminDeleteModal';
 import ReactDOM from 'react-dom';
+import PasswordRequirements from '../PasswordRequirements';
 
 // Generador simple de UID si no hay uuid
 function generateUID() {
@@ -19,6 +20,7 @@ const UserFormModal = ({ isOpen, onClose, onSubmit, initialData, mode }) => {
   });
   const [error, setError] = React.useState('');
   const foto = initialData?.foto || '';
+  const [showPassword, setShowPassword] = useState(false);
 
   React.useEffect(() => {
     setForm({
@@ -46,9 +48,13 @@ const UserFormModal = ({ isOpen, onClose, onSubmit, initialData, mode }) => {
   };
 
   if (!isOpen) return null;
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget) onClose();
+  };
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center animate-fade-in">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center">
+      <div className="fixed inset-0 bg-black bg-opacity-40 z-[1000]" onClick={handleOverlayClick}></div>
+      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center animate-fade-in relative z-[1010]">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">{mode === 'edit' ? 'Editar usuario' : 'Añadir usuario'}</h2>
         {mode === 'edit' && foto && (
           <div className="flex justify-center mb-4">
@@ -74,7 +80,27 @@ const UserFormModal = ({ isOpen, onClose, onSubmit, initialData, mode }) => {
           {mode === 'add' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-              <input type="password" name="password" value={form.password} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <FaEyeSlash className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <FaEye className="h-5 w-5 text-gray-400" />
+                  )}
+                </button>
+              </div>
+              <PasswordRequirements password={form.password} />
             </div>
           )}
           {error && <div className="text-red-500 text-sm mb-2">{error}</div>}

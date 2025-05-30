@@ -433,9 +433,13 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData, mode }) => {
   };
 
   if (!isOpen) return null;
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget) onClose();
+  };
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center animate-fade-in">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center">
+      <div className="fixed inset-0 bg-black bg-opacity-40 z-[1000]" onClick={handleOverlayClick}></div>
+      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center animate-fade-in relative z-[1010]">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">{mode === 'edit' ? 'Editar producto' : 'Añadir producto'}</h2>
         <form onSubmit={handleSubmit} className="space-y-4 text-left">
           <div>
