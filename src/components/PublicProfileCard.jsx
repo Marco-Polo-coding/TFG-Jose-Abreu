@@ -115,10 +115,10 @@ const PublicProfileCard = ({ userEmail }) => {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Tarjeta principal con efecto glassmorphism */}
-      <div className="relative flex flex-col md:flex-row items-center md:items-end justify-center gap-8 mb-16 bg-white/60 dark:bg-gray-800 backdrop-blur-lg rounded-2xl shadow-2xl p-10 border border-white/30 dark:border-gray-700 ring-2 ring-purple-100">
+      <div className="relative flex flex-col md:flex-row items-center md:items-end justify-center gap-8 mb-16 bg-white/60 backdrop-blur-lg rounded-2xl shadow-2xl p-10 border border-white/30 ring-2 ring-purple-100">
         {/* Avatar con borde animado y gradiente */}
         <div className="flex-shrink-0 flex justify-center w-full md:w-auto">
-          <div className={`w-36 h-36 rounded-full flex items-center justify-center text-white text-6xl font-extrabold shadow-xl border-4 border-white dark:border-gray-700 bg-gradient-to-br ${getRandomColor(userEmail)} animate-avatar-glow relative`}>
+          <div className={`w-36 h-36 rounded-full flex items-center justify-center text-white text-6xl font-extrabold shadow-xl border-4 border-white bg-gradient-to-br ${getRandomColor(userEmail)} animate-avatar-glow relative`}>
             {isValidPhoto ? (
               <img
                 src={userData.foto}
@@ -132,10 +132,10 @@ const PublicProfileCard = ({ userEmail }) => {
         </div>
         {/* Info usuario */}
         <div className="text-center md:text-left w-full">
-          <h2 className="text-4xl font-extrabold text-gray-900 dark:text-gray-100 mb-2 drop-shadow-lg">{userData.nombre || userEmail}</h2>
-          <p className="text-lg text-gray-500 dark:text-gray-300 mb-2">{userEmail}</p>
+          <h2 className="text-4xl font-extrabold text-gray-900 mb-2 drop-shadow-lg">{userData.nombre || userEmail}</h2>
+          <p className="text-lg text-gray-500 mb-2">{userEmail}</p>
           {userData.biografia && (
-            <p className="text-base text-gray-700 dark:text-gray-200 mb-2 whitespace-pre-line bg-white/70 dark:bg-gray-900/70 rounded-lg px-4 py-2 border border-gray-200 dark:border-gray-700 shadow-sm max-w-xl mx-auto md:mx-0">
+            <p className="text-base text-gray-700 mb-2 whitespace-pre-line bg-white/70 rounded-lg px-4 py-2 border border-gray-200 shadow-sm max-w-xl mx-auto md:mx-0">
               {userData.biografia}
             </p>
           )}
@@ -191,13 +191,17 @@ const PublicProfileCard = ({ userEmail }) => {
             {ventas.map(producto => (
               <div key={producto.id} className="flex items-center gap-4 bg-white/80 rounded-xl shadow p-4 border border-white/60 hover:shadow-lg transition-all">
                 <img 
-                  src={producto.imagen} 
+                  src={producto.imagenes && producto.imagenes.length > 0 ? producto.imagenes[0] : 'https://cataas.com/cat'} 
                   alt={producto.nombre} 
                   className="w-16 h-16 object-cover rounded-lg border border-purple-100" 
                 />
                 <div className="flex-1">
                   <h4 className="text-lg font-semibold text-gray-900 mb-1 truncate max-w-[180px]">{producto.nombre}</h4>
-                  <p className="text-sm text-purple-600 font-bold">{producto.precio}€</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-purple-600 font-bold">{producto.precio}€</p>
+                    <span className="text-xs text-gray-500">•</span>
+                    <p className="text-xs text-gray-500 capitalize">En venta</p>
+                  </div>
                 </div>
                 <a href={`/producto/${producto.id}`} className="text-purple-600 hover:text-indigo-700 font-bold text-sm">Ver</a>
               </div>

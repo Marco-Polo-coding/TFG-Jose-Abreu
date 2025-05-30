@@ -156,7 +156,8 @@ async def actualizar_producto(
     stock: Optional[int] = Form(None),
     categoria: Optional[str] = Form(None),
     estado: Optional[str] = Form(None),
-    imagenes: List[UploadFile] = File(None)
+    imagenes: List[UploadFile] = File(None),
+    imagenes_existentes: List[str] = Form(None)
 ):
     try:
         producto_ref = db.collection("productos").document(producto_id)
@@ -172,8 +173,11 @@ async def actualizar_producto(
         if categoria is not None: data["categoria"] = categoria
         if estado is not None: data["estado"] = estado
 
+        # Manejar imágenes
+        urls_imagenes = []
+        
+        # Si hay imágenes nuevas, procesarlas
         if imagenes:
-            urls_imagenes = []
             for imagen in imagenes:
                 if hasattr(imagen, 'filename') and imagen.filename and hasattr(imagen, 'content_type') and imagen.content_type and imagen.content_type.startswith("image/"):
                     contents = await imagen.read()
@@ -183,8 +187,22 @@ async def actualizar_producto(
                         resource_type="auto"
                     )
                     urls_imagenes.append(result["secure_url"])
-            if urls_imagenes:
-                data["imagenes"] = urls_imagenes
+        
+        # Si hay imágenes existentes, añadirlas
+        if imagenes_existentes:
+            urls_imagenes.extend(imagenes_existentes)
+        
+        # Si no hay imágenes nuevas ni existentes, mantener las actuales
+        if not urls_imagenes:
+            producto_data = producto.to_dict()
+            if "imagenes" in producto_data:
+                urls_imagenes = producto_data["imagenes"]
+            elif "imagen" in producto_data:
+                urls_imagenes = [producto_data["imagen"]]
+            else:
+                urls_imagenes = ["https://cataas.com/cat"]
+
+        data["imagenes"] = urls_imagenes
 
         if not data:
             raise HTTPException(status_code=400, detail="No se proporcionaron datos para actualizar")
