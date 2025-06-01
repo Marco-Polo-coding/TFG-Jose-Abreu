@@ -48,6 +48,8 @@ const ProfileCard = () => {
   const [loadingFollowers, setLoadingFollowers] = React.useState(true);
   const [loadingFollowing, setLoadingFollowing] = React.useState(true);
   const [uid, setUid] = React.useState('');
+  const [loadingUnfollow, setLoadingUnfollow] = React.useState(null);
+  const [loadingRemoveFollower, setLoadingRemoveFollower] = React.useState(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -193,6 +195,36 @@ const ProfileCard = () => {
 
   // Utilidad para saber si la foto es válida
   const isValidPhoto = userPhoto && !userPhoto.includes('googleusercontent.com') && userPhoto !== '';
+
+  // Función para dejar de seguir a un usuario
+  const handleUnfollow = async (followedUid) => {
+    setLoadingUnfollow(followedUid);
+    try {
+      await apiManager.unfollowUser(followedUid, uid);
+      // Actualizar la lista de seguidos
+      const data = await apiManager.get(`/auth/following/${uid}`);
+      setFollowing(data);
+    } catch (error) {
+      // Opcional: mostrar error
+    } finally {
+      setLoadingUnfollow(null);
+    }
+  };
+
+  // Función para eliminar un seguidor
+  const handleRemoveFollower = async (followerUid) => {
+    setLoadingRemoveFollower(followerUid);
+    try {
+      await apiManager.removeFollower(uid, followerUid);
+      // Actualizar la lista de seguidores
+      const data = await apiManager.get(`/auth/followers/${uid}`);
+      setFollowers(data);
+    } catch (error) {
+      // Opcional: mostrar error
+    } finally {
+      setLoadingRemoveFollower(null);
+    }
+  };
 
   if (loading) {
     return <LoadingSpinner />;
@@ -415,6 +447,13 @@ const ProfileCard = () => {
                     <p className="font-medium text-gray-900">{follower.nombre || follower.email}</p>
                     <p className="text-sm text-gray-500">{follower.email}</p>
                   </div>
+                  <button
+                    className="ml-auto px-3 py-1 rounded-full bg-red-500 text-white text-xs font-semibold shadow hover:bg-red-600 transition-all duration-200"
+                    onClick={() => handleRemoveFollower(follower.uid)}
+                    disabled={loadingRemoveFollower === follower.uid}
+                  >
+                    {loadingRemoveFollower === follower.uid ? 'Eliminando...' : 'Eliminar'}
+                  </button>
                 </div>
               ))}
             </div>
@@ -445,6 +484,13 @@ const ProfileCard = () => {
                     <p className="font-medium text-gray-900">{followed.nombre || followed.email}</p>
                     <p className="text-sm text-gray-500">{followed.email}</p>
                   </div>
+                  <button
+                    className="ml-auto px-3 py-1 rounded-full bg-gray-500 text-white text-xs font-semibold shadow hover:bg-gray-700 transition-all duration-200"
+                    onClick={() => handleUnfollow(followed.uid)}
+                    disabled={loadingUnfollow === followed.uid}
+                  >
+                    {loadingUnfollow === followed.uid ? 'Dejando de seguir...' : 'Dejar de seguir'}
+                  </button>
                 </div>
               ))}
             </div>

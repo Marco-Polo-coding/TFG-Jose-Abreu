@@ -546,4 +546,29 @@ async def get_following(uid: str):
         
         return following_data
     except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/remove-follower/{uid}")
+async def remove_follower(uid: str, body: FollowRequest):
+    follower_uid = body.current_user_uid
+    try:
+        # Eliminar follower_uid de la lista de seguidores de uid
+        user_doc = db.collection("usuarios").document(uid).get()
+        if not user_doc.exists:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        user_data = user_doc.to_dict()
+        seguidores = user_data.get("seguidores", [])
+        if follower_uid in seguidores:
+            seguidores.remove(follower_uid)
+            db.collection("usuarios").document(uid).update({"seguidores": seguidores})
+        # Eliminar uid de la lista de seguidos del follower
+        follower_doc = db.collection("usuarios").document(follower_uid).get()
+        if follower_doc.exists:
+            follower_data = follower_doc.to_dict()
+            seguidos = follower_data.get("seguidos", [])
+            if uid in seguidos:
+                seguidos.remove(uid)
+                db.collection("usuarios").document(follower_uid).update({"seguidos": seguidos})
+        return {"message": "Seguidor eliminado correctamente"}
+    except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) 

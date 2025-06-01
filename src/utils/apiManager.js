@@ -117,6 +117,10 @@ class ApiManager {
     return await this.post(`/auth/unfollow/${uid}`, { current_user_uid: currentUserUid });
   }
 
+  async removeFollower(uid, followerUid) {
+    return await this.post(`/auth/remove-follower/${uid}`, { current_user_uid: followerUid });
+  }
+
   async getFollowers(uid) {
     return await this.get(`/auth/followers/${uid}`);
   }
