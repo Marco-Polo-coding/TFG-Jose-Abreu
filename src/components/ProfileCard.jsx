@@ -355,7 +355,7 @@ const ProfileCard = () => {
           </span>
           <h3 className="text-2xl font-bold text-gray-900">Estadísticas</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="bg-gradient-to-br from-purple-100 to-indigo-100 rounded-xl p-8 text-center shadow-lg border border-white/40 hover:scale-105 transition-transform duration-300">
             <p className="text-4xl font-extrabold text-purple-700 mb-2">{articles.length}</p>
             <p className="text-base text-gray-600 flex items-center justify-center gap-2"><FaBook className="w-5 h-5" /> Artículos</p>
@@ -363,10 +363,6 @@ const ProfileCard = () => {
           <div className="bg-gradient-to-br from-purple-100 to-indigo-100 rounded-xl p-8 text-center shadow-lg border border-white/40 hover:scale-105 transition-transform duration-300">
             <p className="text-4xl font-extrabold text-purple-700 mb-2">{ventas.length}</p>
             <p className="text-base text-gray-600 flex items-center justify-center gap-2"><FaShoppingBag className="w-5 h-5" /> Ventas</p>
-          </div>
-          <div className="bg-gradient-to-br from-purple-100 to-indigo-100 rounded-xl p-8 text-center shadow-lg border border-white/40 hover:scale-105 transition-transform duration-300">
-            <p className="text-4xl font-extrabold text-purple-700 mb-2">0</p>
-            <p className="text-base text-gray-600 flex items-center justify-center gap-2"><FaArrowRight className="w-5 h-5" /> Likes recibidos</p>
           </div>
         </div>
       </div>
