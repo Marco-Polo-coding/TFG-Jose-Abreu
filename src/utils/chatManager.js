@@ -6,8 +6,8 @@ class ChatManager {
   }
 
   // Obtener headers comunes
-  getHeaders() {
-    const token = authManager.getToken();
+  async getHeaders() {
+    const token = await authManager.getToken();
     return {
       'Content-Type': 'application/json',
       'Authorization': token ? `Bearer ${token}` : '',
@@ -25,9 +25,10 @@ class ChatManager {
 
   // Enviar mensaje al chat
   async sendMessage(message, history = []) {
+    const headers = await this.getHeaders();
     const response = await fetch(`${this.baseUrl}/chat`, {
       method: 'POST',
-      headers: this.getHeaders(),
+      headers,
       body: JSON.stringify({
         message,
         history
@@ -41,9 +42,10 @@ class ChatManager {
     if (!authManager.isAuthenticated()) {
       throw new Error('Debes iniciar sesión para crear un chat');
     }
+    const headers = await this.getHeaders();
     const response = await fetch(`${this.baseUrl}/chats`, {
       method: 'POST',
-      headers: this.getHeaders(),
+      headers,
       body: JSON.stringify({
         name: name || `Chat ${new Date().toLocaleString()}`
       })
@@ -56,8 +58,9 @@ class ChatManager {
     if (!authManager.isAuthenticated()) {
       throw new Error('Debes iniciar sesión para ver los chats');
     }
+    const headers = await this.getHeaders();
     const response = await fetch(`${this.baseUrl}/chats`, {
-      headers: this.getHeaders()
+      headers
     });
     return this.handleResponse(response);
   }
@@ -67,8 +70,9 @@ class ChatManager {
     if (!authManager.isAuthenticated()) {
       throw new Error('Debes iniciar sesión para ver el chat');
     }
+    const headers = await this.getHeaders();
     const response = await fetch(`${this.baseUrl}/chats/${chatId}`, {
-      headers: this.getHeaders()
+      headers
     });
     return this.handleResponse(response);
   }
@@ -78,9 +82,10 @@ class ChatManager {
     if (!authManager.isAuthenticated()) {
       throw new Error('Debes iniciar sesión para enviar mensajes');
     }
+    const headers = await this.getHeaders();
     const response = await fetch(`${this.baseUrl}/chats/${chatId}/messages`, {
       method: 'POST',
-      headers: this.getHeaders(),
+      headers,
       body: JSON.stringify(message)
     });
     return this.handleResponse(response);
@@ -91,9 +96,10 @@ class ChatManager {
     if (!authManager.isAuthenticated()) {
       throw new Error('Debes iniciar sesión para renombrar el chat');
     }
+    const headers = await this.getHeaders();
     const response = await fetch(`${this.baseUrl}/chats/${chatId}`, {
       method: 'PATCH',
-      headers: this.getHeaders(),
+      headers,
       body: JSON.stringify({ name: newName })
     });
     return this.handleResponse(response);
@@ -104,9 +110,10 @@ class ChatManager {
     if (!authManager.isAuthenticated()) {
       throw new Error('Debes iniciar sesión para eliminar el chat');
     }
+    const headers = await this.getHeaders();
     const response = await fetch(`${this.baseUrl}/chats/${chatId}`, {
       method: 'DELETE',
-      headers: this.getHeaders()
+      headers
     });
     return this.handleResponse(response);
   }
@@ -116,9 +123,10 @@ class ChatManager {
     if (!authManager.isAuthenticated()) {
       throw new Error('Debes iniciar sesión para migrar los chats');
     }
+    const headers = await this.getHeaders();
     const response = await fetch(`${this.baseUrl}/chats/migrate`, {
       method: 'POST',
-      headers: this.getHeaders(),
+      headers,
       body: JSON.stringify({ chats })
     });
     return this.handleResponse(response);

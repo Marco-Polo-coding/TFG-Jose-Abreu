@@ -27,6 +27,8 @@ const VirtualAssistant = () => {
   const [renamingChatId, setRenamingChatId] = useState(null);
   const [renameValue, setRenameValue] = useState('');
   const [loadingChats, setLoadingChats] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [chatIdToDelete, setChatIdToDelete] = useState(null);
 
   // Control de visibilidad durante la carga y actualización de la ruta
   useEffect(() => {
@@ -169,7 +171,13 @@ const VirtualAssistant = () => {
   const handleSelectChat = async (chatId) => {
     try {
       const data = await chatManager.getChat(chatId);
-      setMessages(data.messages || []);
+      console.log('Mensajes recibidos del backend:', data.messages);
+      // Mapear mensajes: convertir 'role' a 'type'
+      const mappedMessages = (data.messages || []).map(m => ({
+        type: m.role,
+        content: m.content
+      }));
+      setMessages(mappedMessages);
       setSelectedChatId(chatId);
       setView('chat');
     } catch (error) {
@@ -179,12 +187,17 @@ const VirtualAssistant = () => {
     }
   };
 
-  const handleDeleteChat = async (chatId) => {
-    if (!window.confirm('¿Seguro que quieres borrar este chat?')) return;
+  const handleDeleteChat = (chatId) => {
+    setChatIdToDelete(chatId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteChat = async () => {
+    if (!chatIdToDelete) return;
     try {
-      await chatManager.deleteChat(chatId);
-      setChats(chats.filter(c => c.id !== chatId));
-      if (selectedChatId === chatId) {
+      await chatManager.deleteChat(chatIdToDelete);
+      setChats(chats.filter(c => c.id !== chatIdToDelete));
+      if (selectedChatId === chatIdToDelete) {
         setMessages([
           {
             type: 'assistant',
@@ -200,7 +213,15 @@ const VirtualAssistant = () => {
       setToastMessage('No se pudo borrar el chat.');
       setToastType('error');
       setShowToast(true);
+    } finally {
+      setShowDeleteModal(false);
+      setChatIdToDelete(null);
     }
+  };
+
+  const cancelDeleteChat = () => {
+    setShowDeleteModal(false);
+    setChatIdToDelete(null);
   };
 
   const handleRenameChat = async (chatId) => {
@@ -241,7 +262,7 @@ const VirtualAssistant = () => {
             h-[80vh] max-h-[95vh]
             sm:left-auto sm:translate-x-0 sm:bottom-6 sm:right-6 
             sm:w-[320px] sm:h-[450px] sm:max-w-[320px] sm:max-h-[450px]
-            bg-white rounded-2xl shadow-2xl flex flex-col ${getZIndex()}`}
+            bg-white rounded-t-2xl rounded-b-2xl shadow-2xl flex flex-col ${getZIndex()}`}
           style={{
             boxSizing: 'border-box',
           }}
@@ -285,7 +306,7 @@ const VirtualAssistant = () => {
 
           {/* Vista de historial de chats */}
           {view === 'history' && (
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 rounded-b-2xl overflow-hidden">
               <div className="flex items-center mb-4">
                 <button
                   className="mr-2 text-purple-600 hover:text-purple-800 p-2 rounded-full focus:outline-none"
@@ -316,7 +337,7 @@ const VirtualAssistant = () => {
                               onChange={e => setRenameValue(e.target.value)}
                               autoFocus
                             />
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 mb-4">
                               <button
                                 className="text-green-600 hover:text-green-800"
                                 onClick={() => handleRenameChat(chat.id)}
@@ -332,7 +353,9 @@ const VirtualAssistant = () => {
                             </div>
                           </div>
                         ) : (
-                          <span className="font-medium text-gray-800 truncate">{chat.name}</span>
+                          <span className="font-medium text-gray-800 truncate">
+                            {chat.name.replace(/(\d{1,2}\/\d{1,2}\/\d{4}),? (\d{1,2}):(\d{2})(?::\d{2})?/g, (match, d, h, m) => `${h}:${m}`)}
+                          </span>
                         )}
                         <div className="text-xs text-gray-400">{new Date(chat.updated_at || chat.created_at).toLocaleString()}</div>
                       </div>
@@ -352,7 +375,7 @@ const VirtualAssistant = () => {
                           <FaEdit className="w-4 h-4" />
                         </button>
                         <button
-                          className="text-red-500 hover:text-red-700 p-1"
+                          className="text-red-500 hover:text-red-700 ml-2"
                           title="Borrar chat"
                           onClick={() => handleDeleteChat(chat.id)}
                         >
@@ -431,6 +454,33 @@ const VirtualAssistant = () => {
           type={toastType}
           onClose={() => setShowToast(false)}
         />
+      )}
+
+      {/* MODAL DE CONFIRMACIÓN DE BORRADO */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center animate-fade-in">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">¿Eliminar chat?</h2>
+            <p className="text-gray-700 mb-6">
+              ¿Estás seguro de que quieres eliminar
+              <span className="font-semibold text-purple-700"> {chats.find(c => c.id === chatIdToDelete)?.name || 'este chat'}</span>? Esta acción no se puede deshacer.
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={cancelDeleteChat}
+                className="px-6 py-2 rounded-full bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDeleteChat}
+                className="px-6 py-2 rounded-full bg-gradient-to-r from-red-500 to-pink-500 text-white font-semibold shadow hover:from-red-600 hover:to-pink-600 transition"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

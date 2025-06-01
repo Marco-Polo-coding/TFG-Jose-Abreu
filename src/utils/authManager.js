@@ -9,6 +9,20 @@ const useAuthStore = create((set) => ({
   clearAuth: () => set({ isAuthenticated: false, user: null, token: null }),
 }));
 
+// Añadir función para decodificar JWT y obtener la expiración
+function parseJwt (token) {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
+  }
+}
+
 // Clase para manejar la autenticación de forma segura
 class AuthManager {
   constructor() {
@@ -36,6 +50,7 @@ class AuthManager {
   setAuthData(data) {
     // Guardar en localStorage (mantener compatibilidad)
     safeSetItem('token', data.idToken);
+    safeSetItem('refreshToken', data.refreshToken); // Guardar refreshToken
     safeSetItem('userEmail', data.email);
     safeSetItem('userName', data.nombre || data.email);
     safeSetItem('uid', data.uid);
@@ -59,6 +74,7 @@ class AuthManager {
   clearAuthData() {
     // Limpiar localStorage (mantener compatibilidad)
     safeRemoveItem('token');
+    safeRemoveItem('refreshToken');
     safeRemoveItem('userEmail');
     safeRemoveItem('userName');
     safeRemoveItem('userPhoto');
@@ -82,9 +98,48 @@ class AuthManager {
     document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
   }
 
-  // Obtener token actual
-  getToken() {
-    return this.store.getState().token || safeGetItem('token');
+  // Obtener token actual (con refresco automático)
+  async getToken() {
+    let token = this.store.getState().token || safeGetItem('token');
+    if (!token) return null;
+    const payload = parseJwt(token);
+    const now = Math.floor(Date.now() / 1000);
+    // Si el token expira en menos de 2 minutos, refrescarlo
+    if (payload && payload.exp && payload.exp - now < 120) {
+      const refreshToken = safeGetItem('refreshToken');
+      if (refreshToken) {
+        try {
+          const newToken = await this.refreshIdToken(refreshToken);
+          token = newToken;
+        } catch (e) {
+          this.clearAuthData();
+          return null;
+        }
+      } else {
+        this.clearAuthData();
+        return null;
+      }
+    }
+    return token;
+  }
+
+  // Refrescar el idToken usando el refreshToken de Firebase
+  async refreshIdToken(refreshToken) {
+    const apiKey = process.env.REACT_APP_FIREBASE_API_KEY || process.env.VITE_FIREBASE_API_KEY || '';
+    const url = `https://securetoken.googleapis.com/v1/token?key=${apiKey}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `grant_type=refresh_token&refresh_token=${refreshToken}`
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error('No se pudo refrescar el token');
+    // Guardar el nuevo token
+    safeSetItem('token', data.id_token);
+    safeSetItem('refreshToken', data.refresh_token);
+    this.store.getState().setAuth(this.getUser(), data.id_token);
+    this.setSecureCookie('auth_token', data.id_token);
+    return data.id_token;
   }
 
   // Verificar si está autenticado
