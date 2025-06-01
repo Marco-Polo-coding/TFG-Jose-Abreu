@@ -436,15 +436,15 @@ const ProfileCard = () => {
             <div className="space-y-4">
               {followers.map((follower) => (
                 <div key={follower.uid} className="flex items-center gap-3 p-3 bg-white/50 rounded-lg">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold bg-gradient-to-br ${getRandomColor(follower.email)}`}>
+                  <a href={`/user/${follower.email}`} className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold bg-gradient-to-br ${getRandomColor(follower.email)} transition hover:scale-105`}>
                     {follower.foto ? (
                       <img src={follower.foto} alt={follower.nombre} className="w-full h-full object-cover rounded-full" />
                     ) : (
                       getInitials(follower.nombre || follower.email)
                     )}
-                  </div>
+                  </a>
                   <div>
-                    <p className="font-medium text-gray-900">{follower.nombre || follower.email}</p>
+                    <a href={`/user/${follower.email}`} className="font-medium text-gray-900 hover:text-purple-700 transition-colors">{follower.nombre || follower.email}</a>
                     <p className="text-sm text-gray-500">{follower.email}</p>
                   </div>
                   <button
@@ -473,15 +473,15 @@ const ProfileCard = () => {
             <div className="space-y-4">
               {following.map((followed) => (
                 <div key={followed.uid} className="flex items-center gap-3 p-3 bg-white/50 rounded-lg">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold bg-gradient-to-br ${getRandomColor(followed.email)}`}>
+                  <a href={`/user/${followed.email}`} className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold bg-gradient-to-br ${getRandomColor(followed.email)} transition hover:scale-105`}>
                     {followed.foto ? (
                       <img src={followed.foto} alt={followed.nombre} className="w-full h-full object-cover rounded-full" />
                     ) : (
                       getInitials(followed.nombre || followed.email)
                     )}
-                  </div>
+                  </a>
                   <div>
-                    <p className="font-medium text-gray-900">{followed.nombre || followed.email}</p>
+                    <a href={`/user/${followed.email}`} className="font-medium text-gray-900 hover:text-purple-700 transition-colors">{followed.nombre || followed.email}</a>
                     <p className="text-sm text-gray-500">{followed.email}</p>
                   </div>
                   <button

@@ -269,7 +269,7 @@ const BlogPage = () => {
                     </div>
                     <div className="flex items-center justify-between mb-4">
                       <div className="text-sm text-gray-500">
-                        Por {articulo.autor} • {new Date(articulo.fecha_publicacion).toLocaleDateString()}
+                        Por <a href={`/user/${articulo.autor_email}`} className="hover:text-purple-700 font-semibold">{articulo.autor}</a> • {new Date(articulo.fecha_publicacion).toLocaleDateString()}
                       </div>
                     </div>
                     <a
