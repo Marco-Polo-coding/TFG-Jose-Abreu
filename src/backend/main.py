@@ -906,3 +906,31 @@ async def eliminar_respuesta(articulo_id: str, comentario_id: str, respuesta_id:
         return {"message": "Respuesta eliminada correctamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# Endpoint para obtener artículos de un usuario por UID (usando autor_email)
+@app.get("/usuarios/{uid}/articulos")
+async def get_user_articles(uid: str):
+    try:
+        user_doc = db.collection("usuarios").document(uid).get()
+        if not user_doc.exists:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        user_email = user_doc.to_dict().get("email")
+        articulos_ref = db.collection("articulos").where("autor_email", "==", user_email)
+        articulos = [{"id": doc.id, **doc.to_dict()} for doc in articulos_ref.stream()]
+        return articulos
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# Endpoint para obtener productos en venta de un usuario por UID (usando usuario_email)
+@app.get("/usuarios/{uid}/ventas")
+async def get_user_ventas(uid: str):
+    try:
+        user_doc = db.collection("usuarios").document(uid).get()
+        if not user_doc.exists:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        user_email = user_doc.to_dict().get("email")
+        productos_ref = db.collection("productos").where("usuario_email", "==", user_email)
+        productos = [{"id": doc.id, **doc.to_dict()} for doc in productos_ref.stream()]
+        return productos
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

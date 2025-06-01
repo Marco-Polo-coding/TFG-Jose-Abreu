@@ -109,6 +109,22 @@ class ApiManager {
     return data;
   }
 
+  async followUser(uid, currentUserUid) {
+    return await this.post(`/auth/follow/${uid}`, { current_user_uid: currentUserUid });
+  }
+
+  async unfollowUser(uid, currentUserUid) {
+    return await this.post(`/auth/unfollow/${uid}`, { current_user_uid: currentUserUid });
+  }
+
+  async getFollowers(uid) {
+    return await this.get(`/auth/followers/${uid}`);
+  }
+
+  async getFollowing(uid) {
+    return await this.get(`/auth/following/${uid}`);
+  }
+
   // Métodos para productos
   async getProducts() {
     return this.get('/productos');

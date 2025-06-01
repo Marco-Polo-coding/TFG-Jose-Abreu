@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
-import { FaBook, FaShoppingBag, FaChartLine, FaPlus, FaArrowRight, FaHistory } from 'react-icons/fa';
+import { FaBook, FaShoppingBag, FaChartLine, FaPlus, FaArrowRight, FaHistory, FaUsers } from 'react-icons/fa';
 import axios from 'axios';
 import LoadingSpinner from './LoadingSpinner';
 import useLoadingState from '../hooks/useLoadingState';
 import CompraDetalleModal from './CompraDetalleModal';
+import { apiManager } from '../utils/apiManager';
 
 function getInitials(email) {
   if (!email) return '';
@@ -42,6 +43,11 @@ const ProfileCard = () => {
   const [selectedCompra, setSelectedCompra] = React.useState(null);
   const [modalOpen, setModalOpen] = React.useState(false);
   const [showAllCompras, setShowAllCompras] = React.useState(false);
+  const [followers, setFollowers] = React.useState([]);
+  const [following, setFollowing] = React.useState([]);
+  const [loadingFollowers, setLoadingFollowers] = React.useState(true);
+  const [loadingFollowing, setLoadingFollowing] = React.useState(true);
+  const [uid, setUid] = React.useState('');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -147,6 +153,43 @@ const ProfileCard = () => {
     };
     fetchCompras();
   }, []);
+
+  // Obtener UID del usuario autenticado
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedUid = localStorage.getItem('uid');
+      setUid(storedUid);
+    }
+  }, []);
+
+  // Obtener seguidores y seguidos
+  useEffect(() => {
+    if (!uid) return;
+    const fetchFollowers = async () => {
+      setLoadingFollowers(true);
+      try {
+        const data = await apiManager.get(`/auth/followers/${uid}`);
+        setFollowers(data);
+      } catch (error) {
+        setFollowers([]);
+      } finally {
+        setLoadingFollowers(false);
+      }
+    };
+    const fetchFollowing = async () => {
+      setLoadingFollowing(true);
+      try {
+        const data = await apiManager.get(`/auth/following/${uid}`);
+        setFollowing(data);
+      } catch (error) {
+        setFollowing([]);
+      } finally {
+        setLoadingFollowing(false);
+      }
+    };
+    fetchFollowers();
+    fetchFollowing();
+  }, [uid]);
 
   // Utilidad para saber si la foto es válida
   const isValidPhoto = userPhoto && !userPhoto.includes('googleusercontent.com') && userPhoto !== '';
@@ -345,6 +388,70 @@ const ProfileCard = () => {
             <CompraDetalleModal isOpen={modalOpen} onClose={() => setModalOpen(false)} compra={selectedCompra} />
           </div>
         )}
+      </div>
+
+      {/* Sección de Seguidores y Seguidos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+        {/* Seguidores */}
+        <div className="bg-white/60 backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white/30">
+          <div className="flex items-center gap-3 mb-4">
+            <FaUsers className="w-6 h-6 text-purple-600" />
+            <h3 className="text-xl font-semibold text-gray-900">Seguidores</h3>
+          </div>
+          {loadingFollowers ? (
+            <LoadingSpinner />
+          ) : followers.length > 0 ? (
+            <div className="space-y-4">
+              {followers.map((follower) => (
+                <div key={follower.uid} className="flex items-center gap-3 p-3 bg-white/50 rounded-lg">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold bg-gradient-to-br ${getRandomColor(follower.email)}`}>
+                    {follower.foto ? (
+                      <img src={follower.foto} alt={follower.nombre} className="w-full h-full object-cover rounded-full" />
+                    ) : (
+                      getInitials(follower.nombre || follower.email)
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{follower.nombre || follower.email}</p>
+                    <p className="text-sm text-gray-500">{follower.email}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500">No tiene seguidores</p>
+          )}
+        </div>
+        {/* Seguidos */}
+        <div className="bg-white/60 backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white/30">
+          <div className="flex items-center gap-3 mb-4">
+            <FaUsers className="w-6 h-6 text-purple-600" />
+            <h3 className="text-xl font-semibold text-gray-900">Siguiendo</h3>
+          </div>
+          {loadingFollowing ? (
+            <LoadingSpinner />
+          ) : following.length > 0 ? (
+            <div className="space-y-4">
+              {following.map((followed) => (
+                <div key={followed.uid} className="flex items-center gap-3 p-3 bg-white/50 rounded-lg">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold bg-gradient-to-br ${getRandomColor(followed.email)}`}>
+                    {followed.foto ? (
+                      <img src={followed.foto} alt={followed.nombre} className="w-full h-full object-cover rounded-full" />
+                    ) : (
+                      getInitials(followed.nombre || followed.email)
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{followed.nombre || followed.email}</p>
+                    <p className="text-sm text-gray-500">{followed.email}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500">No sigue a nadie</p>
+          )}
+        </div>
       </div>
 
       {/* Estadísticas */}

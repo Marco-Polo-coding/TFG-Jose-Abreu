@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from fastapi import APIRouter, HTTPException, Depends, Body, File, UploadFile, Form
 from pydantic import BaseModel, EmailStr
 import firebase_admin
@@ -48,6 +48,8 @@ class UserRegister(BaseModel):
     nombre: Optional[str] = None
     biografia: Optional[str] = None
     role: Optional[str] = "user"  # Por defecto será "user"
+    seguidores: Optional[List[str]] = []  # Lista de UIDs de seguidores
+    seguidos: Optional[List[str]] = []  # Lista de UIDs de usuarios seguidos
 
 class PasswordReset(BaseModel):
     email: EmailStr
@@ -72,6 +74,9 @@ class DeleteAccount(BaseModel):
     uid: str
     email: EmailStr
 
+class FollowRequest(BaseModel):
+    current_user_uid: str
+
 @router.post("/register")
 async def register_user(user: UserRegister):
     try:
@@ -87,7 +92,9 @@ async def register_user(user: UserRegister):
             "email": user.email,
             "nombre": user.nombre or "",
             "biografia": user.biografia or "",
-            "role": user.role or "user"  # Añadir el rol
+            "role": user.role or "user",
+            "seguidores": user.seguidores or [],
+            "seguidos": user.seguidos or []
         }
         db.collection("usuarios").document(user_record.uid).set(user_data)
         
@@ -429,4 +436,114 @@ async def delete_account(account_data: DeleteAccount):
         raise HTTPException(
             status_code=500,
             detail="Error al eliminar la cuenta"
-        ) 
+        )
+
+@router.post("/follow/{uid}")
+async def follow_user(uid: str, body: FollowRequest):
+    current_user_uid = body.current_user_uid
+    try:
+        # Verificar que el usuario a seguir existe
+        user_to_follow = db.collection("usuarios").document(uid).get()
+        if not user_to_follow.exists:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        # Verificar que el usuario actual existe
+        current_user = db.collection("usuarios").document(current_user_uid).get()
+        if not current_user.exists:
+            raise HTTPException(status_code=404, detail="Usuario actual no encontrado")
+        # Actualizar seguidores del usuario a seguir
+        user_to_follow_data = user_to_follow.to_dict()
+        if "seguidores" not in user_to_follow_data:
+            user_to_follow_data["seguidores"] = []
+        if current_user_uid not in user_to_follow_data["seguidores"]:
+            user_to_follow_data["seguidores"].append(current_user_uid)
+            db.collection("usuarios").document(uid).update({"seguidores": user_to_follow_data["seguidores"]})
+        # Actualizar seguidos del usuario actual
+        current_user_data = current_user.to_dict()
+        if "seguidos" not in current_user_data:
+            current_user_data["seguidos"] = []
+        if uid not in current_user_data["seguidos"]:
+            current_user_data["seguidos"].append(uid)
+            db.collection("usuarios").document(current_user_uid).update({"seguidos": current_user_data["seguidos"]})
+        return {"message": "Usuario seguido con éxito"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/unfollow/{uid}")
+async def unfollow_user(uid: str, body: FollowRequest):
+    current_user_uid = body.current_user_uid
+    try:
+        # Verificar que el usuario a dejar de seguir existe
+        user_to_unfollow = db.collection("usuarios").document(uid).get()
+        if not user_to_unfollow.exists:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        # Verificar que el usuario actual existe
+        current_user = db.collection("usuarios").document(current_user_uid).get()
+        if not current_user.exists:
+            raise HTTPException(status_code=404, detail="Usuario actual no encontrado")
+        # Actualizar seguidores del usuario a dejar de seguir
+        user_to_unfollow_data = user_to_unfollow.to_dict()
+        if "seguidores" in user_to_unfollow_data and current_user_uid in user_to_unfollow_data["seguidores"]:
+            user_to_unfollow_data["seguidores"].remove(current_user_uid)
+            db.collection("usuarios").document(uid).update({"seguidores": user_to_unfollow_data["seguidores"]})
+        # Actualizar seguidos del usuario actual
+        current_user_data = current_user.to_dict()
+        if "seguidos" in current_user_data and uid in current_user_data["seguidos"]:
+            current_user_data["seguidos"].remove(uid)
+            db.collection("usuarios").document(current_user_uid).update({"seguidos": current_user_data["seguidos"]})
+        return {"message": "Dejado de seguir al usuario con éxito"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/followers/{uid}")
+async def get_followers(uid: str):
+    try:
+        user = db.collection("usuarios").document(uid).get()
+        if not user.exists:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+        user_data = user.to_dict()
+        followers = user_data.get("seguidores", [])
+        
+        # Obtener información detallada de los seguidores
+        followers_data = []
+        for follower_uid in followers:
+            follower = db.collection("usuarios").document(follower_uid).get()
+            if follower.exists:
+                follower_data = follower.to_dict()
+                followers_data.append({
+                    "uid": follower_uid,
+                    "nombre": follower_data.get("nombre", ""),
+                    "email": follower_data.get("email", ""),
+                    "foto": follower_data.get("foto", None)
+                })
+        
+        return followers_data
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/following/{uid}")
+async def get_following(uid: str):
+    try:
+        user = db.collection("usuarios").document(uid).get()
+        if not user.exists:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+        user_data = user.to_dict()
+        following = user_data.get("seguidos", [])
+        
+        # Obtener información detallada de los usuarios seguidos
+        following_data = []
+        for following_uid in following:
+            following_user = db.collection("usuarios").document(following_uid).get()
+            if following_user.exists:
+                following_user_data = following_user.to_dict()
+                following_data.append({
+                    "uid": following_uid,
+                    "nombre": following_user_data.get("nombre", ""),
+                    "email": following_user_data.get("email", ""),
+                    "foto": following_user_data.get("foto", None)
+                })
+        
+        return following_data
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) 

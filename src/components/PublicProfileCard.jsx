@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { FaBook, FaShoppingBag, FaHome } from 'react-icons/fa';
+import { FaBook, FaShoppingBag, FaHome, FaUserPlus, FaUserMinus, FaUsers } from 'react-icons/fa';
 import LoadingSpinner from './LoadingSpinner';
 import { apiManager } from '../utils/apiManager';
+import { authManager } from '../utils/authManager';
 
 function getInitials(email) {
   if (!email) return '';
@@ -30,6 +31,14 @@ const PublicProfileCard = ({ userEmail }) => {
   const [loadingVentas, setLoadingVentas] = useState(true);
   const [errorVentas, setErrorVentas] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [followers, setFollowers] = useState([]);
+  const [following, setFollowing] = useState([]);
+  const [loadingFollowers, setLoadingFollowers] = useState(true);
+  const [loadingFollowing, setLoadingFollowing] = useState(true);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userUid, setUserUid] = useState(null);
+  const [loadingFollow, setLoadingFollow] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -37,6 +46,12 @@ const PublicProfileCard = ({ userEmail }) => {
         const encodedEmail = encodeURIComponent(userEmail);
         const data = await apiManager.get(`/usuarios/${encodedEmail}`);
         setUserData(data);
+        setUserUid(data.id);
+        const currentUserData = authManager.getUser();
+        setCurrentUser(currentUserData);
+        if (currentUserData && data.seguidores) {
+          setIsFollowing(data.seguidores.includes(currentUserData.uid));
+        }
         setLoading(false);
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -49,9 +64,9 @@ const PublicProfileCard = ({ userEmail }) => {
 
   useEffect(() => {
     const fetchUserArticles = async () => {
+      if (!userUid) return;
       try {
-        const encodedEmail = encodeURIComponent(userEmail);
-        const data = await apiManager.get(`/usuarios/${encodedEmail}/articulos`);
+        const data = await apiManager.get(`/usuarios/${userUid}/articulos`);
         setArticles(data);
         setLoadingArticles(false);
       } catch (error) {
@@ -62,13 +77,13 @@ const PublicProfileCard = ({ userEmail }) => {
     };
 
     fetchUserArticles();
-  }, [userEmail]);
+  }, [userUid]);
 
   useEffect(() => {
     const fetchUserVentas = async () => {
+      if (!userUid) return;
       try {
-        const encodedEmail = encodeURIComponent(userEmail);
-        const data = await apiManager.get(`/usuarios/${encodedEmail}/ventas`);
+        const data = await apiManager.get(`/usuarios/${userUid}/ventas`);
         setVentas(data);
         setLoadingVentas(false);
       } catch (error) {
@@ -79,7 +94,70 @@ const PublicProfileCard = ({ userEmail }) => {
     };
 
     fetchUserVentas();
-  }, [userEmail]);
+  }, [userUid]);
+
+  useEffect(() => {
+    const fetchFollowers = async () => {
+      if (!userData) return;
+      try {
+        const data = await apiManager.get(`/auth/followers/${userData.uid}`);
+        setFollowers(data);
+        setLoadingFollowers(false);
+      } catch (error) {
+        console.error('Error fetching followers:', error);
+        setLoadingFollowers(false);
+      }
+    };
+
+    const fetchFollowing = async () => {
+      if (!userData) return;
+      try {
+        const data = await apiManager.get(`/auth/following/${userData.uid}`);
+        setFollowing(data);
+        setLoadingFollowing(false);
+      } catch (error) {
+        console.error('Error fetching following:', error);
+        setLoadingFollowing(false);
+      }
+    };
+
+    fetchFollowers();
+    fetchFollowing();
+  }, [userData]);
+
+  const handleFollow = async () => {
+    if (!currentUser || !userData) return;
+    setLoadingFollow(true);
+    try {
+      await apiManager.post(`/auth/follow/${userData.uid}`, { current_user_uid: currentUser.uid });
+      setIsFollowing(true);
+      const updatedFollowers = await apiManager.get(`/auth/followers/${userData.uid}`);
+      setFollowers(updatedFollowers);
+      const refreshedUser = await apiManager.get(`/usuarios/${encodeURIComponent(userEmail)}`);
+      setUserData(refreshedUser);
+    } catch (error) {
+      console.error('Error following user:', error);
+    } finally {
+      setLoadingFollow(false);
+    }
+  };
+
+  const handleUnfollow = async () => {
+    if (!currentUser || !userData) return;
+    setLoadingFollow(true);
+    try {
+      await apiManager.post(`/auth/unfollow/${userData.uid}`, { current_user_uid: currentUser.uid });
+      setIsFollowing(false);
+      const updatedFollowers = await apiManager.get(`/auth/followers/${userData.uid}`);
+      setFollowers(updatedFollowers);
+      const refreshedUser = await apiManager.get(`/usuarios/${encodeURIComponent(userEmail)}`);
+      setUserData(refreshedUser);
+    } catch (error) {
+      console.error('Error unfollowing user:', error);
+    } finally {
+      setLoadingFollow(false);
+    }
+  };
 
   if (loading) {
     return <LoadingSpinner />;
@@ -136,6 +214,92 @@ const PublicProfileCard = ({ userEmail }) => {
             <p className="text-base text-gray-700 mb-2 whitespace-pre-line bg-white/70 rounded-lg px-4 py-2 border border-gray-200 shadow-sm max-w-xl mx-auto md:mx-0">
               {userData.biografia}
             </p>
+          )}
+          {currentUser && currentUser.uid !== userData.uid && (
+            <button
+              onClick={isFollowing ? handleUnfollow : handleFollow}
+              className={`mt-2 inline-flex items-center gap-2 px-5 py-2 rounded-full ${
+                isFollowing
+                  ? 'bg-gray-600 hover:bg-gray-700'
+                  : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700'
+              } text-white font-semibold shadow hover:scale-105 transition-all duration-300`}
+              disabled={loadingFollow}
+            >
+              {isFollowing ? (
+                <>
+                  <FaUserMinus className="w-4 h-4" /> Dejar de seguir
+                </>
+              ) : (
+                <>
+                  <FaUserPlus className="w-4 h-4" /> Seguir
+                </>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Sección de seguidores y seguidos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+        {/* Seguidores */}
+        <div className="bg-white/60 backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white/30">
+          <div className="flex items-center gap-3 mb-4">
+            <FaUsers className="w-6 h-6 text-purple-600" />
+            <h3 className="text-xl font-semibold text-gray-900">Seguidores</h3>
+          </div>
+          {loadingFollowers ? (
+            <LoadingSpinner />
+          ) : followers.length > 0 ? (
+            <div className="space-y-4">
+              {followers.map((follower) => (
+                <div key={follower.uid} className="flex items-center gap-3 p-3 bg-white/50 rounded-lg">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold bg-gradient-to-br ${getRandomColor(follower.email)}`}>
+                    {follower.foto ? (
+                      <img src={follower.foto} alt={follower.nombre} className="w-full h-full object-cover rounded-full" />
+                    ) : (
+                      getInitials(follower.nombre || follower.email)
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{follower.nombre || follower.email}</p>
+                    <p className="text-sm text-gray-500">{follower.email}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500">No tiene seguidores</p>
+          )}
+        </div>
+
+        {/* Seguidos */}
+        <div className="bg-white/60 backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white/30">
+          <div className="flex items-center gap-3 mb-4">
+            <FaUsers className="w-6 h-6 text-purple-600" />
+            <h3 className="text-xl font-semibold text-gray-900">Siguiendo</h3>
+          </div>
+          {loadingFollowing ? (
+            <LoadingSpinner />
+          ) : following.length > 0 ? (
+            <div className="space-y-4">
+              {following.map((followed) => (
+                <div key={followed.uid} className="flex items-center gap-3 p-3 bg-white/50 rounded-lg">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold bg-gradient-to-br ${getRandomColor(followed.email)}`}>
+                    {followed.foto ? (
+                      <img src={followed.foto} alt={followed.nombre} className="w-full h-full object-cover rounded-full" />
+                    ) : (
+                      getInitials(followed.nombre || followed.email)
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{followed.nombre || followed.email}</p>
+                    <p className="text-sm text-gray-500">{followed.email}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500">No sigue a nadie</p>
           )}
         </div>
       </div>
