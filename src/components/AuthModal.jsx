@@ -5,6 +5,7 @@ import { GoogleLogin } from '@react-oauth/google';
 import useCartStore from '../store/cartStore';
 import PasswordRequirements from './PasswordRequirements';
 import { apiManager } from '../utils/apiManager';
+import { authManager } from '../utils/authManager';
 
 const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
   const [isLoginMode, setIsLoginMode] = useState(mode === 'login');
@@ -97,6 +98,16 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
     return password.length >= minLength && hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar;
   };
 
+  // Centraliza la gestión de sesión para ambos flujos
+  const handleAuthSuccess = (data) => {
+    authManager.setAuthData(data);
+    setIsAuthenticated(true);
+    onLoginSuccess?.(data.email, data.nombre || data.email, data.uid);
+    showNotification('¡Inicio de sesión exitoso!', 'success');
+    onClose();
+    setTimeout(() => window.location.reload(), 1500);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -120,8 +131,6 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
         ...(isLoginMode ? {} : { nombre: formData.name })
       };
 
-      console.log('Enviando petición de login:', requestBody); // Log para depuración
-
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -131,7 +140,6 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
       });
 
       const data = await response.json();
-      console.log('Respuesta del servidor:', data); // Log para depuración
 
       if (!response.ok) {
         throw new Error(data.detail || 'Error en la autenticación');
@@ -145,50 +153,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
         localStorage.removeItem('rememberedPassword');
       }
 
-      // Guardar expiración del token
-      const now = new Date();
-      const expiresInDays = rememberMe ? 15 : 1;
-      const expiresAt = new Date(now.getTime() + expiresInDays * 24 * 60 * 60 * 1000);
-      localStorage.setItem('tokenExpiresAt', expiresAt.toISOString());
-
-      localStorage.setItem('token', data.idToken);
-      localStorage.setItem('userEmail', formData.email);
-      localStorage.setItem('userName', data.nombre || formData.name || formData.email);
-      if (data.uid) {
-        localStorage.setItem('uid', data.uid);
-      }
-      if (data.foto) {
-        localStorage.setItem('userPhoto', data.foto);
-      } else {
-        localStorage.removeItem('userPhoto');
-      }
-      // Guardar el rol del usuario
-      if (data.role) {
-        localStorage.setItem('userRole', data.role);
-        // Establecer cookie sin HttpOnly para que sea accesible desde JavaScript
-        document.cookie = `userRole=${data.role}; path=/; max-age=86400; SameSite=Strict`;
-      } else {
-        localStorage.setItem('userRole', 'user');
-        document.cookie = `userRole=user; path=/; max-age=86400; SameSite=Strict`;
-      }
-      // Biografía: si viene en la respuesta, guardar; si no, limpiar
-      if (data.biografia !== undefined && data.biografia !== null) {
-        localStorage.setItem('userBio', data.biografia);
-      } else {
-        localStorage.removeItem('userBio');
-      }
-      setIsAuthenticated(true);
-      onLoginSuccess?.(formData.email, data.nombre || formData.name || formData.email, data.uid);
-      
-      showNotification(
-        isLoginMode ? '¡Inicio de sesión exitoso!' : '¡Cuenta creada exitosamente!',
-        'success'
-      );
-      
-      onClose();
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      handleAuthSuccess(data);
     } catch (err) {
       setError(err.message);
       showNotification(err.message, 'error');
