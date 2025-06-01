@@ -38,7 +38,7 @@ class ChatManager {
   }
 
   // Crear nuevo chat
-  async createChat(name = null) {
+  async createChat(name = null, messages = []) {
     if (!authManager.isAuthenticated()) {
       throw new Error('Debes iniciar sesión para crear un chat');
     }
@@ -47,7 +47,8 @@ class ChatManager {
       method: 'POST',
       headers,
       body: JSON.stringify({
-        name: name || `Chat ${new Date().toLocaleString()}`
+        name: name || `Chat ${new Date().toLocaleString()}`,
+        messages
       })
     });
     return this.handleResponse(response);

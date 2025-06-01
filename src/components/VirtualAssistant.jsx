@@ -102,12 +102,26 @@ const VirtualAssistant = () => {
       }));
 
     try {
+      // Guardar mensaje del usuario en el historial del chat si hay chat seleccionado
+      if (selectedChatId) {
+        await chatManager.addMessage(selectedChatId, {
+          role: 'user',
+          content: input
+        });
+      }
       const data = await chatManager.sendMessage(input, history);
       const assistantMessage = {
         type: 'assistant',
         content: data.response || 'El asistente no está disponible ahora mismo. Por favor, contacta con soporte en info@crpghub.com.'
       };
       setMessages(prev => [...prev, assistantMessage]);
+      // Guardar respuesta del asistente en el historial del chat si hay chat seleccionado
+      if (selectedChatId) {
+        await chatManager.addMessage(selectedChatId, {
+          role: 'assistant',
+          content: assistantMessage.content
+        });
+      }
     } catch (error) {
       setMessages(prev => [...prev, {
         type: 'assistant',
@@ -127,7 +141,12 @@ const VirtualAssistant = () => {
       return;
     }
     try {
-      await chatManager.createChat();
+      await chatManager.createChat(null, [
+        {
+          role: 'assistant',
+          content: '¡Hola! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?'
+        }
+      ]);
       setMessages([
         {
           type: 'assistant',
@@ -171,7 +190,6 @@ const VirtualAssistant = () => {
   const handleSelectChat = async (chatId) => {
     try {
       const data = await chatManager.getChat(chatId);
-      console.log('Mensajes recibidos del backend:', data.messages);
       // Mapear mensajes: convertir 'role' a 'type'
       const mappedMessages = (data.messages || []).map(m => ({
         type: m.role,
