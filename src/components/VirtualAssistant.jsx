@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FaRobot, FaTimes, FaPaperPlane, FaSpinner, FaBars, FaPlus } from 'react-icons/fa';
 import LoadingSpinner from './LoadingSpinner';
+import { authManager } from '../utils/authManager';
+import Toast from './Toast';
 
 const VirtualAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,6 +17,9 @@ const VirtualAssistant = () => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const [currentPath, setCurrentPath] = useState('');
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('info');
 
   // Control de visibilidad durante la carga y actualización de la ruta
   useEffect(() => {
@@ -80,14 +85,71 @@ const VirtualAssistant = () => {
     setInput('');
     setIsLoading(true);
 
-    // Simular animación y respuesta por defecto
-    setTimeout(() => {
+    const history = messages
+      .filter(m => m.type === 'user' || m.type === 'assistant')
+      .map(m => ({
+        role: m.type,
+        content: m.content
+      }));
+    try {
+      const response = await fetch('http://localhost:8000/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: input,
+          history: history
+        })
+      });
+      if (!response.ok) throw new Error('Error en la petición');
+      const data = await response.json();
+      const assistantMessage = {
+        type: 'assistant',
+        content: data.response || 'El asistente no está disponible ahora mismo. Por favor, contacta con soporte en info@crpghub.com.'
+      };
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
       setMessages(prev => [...prev, {
         type: 'assistant',
         content: 'El asistente no está disponible ahora mismo. Por favor, contacta con soporte en info@crpghub.com.'
       }]);
+    } finally {
       setIsLoading(false);
-    }, 1800); // 1.8 segundos de espera para simular "pensando"
+    }
+  };
+
+  // Función para crear un nuevo chat
+  const handleNewChat = async () => {
+    if (!authManager.isAuthenticated()) {
+      setToastMessage('Debes iniciar sesión para crear un nuevo chat.');
+      setToastType('info');
+      setShowToast(true);
+      return;
+    }
+    try {
+      const token = authManager.getToken();
+      const response = await fetch('http://localhost:8000/chats', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({})
+      });
+      if (!response.ok) throw new Error('Error al crear el chat');
+      setMessages([
+        {
+          type: 'assistant',
+          content: '¡Hola! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?'
+        }
+      ]);
+      setInput('');
+    } catch (error) {
+      setToastMessage('No se pudo crear un nuevo chat. Inténtalo de nuevo.');
+      setToastType('error');
+      setShowToast(true);
+    }
   };
 
   if (!isVisible) return null;
@@ -138,6 +200,7 @@ const VirtualAssistant = () => {
               title="Nuevo chat"
               type="button"
               style={{ zIndex: 2 }}
+              onClick={handleNewChat}
             >
               <FaPlus className="w-5 h-5" />
             </button>
@@ -203,6 +266,15 @@ const VirtualAssistant = () => {
             </div>
           </form>
         </div>
+      )}
+
+      {/* Toast de notificación */}
+      {showToast && (
+        <Toast
+          message={toastMessage}
+          type={toastType}
+          onClose={() => setShowToast(false)}
+        />
       )}
     </>
   );

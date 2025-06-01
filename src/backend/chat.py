@@ -1,20 +1,10 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
 import ollama
-from fastapi.middleware.cors import CORSMiddleware
 import re
 
-
-app = FastAPI()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # O pon ["http://localhost:3000"] si quieres restringirlo
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+router = APIRouter()
 
 class ChatMessage(BaseModel):
     message: str
@@ -80,7 +70,7 @@ INSTRUCCIONES GENERALES:
 - Enfócate en ayudar con los temas anteriores.
 """
 
-@app.post("/chat")
+@router.post("/chat")
 async def chat(message: ChatMessage):
     try:
         # Construir historial para el modelo (máximo 3 previos)
