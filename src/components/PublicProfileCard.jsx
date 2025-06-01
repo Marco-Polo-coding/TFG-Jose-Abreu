@@ -216,25 +216,42 @@ const PublicProfileCard = ({ userEmail }) => {
             </p>
           )}
           {currentUser && currentUser.uid !== userData.uid && (
-            <button
-              onClick={isFollowing ? handleUnfollow : handleFollow}
-              className={`mt-2 inline-flex items-center gap-2 px-5 py-2 rounded-full ${
-                isFollowing
-                  ? 'bg-gray-600 hover:bg-gray-700'
-                  : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700'
-              } text-white font-semibold shadow hover:scale-105 transition-all duration-300`}
-              disabled={loadingFollow}
-            >
-              {isFollowing ? (
-                <>
-                  <FaUserMinus className="w-4 h-4" /> Dejar de seguir
-                </>
-              ) : (
-                <>
-                  <FaUserPlus className="w-4 h-4" /> Seguir
-                </>
-              )}
-            </button>
+            <>
+              <button
+                onClick={isFollowing ? handleUnfollow : handleFollow}
+                className={`mt-2 inline-flex items-center gap-2 px-5 py-2 rounded-full ${
+                  isFollowing
+                    ? 'bg-gray-600 hover:bg-gray-700'
+                    : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700'
+                } text-white font-semibold shadow hover:scale-105 transition-all duration-300`}
+                disabled={loadingFollow}
+              >
+                {isFollowing ? (
+                  <>
+                    <FaUserMinus className="w-4 h-4" /> Dejar de seguir
+                  </>
+                ) : (
+                  <>
+                    <FaUserPlus className="w-4 h-4" /> Seguir
+                  </>
+                )}
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    const chat = await import('../utils/directChatManager').then(m => m.directChatManager.createChat(userData.uid));
+                    if (chat && chat.id) {
+                      window.location.href = `/chat?id=${chat.id}&user=${userData.uid}`;
+                    }
+                  } catch (err) {
+                    alert('Error al iniciar el chat');
+                  }
+                }}
+                className="mt-2 ml-2 inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-semibold shadow hover:scale-105 transition-all duration-300"
+              >
+                <FaUsers className="w-4 h-4" /> Iniciar chat
+              </button>
+            </>
           )}
         </div>
       </div>

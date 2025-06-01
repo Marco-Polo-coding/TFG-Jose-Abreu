@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaUser, FaSignInAlt, FaUserPlus, FaSignOutAlt, FaBookmark, FaHeart, FaUserCircle, FaNewspaper, FaBox, FaSun, FaMoon } from 'react-icons/fa';
+import { FaUser, FaSignInAlt, FaUserPlus, FaSignOutAlt, FaBookmark, FaHeart, FaUserCircle, FaNewspaper, FaBox, FaSun, FaMoon, FaComments } from 'react-icons/fa';
 import ProfileModal from './ProfileModal';
 import ConfirmModal from './ConfirmModal';
 import AuthModal from './AuthModal';
@@ -121,10 +121,10 @@ const UserButton = () => {
       <div className="relative" ref={popoverRef}>
         <button 
           onClick={() => setIsOpen(!isOpen)}
-          className="bg-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 group border-2 border-transparent hover:border-purple-300"
+          className={`bg-white ${isAuthenticated ? 'p-0' : 'p-3'} rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 group border-2 border-transparent hover:border-purple-300`}
         >
           {isAuthenticated ? (
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-xl font-bold bg-gradient-to-br from-purple-500 to-indigo-500 border-0 border-white shadow ${getRandomColor(userEmail)}`}>
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl font-bold bg-gradient-to-br from-purple-500 to-indigo-500 border-0 border-white shadow ${getRandomColor(userEmail)}`}>
               {isValidPhoto ? (
                 <img src={userPhoto} alt={userName || userEmail} className="w-full h-full object-cover rounded-full" />
               ) : (
@@ -132,7 +132,7 @@ const UserButton = () => {
               )}
             </div>
           ) : (
-            <FaUser className="w-8 h-8 text-purple-600 group-hover:text-purple-700 transition-colors" />
+            <FaUser className="w-10 h-10 text-purple-600 group-hover:text-purple-700 transition-colors" />
           )}
         </button>
 
@@ -140,8 +140,8 @@ const UserButton = () => {
           <div className="absolute top-16 right-4 z-50 bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl p-6 w-80 border border-purple-100 ring-1 ring-purple-100 animate-fade-in">
             {isAuthenticated ? (
               <div className="space-y-5">
-                <div className="flex items-center space-x-4 pb-2">
-                  <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl font-bold bg-gradient-to-br from-purple-500 to-indigo-500 border-4 border-white shadow ${getRandomColor(userEmail)}`}>
+                <div className="flex items-center space-x-4 pb-0.5">
+                  <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl font-bold bg-gradient-to-br from-purple-500 to-indigo-500 border-2 border-white shadow ${getRandomColor(userEmail)}`}>
                     {isValidPhoto ? (
                       <img src={userPhoto} alt={userName || userEmail} className="w-full h-full object-cover rounded-full" />
                     ) : (
@@ -153,7 +153,7 @@ const UserButton = () => {
                     <p className="text-xs text-gray-500 truncate">{userEmail}</p>
                   </div>
                 </div>
-                <div className="border-t border-purple-100"></div>
+                <div className="border-t border-purple-100 mt-1"></div>
                 <div className="space-y-2">
                   <a
                     href="/profile"
@@ -175,6 +175,13 @@ const UserButton = () => {
                   >
                     <FaHeart className="w-5 h-5 text-purple-500 group-hover:text-purple-700 transition-colors" />
                     <span>Productos favoritos</span>
+                  </a>
+                  <a
+                    href="/chat"
+                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-base text-gray-700 hover:bg-purple-100/60 rounded-lg transition-all duration-200 group font-medium"
+                  >
+                    <FaComments className="w-5 h-5 text-purple-500 group-hover:text-purple-700 transition-colors" />
+                    <span>Mis mensajes</span>
                   </a>
                   <a
                     href="/my_articles"

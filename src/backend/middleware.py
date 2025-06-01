@@ -37,4 +37,11 @@ async def verify_admin(token: str = Depends(get_token_header)):
         raise HTTPException(
             status_code=401,
             detail="Token inválido o expirado"
-        ) 
+        )
+
+async def get_current_uid(token: str = Depends(get_token_header)):
+    try:
+        decoded_token = auth.verify_id_token(token)
+        return decoded_token['uid']
+    except Exception:
+        raise HTTPException(status_code=401, detail="Token inválido o expirado") 

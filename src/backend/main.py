@@ -14,6 +14,7 @@ import logging
 import json
 from chat_history import router as chat_history_router
 from chat import router as chat_router
+from chat_routes import router as direct_chat_router
 
 # Configuración de logging
 logging.basicConfig(
@@ -46,6 +47,9 @@ app.include_router(chat_history_router)
 
 # Incluir el router de chat
 app.include_router(chat_router)
+
+# Incluir el router de chat directo
+app.include_router(direct_chat_router)
 
 # Configuración de CORS
 app.add_middleware(

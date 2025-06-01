@@ -1,0 +1,14 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ChatContainer from '../components/ChatContainer';
+
+// Indicar que esta página debe ser renderizada en el servidor
+export const prerender = false;
+---
+
+<Layout title="Chat">
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-6">Mensajes</h1>
+    <ChatContainer client:load />
+  </div>
+</Layout> 
