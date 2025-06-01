@@ -3,6 +3,8 @@ import { FaBook, FaShoppingBag, FaHome, FaUserPlus, FaUserMinus, FaUsers } from 
 import LoadingSpinner from './LoadingSpinner';
 import { apiManager } from '../utils/apiManager';
 import { authManager } from '../utils/authManager';
+import ConfirmModal from './ConfirmModal';
+import ErrorModal from './ErrorModal';
 
 function getInitials(email) {
   if (!email) return '';
@@ -39,6 +41,8 @@ const PublicProfileCard = ({ userEmail }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [userUid, setUserUid] = useState(null);
   const [loadingFollow, setLoadingFollow] = useState(false);
+  const [showChatError, setShowChatError] = useState(false);
+  const [chatErrorMsg, setChatErrorMsg] = useState('');
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -244,7 +248,8 @@ const PublicProfileCard = ({ userEmail }) => {
                       window.location.href = `/chat?id=${chat.id}&user=${userData.uid}`;
                     }
                   } catch (err) {
-                    alert('Error al iniciar el chat');
+                    setChatErrorMsg('Error al iniciar el chat');
+                    setShowChatError(true);
                   }
                 }}
                 className="mt-2 ml-2 inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-semibold shadow hover:scale-105 transition-all duration-300"
@@ -388,6 +393,15 @@ const PublicProfileCard = ({ userEmail }) => {
           </div>
         )}
       </div>
+
+      {/* Modal de error al iniciar chat */}
+      <ErrorModal
+        isOpen={showChatError}
+        onClose={() => setShowChatError(false)}
+        title="Error al iniciar el chat"
+        message={chatErrorMsg}
+        buttonText="Aceptar"
+      />
     </div>
   );
 };

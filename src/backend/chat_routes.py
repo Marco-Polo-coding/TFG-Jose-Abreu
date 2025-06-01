@@ -17,15 +17,17 @@ class DirectChatCreate(BaseModel):
 @router.post("/direct-chats")
 async def create_direct_chat(chat: DirectChatCreate, uid: str = Depends(get_current_uid)):
     # Verificar que el participante existe
-    participant = db.collection("users").document(chat.participant_id).get()
+    participant = db.collection("usuarios").document(chat.participant_id).get()
     if not participant.exists:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
+    # Ordenar los UIDs para la clave única
+    participants = sorted([uid, chat.participant_id])
+    participants_key = f"{participants[0]}_{participants[1]}"
+    
     # Verificar que no existe ya un chat entre estos usuarios
     existing_chat = db.collection("direct_chats").where(
-        "participants", "array_contains", uid
-    ).where(
-        "participants", "array_contains", chat.participant_id
+        "participants_key", "==", participants_key
     ).limit(1).get()
     
     if existing_chat:
@@ -33,7 +35,8 @@ async def create_direct_chat(chat: DirectChatCreate, uid: str = Depends(get_curr
     
     # Crear nuevo chat
     chat_data = {
-        "participants": [uid, chat.participant_id],
+        "participants": participants,
+        "participants_key": participants_key,
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow(),
         "last_message": None
