@@ -1,14 +1,45 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import ChatContainer from '../components/ChatContainer';
+import CartButton from '../components/CartButton';
+import UserButton from '../components/UserButton';
+import { FaHome, FaComments } from 'react-icons/fa';
 
 // Indicar que esta página debe ser renderizada en el servidor
 export const prerender = false;
 ---
 
 <Layout title="Chat">
-  <div class="container mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold mb-6">Mensajes</h1>
-    <ChatContainer client:load />
+  <div class="min-h-screen bg-gray-50">
+    <div class="fixed top-4 right-4 z-50 flex items-center gap-8">
+      <CartButton client:load />
+      <UserButton client:load />
+    </div>
+    <section class="relative h-[30vh] bg-gradient-to-r from-purple-900 to-indigo-900 overflow-hidden flex items-center mb-12 shadow-xl">
+      <div class="absolute inset-0 bg-black opacity-40"></div>
+      <div class="relative container mx-auto px-4 h-full flex flex-col justify-center">
+        {/* Breadcrumb */}
+        <div class="flex items-center gap-4 mb-4">
+          <a href="/" class="flex items-center gap-2 text-white hover:text-purple-200 transition-colors">
+            <FaHome className="w-5 h-5" />
+            <span>Inicio</span>
+          </a>
+          <span class="text-white/50">/</span>
+          <span class="text-white/50">Mensajes</span>
+        </div>
+        <div class="flex items-center gap-4 text-white">
+          <FaComments className="text-5xl md:text-6xl drop-shadow-xl" />
+          <div>
+            <h1 class="text-3xl md:text-5xl font-extrabold mb-2 drop-shadow-xl">Mensajes</h1>
+            <p class="text-lg md:text-xl text-gray-200 drop-shadow">Chatea con otros usuarios de la comunidad</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="py-8">
+      <div class="container mx-auto px-4 rounded-2xl shadow-xl bg-white/80 border border-white/60">
+        <ChatContainer client:load />
+      </div>
+    </section>
   </div>
 </Layout> 
