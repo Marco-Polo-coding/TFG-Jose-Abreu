@@ -80,30 +80,14 @@ const VirtualAssistant = () => {
     setInput('');
     setIsLoading(true);
 
-    try {
-      const response = await fetch('http://localhost:8002/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message: input }),
-      });
-
-      const data = await response.json();
-      
+    // Simular animación y respuesta por defecto
+    setTimeout(() => {
       setMessages(prev => [...prev, {
         type: 'assistant',
-        content: data.response
+        content: 'El asistente no está disponible ahora mismo. Por favor, contacta con soporte en info@crpghub.com.'
       }]);
-    } catch (error) {
-      console.error('Error:', error);
-      setMessages(prev => [...prev, {
-        type: 'assistant',
-        content: 'Lo siento, ha ocurrido un error. Por favor, intenta de nuevo.'
-      }]);
-    } finally {
       setIsLoading(false);
-    }
+    }, 1800); // 1.8 segundos de espera para simular "pensando"
   };
 
   if (!isVisible) return null;
