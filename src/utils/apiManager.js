@@ -41,12 +41,24 @@ class ApiManager {
   }
 
   async post(endpoint, data) {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+    let options = {
       method: 'POST',
-      headers: this.getHeaders(),
       credentials: 'include',
-      body: JSON.stringify(data),
-    });
+    };
+
+    if (data instanceof FormData) {
+      options.body = data;
+      // Solo añade los headers de autorización y CSRF, pero NO Content-Type
+      options.headers = {
+        'Authorization': authManager.getToken() ? `Bearer ${authManager.getToken()}` : '',
+        'X-CSRF-Token': this.csrfToken,
+      };
+    } else {
+      options.body = JSON.stringify(data);
+      options.headers = this.getHeaders();
+    }
+
+    const response = await fetch(`${this.baseUrl}${endpoint}`, options);
     return this.handleResponse(response);
   }
 

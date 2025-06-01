@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { FaComment, FaReply } from 'react-icons/fa';
+import { FaComment, FaReply, FaTrash } from 'react-icons/fa';
 import Toast from './Toast';
+import ImageUpload from './ImageUpload';
 import { apiManager } from '../utils/apiManager';
+import ConfirmDeleteCommentModal from './ConfirmDeleteCommentModal';
 
 const Comments = ({ articuloId }) => {
   const [comentarios, setComentarios] = useState([]);
@@ -12,6 +14,10 @@ const Comments = ({ articuloId }) => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
   const [loading, setLoading] = useState(true);
+  const [imagenComentario, setImagenComentario] = useState(null);
+  const [imagenRespuesta, setImagenRespuesta] = useState(null);
+  const userEmail = localStorage.getItem('userEmail');
+  const [modalDelete, setModalDelete] = useState({ open: false, type: null, comentarioId: null, respuestaId: null });
 
   useEffect(() => {
     cargarComentarios();
@@ -41,14 +47,18 @@ const Comments = ({ articuloId }) => {
         return;
       }
 
-      const comentario = {
-        usuario: userEmail,
-        texto: nuevoComentario,
-        fecha: new Date().toISOString()
-      };
+      const formData = new FormData();
+      formData.append('usuario', userEmail);
+      formData.append('texto', nuevoComentario);
+      formData.append('fecha', new Date().toISOString());
+      if (imagenComentario) {
+        formData.append('imagen', imagenComentario);
+      }
 
-      await apiManager.post(`/articulos/${articuloId}/comentarios`, comentario);
+      await apiManager.post(`/articulos/${articuloId}/comentarios`, formData);
+      
       setNuevoComentario('');
+      setImagenComentario(null);
       cargarComentarios();
       setToastMessage('Comentario publicado correctamente');
       setToastType('success');
@@ -71,15 +81,19 @@ const Comments = ({ articuloId }) => {
         return;
       }
 
-      const respuesta = {
-        usuario: userEmail,
-        texto: respuestaComentario,
-        fecha: new Date().toISOString(),
-        comentario_padre: comentarioRespondiendo.id
-      };
+      const formData = new FormData();
+      formData.append('usuario', userEmail);
+      formData.append('texto', respuestaComentario);
+      formData.append('fecha', new Date().toISOString());
+      formData.append('comentario_padre', comentarioRespondiendo.id);
+      if (imagenRespuesta) {
+        formData.append('imagen', imagenRespuesta);
+      }
 
-      await apiManager.post(`/articulos/${articuloId}/comentarios`, respuesta);
+      await apiManager.post(`/articulos/${articuloId}/comentarios`, formData);
+
       setRespuestaComentario('');
+      setImagenRespuesta(null);
       setComentarioRespondiendo(null);
       cargarComentarios();
       setToastMessage('Respuesta publicada correctamente');
@@ -90,6 +104,45 @@ const Comments = ({ articuloId }) => {
       setToastType('error');
       setShowToast(true);
     }
+  };
+
+  const openDeleteComentario = (comentarioId) => {
+    setModalDelete({ open: true, type: 'comentario', comentarioId, respuestaId: null });
+  };
+  const openDeleteRespuesta = (comentarioId, respuestaId) => {
+    setModalDelete({ open: true, type: 'respuesta', comentarioId, respuestaId });
+  };
+  const closeModalDelete = () => setModalDelete({ open: false, type: null, comentarioId: null, respuestaId: null });
+
+  const handleDeleteComentario = async () => {
+    const { comentarioId } = modalDelete;
+    try {
+      await apiManager.delete(`/articulos/${articuloId}/comentarios/${comentarioId}?usuario=${userEmail}`);
+      cargarComentarios();
+      setToastMessage('Comentario eliminado correctamente');
+      setToastType('success');
+      setShowToast(true);
+    } catch (error) {
+      setToastMessage('Error al eliminar el comentario');
+      setToastType('error');
+      setShowToast(true);
+    }
+    closeModalDelete();
+  };
+  const handleDeleteRespuesta = async () => {
+    const { comentarioId, respuestaId } = modalDelete;
+    try {
+      await apiManager.delete(`/articulos/${articuloId}/comentarios/${comentarioId}/respuestas/${respuestaId}?usuario=${userEmail}`);
+      cargarComentarios();
+      setToastMessage('Respuesta eliminada correctamente');
+      setToastType('success');
+      setShowToast(true);
+    } catch (error) {
+      setToastMessage('Error al eliminar la respuesta');
+      setToastType('error');
+      setShowToast(true);
+    }
+    closeModalDelete();
   };
 
   if (loading) {
@@ -112,6 +165,13 @@ const Comments = ({ articuloId }) => {
           className="w-full p-4 border rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500"
           rows="4"
         />
+        <div className="flex items-center gap-4 mb-4">
+          <ImageUpload
+            value={imagenComentario}
+            onImageSelect={(file) => setImagenComentario(file)}
+            onImageRemove={() => setImagenComentario(null)}
+          />
+        </div>
         <button
           type="submit"
           className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-3 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105 font-semibold shadow-lg"
@@ -134,8 +194,26 @@ const Comments = ({ articuloId }) => {
               <span className="text-gray-500">
                 {new Date(comentario.fecha).toLocaleDateString()}
               </span>
+              {comentario.usuario === userEmail && (
+                <button
+                  onClick={() => openDeleteComentario(comentario.id)}
+                  className="ml-auto text-red-500 hover:text-red-700"
+                  title="Eliminar comentario"
+                >
+                  <FaTrash />
+                </button>
+              )}
             </div>
             <p className="text-gray-700">{comentario.texto}</p>
+            {comentario.imagen && (
+              <div className="mt-2">
+                <img
+                  src={comentario.imagen}
+                  alt="Comentario"
+                  className="max-h-64 rounded-lg object-contain"
+                />
+              </div>
+            )}
             
             {/* Botón de responder */}
             <button
@@ -156,6 +234,13 @@ const Comments = ({ articuloId }) => {
                   className="w-full p-3 border rounded-lg mb-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
                   rows="3"
                 />
+                <div className="flex items-center gap-4 mb-4">
+                  <ImageUpload
+                    value={imagenRespuesta}
+                    onImageSelect={(file) => setImagenRespuesta(file)}
+                    onImageRemove={() => setImagenRespuesta(null)}
+                  />
+                </div>
                 <div className="flex gap-2">
                   <button
                     type="submit"
@@ -168,6 +253,7 @@ const Comments = ({ articuloId }) => {
                     onClick={() => {
                       setComentarioRespondiendo(null);
                       setRespuestaComentario('');
+                      setImagenRespuesta(null);
                     }}
                     className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
                   >
@@ -190,8 +276,26 @@ const Comments = ({ articuloId }) => {
                   <span className="text-gray-500">
                     {new Date(respuesta.fecha).toLocaleDateString()}
                   </span>
+                  {respuesta.usuario === userEmail && (
+                    <button
+                      onClick={() => openDeleteRespuesta(comentario.id, respuesta.id)}
+                      className="ml-auto text-red-500 hover:text-red-700"
+                      title="Eliminar respuesta"
+                    >
+                      <FaTrash />
+                    </button>
+                  )}
                 </div>
                 <p className="text-gray-700">{respuesta.texto}</p>
+                {respuesta.imagen && (
+                  <div className="mt-2">
+                    <img
+                      src={respuesta.imagen}
+                      alt="Respuesta"
+                      className="max-h-48 rounded-lg object-contain"
+                    />
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -206,6 +310,13 @@ const Comments = ({ articuloId }) => {
           onClose={() => setShowToast(false)}
         />
       )}
+
+      {/* Modal de confirmación de borrado */}
+      <ConfirmDeleteCommentModal
+        isOpen={modalDelete.open}
+        onClose={closeModalDelete}
+        onConfirm={modalDelete.type === 'comentario' ? handleDeleteComentario : handleDeleteRespuesta}
+      />
     </div>
   );
 };

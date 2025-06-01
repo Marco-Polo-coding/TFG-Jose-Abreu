@@ -363,19 +363,59 @@ async def obtener_articulo(articulo_id: str):
 
 # POST /articulos/{id}/comentarios → Añadir comentario a un artículo
 @app.post("/articulos/{articulo_id}/comentarios", response_model=Dict[str, Any])
-async def agregar_comentario(articulo_id: str, comentario: Dict[str, Any]):
+async def agregar_comentario(
+    articulo_id: str,
+    usuario: str = Form(...),
+    texto: str = Form(...),
+    fecha: str = Form(...),
+    imagen: Optional[UploadFile] = File(None),
+    comentario_padre: Optional[str] = Form(None)
+):
     try:
         articulo_ref = db.collection("articulos").document(articulo_id)
         articulo = articulo_ref.get()
         if not articulo.exists:
             raise HTTPException(status_code=404, detail="Artículo no encontrado")
         
-        comentario["timestamp"] = datetime.now()
-        comentario_id = articulo_ref.collection("comentarios").document().id
-        articulo_ref.collection("comentarios").document(comentario_id).set(comentario)
+        comentario_data = {
+            "usuario": usuario,
+            "texto": texto,
+            "fecha": fecha,
+            "timestamp": datetime.now()
+        }
+
+        # Si hay una imagen, subirla a Cloudinary
+        if imagen:
+            if not imagen.content_type.startswith("image/"):
+                raise HTTPException(status_code=400, detail="El archivo debe ser una imagen")
+            
+            contents = await imagen.read()
+            result = cloudinary.uploader.upload(
+                contents,
+                folder="comment_images",
+                resource_type="auto"
+            )
+            comentario_data["imagen"] = result["secure_url"]
+
+        # Si es una respuesta, añadir el ID del comentario padre
+        if comentario_padre:
+            comentario_data["comentario_padre"] = comentario_padre
+            comentario_ref = articulo_ref.collection("comentarios").document(comentario_padre)
+            comentario = comentario_ref.get()
+            if not comentario.exists:
+                raise HTTPException(status_code=404, detail="Comentario padre no encontrado")
+            
+            respuesta_id = comentario_ref.collection("respuestas").document().id
+            comentario_ref.collection("respuestas").document(respuesta_id).set(comentario_data)
+            return {"id": respuesta_id, **comentario_data}
         
-        return {"id": comentario_id, **comentario}
+        # Si es un comentario nuevo
+        comentario_id = articulo_ref.collection("comentarios").document().id
+        articulo_ref.collection("comentarios").document(comentario_id).set(comentario_data)
+        
+        return {"id": comentario_id, **comentario_data}
     except Exception as e:
+        logger.error(f"Error al agregar comentario: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 # POST /articulos/{id}/comentarios/{comentario_id}/respuestas → Añadir respuesta a un comentario
@@ -832,5 +872,37 @@ async def obtener_usuario_por_email(email: str):
         if not usuarios:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
         return {"id": usuarios[0].id, **usuarios[0].to_dict()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/articulos/{articulo_id}/comentarios/{comentario_id}")
+async def eliminar_comentario(articulo_id: str, comentario_id: str, usuario: str = None):
+    try:
+        comentario_ref = db.collection("articulos").document(articulo_id).collection("comentarios").document(comentario_id)
+        comentario = comentario_ref.get()
+        if not comentario.exists:
+            raise HTTPException(status_code=404, detail="Comentario no encontrado")
+        if usuario and comentario.to_dict().get("usuario") != usuario:
+            raise HTTPException(status_code=403, detail="No tienes permiso para borrar este comentario")
+        # Eliminar posibles respuestas
+        respuestas_ref = comentario_ref.collection("respuestas").stream()
+        for r in respuestas_ref:
+            comentario_ref.collection("respuestas").document(r.id).delete()
+        comentario_ref.delete()
+        return {"message": "Comentario eliminado correctamente"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/articulos/{articulo_id}/comentarios/{comentario_id}/respuestas/{respuesta_id}")
+async def eliminar_respuesta(articulo_id: str, comentario_id: str, respuesta_id: str, usuario: str = None):
+    try:
+        respuesta_ref = db.collection("articulos").document(articulo_id).collection("comentarios").document(comentario_id).collection("respuestas").document(respuesta_id)
+        respuesta = respuesta_ref.get()
+        if not respuesta.exists:
+            raise HTTPException(status_code=404, detail="Respuesta no encontrada")
+        if usuario and respuesta.to_dict().get("usuario") != usuario:
+            raise HTTPException(status_code=403, detail="No tienes permiso para borrar esta respuesta")
+        respuesta_ref.delete()
+        return {"message": "Respuesta eliminada correctamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
