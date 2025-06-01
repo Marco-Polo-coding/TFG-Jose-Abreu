@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaRobot, FaTimes, FaPaperPlane, FaSpinner, FaBars, FaPlus } from 'react-icons/fa';
-import LoadingSpinner from './LoadingSpinner';
+import { FaRobot, FaTimes, FaPaperPlane, FaSpinner, FaBars, FaPlus, FaTrash, FaEdit, FaArrowLeft, FaCheck } from 'react-icons/fa';
+// import LoadingSpinner from './LoadingSpinner';
 import { authManager } from '../utils/authManager';
+import { chatManager } from '../utils/chatManager';
 import Toast from './Toast';
 
 const VirtualAssistant = () => {
@@ -20,6 +21,12 @@ const VirtualAssistant = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('info');
+  const [view, setView] = useState('chat'); // 'chat' o 'history'
+  const [chats, setChats] = useState([]);
+  const [selectedChatId, setSelectedChatId] = useState(null);
+  const [renamingChatId, setRenamingChatId] = useState(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [loadingChats, setLoadingChats] = useState(false);
 
   // Control de visibilidad durante la carga y actualización de la ruta
   useEffect(() => {
@@ -91,19 +98,9 @@ const VirtualAssistant = () => {
         role: m.type,
         content: m.content
       }));
+
     try {
-      const response = await fetch('http://localhost:8000/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: input,
-          history: history
-        })
-      });
-      if (!response.ok) throw new Error('Error en la petición');
-      const data = await response.json();
+      const data = await chatManager.sendMessage(input, history);
       const assistantMessage = {
         type: 'assistant',
         content: data.response || 'El asistente no está disponible ahora mismo. Por favor, contacta con soporte en info@crpghub.com.'
@@ -128,16 +125,7 @@ const VirtualAssistant = () => {
       return;
     }
     try {
-      const token = authManager.getToken();
-      const response = await fetch('http://localhost:8000/chats', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({})
-      });
-      if (!response.ok) throw new Error('Error al crear el chat');
+      await chatManager.createChat();
       setMessages([
         {
           type: 'assistant',
@@ -147,6 +135,85 @@ const VirtualAssistant = () => {
       setInput('');
     } catch (error) {
       setToastMessage('No se pudo crear un nuevo chat. Inténtalo de nuevo.');
+      setToastType('error');
+      setShowToast(true);
+    }
+  };
+
+  const fetchChats = async () => {
+    if (!authManager.isAuthenticated()) return;
+    setLoadingChats(true);
+    try {
+      const data = await chatManager.getChats();
+      setChats(data);
+    } catch (error) {
+      setToastMessage('No se pudo cargar el historial de chats.');
+      setToastType('error');
+      setShowToast(true);
+    } finally {
+      setLoadingChats(false);
+    }
+  };
+
+  const handleOpenHistory = () => {
+    if (!authManager.isAuthenticated()) {
+      setToastMessage('Debes iniciar sesión para ver el historial de chats.');
+      setToastType('info');
+      setShowToast(true);
+      return;
+    }
+    setView('history');
+    fetchChats();
+  };
+
+  const handleSelectChat = async (chatId) => {
+    try {
+      const data = await chatManager.getChat(chatId);
+      setMessages(data.messages || []);
+      setSelectedChatId(chatId);
+      setView('chat');
+    } catch (error) {
+      setToastMessage('No se pudo cargar el chat seleccionado.');
+      setToastType('error');
+      setShowToast(true);
+    }
+  };
+
+  const handleDeleteChat = async (chatId) => {
+    if (!window.confirm('¿Seguro que quieres borrar este chat?')) return;
+    try {
+      await chatManager.deleteChat(chatId);
+      setChats(chats.filter(c => c.id !== chatId));
+      if (selectedChatId === chatId) {
+        setMessages([
+          {
+            type: 'assistant',
+            content: '¡Hola! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?'
+          }
+        ]);
+        setSelectedChatId(null);
+      }
+      setToastMessage('Chat borrado correctamente.');
+      setToastType('success');
+      setShowToast(true);
+    } catch (error) {
+      setToastMessage('No se pudo borrar el chat.');
+      setToastType('error');
+      setShowToast(true);
+    }
+  };
+
+  const handleRenameChat = async (chatId) => {
+    try {
+      await chatManager.renameChat(chatId, renameValue);
+      setChats(chats.map(c => c.id === chatId ? { ...c, name: renameValue } : c));
+      setRenamingChatId(null);
+      setRenameValue('');
+      setToastMessage('Chat renombrado correctamente.');
+      setToastType('success');
+      setShowToast(true);
+    } catch (error) {
+      setToastMessage('No se pudo renombrar el chat.');
       setToastType('error');
       setShowToast(true);
     }
@@ -187,6 +254,7 @@ const VirtualAssistant = () => {
               title="Ver historial de chats"
               style={{ zIndex: 2 }}
               type="button"
+              onClick={handleOpenHistory}
             >
               <FaBars className="w-5 h-5" />
             </button>
@@ -215,56 +283,144 @@ const VirtualAssistant = () => {
             </button>
           </div>
 
-          {/* Mensajes */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-2xl p-3 ${
-                    message.type === 'user'
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}
+          {/* Vista de historial de chats */}
+          {view === 'history' && (
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+              <div className="flex items-center mb-4">
+                <button
+                  className="mr-2 text-purple-600 hover:text-purple-800 p-2 rounded-full focus:outline-none"
+                  onClick={() => setView('chat')}
+                  title="Volver al chat"
                 >
-                  {message.content}
-                </div>
+                  <FaArrowLeft className="w-5 h-5" />
+                </button>
+                <h4 className="text-lg font-semibold text-gray-700">Historial de chats</h4>
               </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-start w-full">
-                <div className="w-full flex flex-col items-center justify-center py-8">
-                  <div className="animate-bounce mb-2">
-                    <FaRobot className="w-10 h-10 text-purple-500 opacity-80" />
-                  </div>
-                  <span className="text-purple-600 font-semibold text-base">El asistente está pensando...</span>
+              {loadingChats ? (
+                <div className="flex justify-center items-center h-32">
+                  <FaSpinner className="animate-spin w-6 h-6 text-purple-500" />
                 </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input */}
-          <form onSubmit={handleSubmit} className="p-4 border-t">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Escribe tu mensaje..."
-                className="flex-1 p-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700 transition-colors disabled:opacity-50"
-              >
-                <FaPaperPlane className="w-5 h-5" />
-              </button>
+              ) : (
+                <ul className="space-y-2">
+                  {chats.length === 0 && (
+                    <li className="text-gray-500">No tienes chats guardados.</li>
+                  )}
+                  {chats.map(chat => (
+                    <li key={chat.id} className="bg-white rounded-xl shadow p-3 flex items-center justify-between group transition hover:shadow-lg">
+                      <div className="flex-1 min-w-0">
+                        {renamingChatId === chat.id ? (
+                          <div className="flex flex-col gap-1">
+                            <input
+                              className="border rounded px-2 py-1 text-sm flex-1 mb-1"
+                              value={renameValue}
+                              onChange={e => setRenameValue(e.target.value)}
+                              autoFocus
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                className="text-green-600 hover:text-green-800"
+                                onClick={() => handleRenameChat(chat.id)}
+                              >
+                                <FaCheck className="w-4 h-4" />
+                              </button>
+                              <button
+                                className="text-gray-400 hover:text-gray-600"
+                                onClick={() => { setRenamingChatId(null); setRenameValue(''); }}
+                              >
+                                <FaTimes className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="font-medium text-gray-800 truncate">{chat.name}</span>
+                        )}
+                        <div className="text-xs text-gray-400">{new Date(chat.updated_at || chat.created_at).toLocaleString()}</div>
+                      </div>
+                      <div className="flex items-center gap-2 ml-2">
+                        <button
+                          className="text-purple-600 hover:text-purple-800 p-1"
+                          title="Abrir chat"
+                          onClick={() => handleSelectChat(chat.id)}
+                        >
+                          <FaRobot className="w-4 h-4" />
+                        </button>
+                        <button
+                          className="text-blue-500 hover:text-blue-700 p-1"
+                          title="Renombrar chat"
+                          onClick={() => { setRenamingChatId(chat.id); setRenameValue(chat.name); }}
+                        >
+                          <FaEdit className="w-4 h-4" />
+                        </button>
+                        <button
+                          className="text-red-500 hover:text-red-700 p-1"
+                          title="Borrar chat"
+                          onClick={() => handleDeleteChat(chat.id)}
+                        >
+                          <FaTrash className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-          </form>
+          )}
+
+          {/* Vista de chat normal */}
+          {view === 'chat' && (
+            <>
+              {/* Mensajes */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[80%] rounded-2xl p-3 ${
+                        message.type === 'user'
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {message.content}
+                    </div>
+                  </div>
+                ))}
+                {isLoading && (
+                  <div className="flex justify-start w-full">
+                    <div className="w-full flex flex-col items-center justify-center py-8">
+                      <div className="animate-bounce mb-2">
+                        <FaRobot className="w-10 h-10 text-purple-500 opacity-80" />
+                      </div>
+                      <span className="text-purple-600 font-semibold text-base">El asistente está pensando...</span>
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Input */}
+              <form onSubmit={handleSubmit} className="p-4 border-t">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Escribe tu mensaje..."
+                    className="flex-1 p-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700 transition-colors disabled:opacity-50"
+                  >
+                    <FaPaperPlane className="w-5 h-5" />
+                  </button>
+                </div>
+              </form>
+            </>
+          )}
         </div>
       )}
 
