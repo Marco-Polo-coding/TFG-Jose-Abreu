@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaRobot, FaTimes, FaPaperPlane, FaSpinner } from 'react-icons/fa';
+import { FaRobot, FaTimes, FaPaperPlane, FaSpinner, FaBars, FaPlus } from 'react-icons/fa';
 import LoadingSpinner from './LoadingSpinner';
 
 const VirtualAssistant = () => {
@@ -118,14 +118,35 @@ const VirtualAssistant = () => {
           }}
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 rounded-t-2xl flex justify-between items-center">
-            <div className="flex items-center gap-3">
+          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 rounded-t-2xl flex justify-between items-center relative">
+            {/* Botón de historial (hamburguesa) */}
+            <button
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-200 transition-colors p-2 rounded-full hover:bg-white/10 focus:outline-none"
+              title="Ver historial de chats"
+              style={{ zIndex: 2 }}
+              type="button"
+            >
+              <FaBars className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-3 ml-12">
               <FaRobot className="w-6 h-6 text-white" />
               <h3 className="text-white font-semibold">Asistente Virtual</h3>
             </div>
+            {/* Botón de nuevo chat */}
+            <button
+              className="absolute right-12 top-1/2 -translate-y-1/2 text-white hover:text-gray-200 transition-colors p-2 rounded-full hover:bg-white/10 focus:outline-none"
+              title="Nuevo chat"
+              type="button"
+              style={{ zIndex: 2 }}
+            >
+              <FaPlus className="w-5 h-5" />
+            </button>
             <button
               onClick={() => setIsOpen(false)}
-              className="text-white hover:text-gray-200 transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-200 transition-colors p-2 rounded-full focus:outline-none"
+              style={{ zIndex: 2 }}
+              title="Cerrar"
+              type="button"
             >
               <FaTimes className="w-5 h-5" />
             </button>

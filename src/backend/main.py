@@ -12,6 +12,7 @@ import cloudinary.uploader
 from pydantic import BaseModel
 import logging
 import json
+from chat_history import router as chat_history_router
 
 # Configuración de logging
 logging.basicConfig(
@@ -38,6 +39,9 @@ app.include_router(auth_router, prefix="/auth")
 
 # Incluir el router de administrador
 app.include_router(admin_router, prefix="/admin")
+
+# Incluir el router de chat history
+app.include_router(chat_history_router)
 
 # Configuración de CORS
 app.add_middleware(
