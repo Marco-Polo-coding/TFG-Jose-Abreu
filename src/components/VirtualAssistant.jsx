@@ -418,7 +418,7 @@ const VirtualAssistant = () => {
                     className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-[80%] rounded-2xl p-3 ${
+                      className={`max-w-[90%] rounded-2xl p-3 break-words whitespace-pre-line ${
                         message.type === 'user'
                           ? 'bg-purple-600 text-white'
                           : 'bg-gray-100 text-gray-800'
