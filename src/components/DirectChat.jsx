@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { directChatManager } from '../utils/directChatManager';
 import { authManager } from '../utils/authManager';
 import { apiManager } from '../utils/apiManager';
+import { FaSpinner } from 'react-icons/fa';
 
 const DirectChat = ({ chatId, otherUserId }) => {
   const [messages, setMessages] = useState([]);
@@ -74,7 +75,12 @@ const DirectChat = ({ chatId, otherUserId }) => {
     }
   };
 
-  if (loading && messages.length === 0) return <div>Cargando chat...</div>;
+  if (loading && messages.length === 0) return (
+    <div className="flex flex-col items-center justify-center h-full py-16">
+      <FaSpinner className="animate-spin text-purple-500 text-4xl mb-4" />
+      <span className="text-purple-500 text-lg font-semibold">Cargando chat...</span>
+    </div>
+  );
   if (error) return <div className="text-red-500">{error}</div>;
 
   return (
@@ -86,9 +92,9 @@ const DirectChat = ({ chatId, otherUserId }) => {
         </h2>
       </div>
       {/* Área de mensajes */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-white to-purple-50 rounded-b-xl">
         {messages.length === 0 && !loading && !error && (
-          <div className="text-gray-400 text-center py-8">
+          <div className="text-gray-400 text-center py-8 italic text-lg">
             No hay mensajes aún. ¡Sé el primero en escribir!
           </div>
         )}
@@ -100,14 +106,14 @@ const DirectChat = ({ chatId, otherUserId }) => {
               className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[70%] rounded-lg p-3 ${
+                className={`max-w-[70%] rounded-2xl p-4 shadow-md mb-2 break-words whitespace-pre-line transition-all duration-200 ${
                   isOwn
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 text-gray-900'
+                    ? 'bg-purple-500 text-white rounded-br-none'
+                    : 'bg-white text-gray-900 rounded-bl-none border border-purple-100'
                 }`}
               >
-                <p>{message.content}</p>
-                <span className="text-xs opacity-70">
+                <p className="mb-1 text-base">{message.content}</p>
+                <span className="text-xs opacity-70 block text-right">
                   {new Date(message.timestamp).toLocaleTimeString()}
                 </span>
               </div>
@@ -117,24 +123,22 @@ const DirectChat = ({ chatId, otherUserId }) => {
         <div ref={messagesEndRef} />
       </div>
       {/* Formulario de envío */}
-      <form onSubmit={handleSend} className="p-4 border-t">
-        <div className="flex space-x-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Escribe un mensaje..."
-            className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={loading}
-          />
-          <button
-            type="submit"
-            disabled={sendLoading || !input.trim() || loading}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
-          >
-            {sendLoading ? 'Enviando...' : 'Enviar'}
-          </button>
-        </div>
+      <form onSubmit={handleSend} className="p-4 border-t bg-white flex items-center gap-2">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Escribe un mensaje..."
+          className="flex-1 p-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-400 bg-purple-50 text-gray-800 shadow-sm"
+          disabled={loading}
+        />
+        <button
+          type="submit"
+          disabled={sendLoading || !input.trim() || loading}
+          className="px-6 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-2xl font-semibold shadow-md hover:from-purple-600 hover:to-purple-700 transition-all duration-200 disabled:opacity-50"
+        >
+          {sendLoading ? <FaSpinner className="animate-spin" /> : 'Enviar'}
+        </button>
       </form>
     </div>
   );

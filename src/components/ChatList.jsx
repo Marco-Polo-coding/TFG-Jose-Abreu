@@ -51,22 +51,22 @@ const ChatList = ({ onSelectChat }) => {
         return (
           <div
             key={chat.id}
-            className="p-4 border rounded-lg cursor-pointer hover:bg-gray-50"
+            className="p-4 border rounded-2xl cursor-pointer bg-white shadow-sm hover:bg-purple-50 hover:shadow-md transition-all duration-200"
             onClick={() => onSelectChat(chat.id, otherParticipantId)}
           >
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-medium">
+                <h3 className="font-bold text-lg text-purple-700">
                   {userNames[otherParticipantId] || otherParticipantId}
                 </h3>
                 {chat.last_message && (
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 mt-1">
                     {chat.last_message.content}
                   </p>
                 )}
               </div>
               {chat.last_message && (
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-purple-400 font-semibold">
                   {new Date(chat.last_message.timestamp).toLocaleTimeString()}
                 </span>
               )}
