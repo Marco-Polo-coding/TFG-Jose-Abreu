@@ -4,6 +4,8 @@ import ProfileModal from './ProfileModal';
 import ConfirmModal from './ConfirmModal';
 import AuthModal from './AuthModal';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { directChatManager } from '../utils/directChatManager';
+import { authManager } from '../utils/authManager';
 const clientId = "1040096324756-vf83konj4f2794dpau2119934d5jbu0p.apps.googleusercontent.com";
 
 const UserButton = () => {
@@ -25,6 +27,7 @@ const UserButton = () => {
     }
     return false;
   });
+  const [unreadChats, setUnreadChats] = useState(0);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -60,6 +63,35 @@ const UserButton = () => {
       localStorage.setItem('theme', 'light');
     }
   }, [darkMode]);
+
+  useEffect(() => {
+    const fetchUnreadChats = async () => {
+      if (!isAuthenticated) return;
+      try {
+        const userChats = await directChatManager.getChats();
+        const currentUid = localStorage.getItem('uid');
+        let count = 0;
+        userChats.forEach(chat => {
+          const lastMsg = chat.last_message;
+          if (lastMsg && lastMsg.sender !== currentUid && (!lastMsg.read_by || !lastMsg.read_by.includes(currentUid))) {
+            count++;
+          }
+        });
+        setUnreadChats(count);
+      } catch (e) {
+        setUnreadChats(0);
+      }
+    };
+    fetchUnreadChats();
+    // Exponer la función global para refrescar desde otros componentes
+    window.refreshUnreadChats = fetchUnreadChats;
+    // Polling cada 15 segundos
+    const interval = setInterval(fetchUnreadChats, 15000);
+    return () => {
+      clearInterval(interval);
+      window.refreshUnreadChats = undefined;
+    };
+  }, [isAuthenticated]);
 
   const handleAuthClick = (mode) => {
     setAuthMode(mode);
@@ -178,10 +210,15 @@ const UserButton = () => {
                   </a>
                   <a
                     href="/chat"
-                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-base text-gray-700 hover:bg-purple-100/60 rounded-lg transition-all duration-200 group font-medium"
+                    className="w-full flex items-center space-x-3 px-4 py-2.5 text-base text-gray-700 hover:bg-purple-100/60 rounded-lg transition-all duration-200 group font-medium relative"
                   >
                     <FaComments className="w-5 h-5 text-purple-500 group-hover:text-purple-700 transition-colors" />
                     <span>Mis mensajes</span>
+                    {unreadChats > 0 && (
+                      <span className="absolute -top-2 left-7 bg-purple-500 text-white text-xs rounded-full px-2 py-0.5 font-bold shadow animate-bounce">
+                        {unreadChats}
+                      </span>
+                    )}
                   </a>
                   <a
                     href="/my_articles"

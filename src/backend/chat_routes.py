@@ -107,4 +107,26 @@ async def get_chat_messages(chat_id: str, uid: str = Depends(get_current_uid)):
         "chat_id", "==", chat_id
     ).order_by("timestamp", direction="DESCENDING").limit(50).stream()
     
-    return [{"id": msg.id, **msg.to_dict()} for msg in messages] 
+    return [{"id": msg.id, **msg.to_dict()} for msg in messages]
+
+@router.post("/direct-chats/{chat_id}/read")
+async def mark_chat_as_read(chat_id: str, uid: str = Depends(get_current_uid)):
+    # Verificar que el chat existe y el usuario es participante
+    chat = db.collection("direct_chats").document(chat_id).get()
+    if not chat.exists:
+        raise HTTPException(status_code=404, detail="Chat no encontrado")
+    chat_data = chat.to_dict()
+    if uid not in chat_data["participants"]:
+        raise HTTPException(status_code=403, detail="No tienes acceso a este chat")
+    # Buscar el último mensaje de este chat
+    messages = db.collection("direct_messages").where(
+        "chat_id", "==", chat_id
+    ).order_by("timestamp", direction="DESCENDING").limit(1).stream()
+    updated = False
+    for msg in messages:
+        msg_data = msg.to_dict()
+        if uid not in msg_data.get("read_by", []):
+            new_read_by = msg_data.get("read_by", []) + [uid]
+            db.collection("direct_messages").document(msg.id).update({"read_by": new_read_by})
+            updated = True
+    return {"success": updated} 

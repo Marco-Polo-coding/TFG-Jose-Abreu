@@ -33,9 +33,15 @@ const DirectChat = ({ chatId, otherUserId }) => {
   // Función reutilizable para cargar mensajes
   const loadMessages = async () => {
     try {
+      // Marcar como leído antes de cargar mensajes
+      await directChatManager.markChatAsRead(chatId);
       const chatMessages = await directChatManager.getMessages(chatId);
       setMessages(chatMessages.reverse());
       setError(null);
+      // Refrescar el contador de chats sin leer si existe la función global
+      if (window && typeof window.refreshUnreadChats === 'function') {
+        window.refreshUnreadChats();
+      }
     } catch (err) {
       setError('Error al cargar los mensajes');
       console.error(err);
@@ -84,15 +90,15 @@ const DirectChat = ({ chatId, otherUserId }) => {
   if (error) return <div className="text-red-500">{error}</div>;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-white/90 rounded-3xl shadow-xl border border-purple-100 overflow-hidden">
       {/* Cabecera del chat */}
-      <div className="p-4 border-b">
+      <div className="p-4 border-b bg-white/95 rounded-t-3xl">
         <h2 className="font-medium">
           {otherUser?.name || 'Usuario'}
         </h2>
       </div>
       {/* Área de mensajes */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-white to-purple-50 rounded-b-xl">
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white/80">
         {messages.length === 0 && !loading && !error && (
           <div className="text-gray-400 text-center py-8 italic text-lg">
             No hay mensajes aún. ¡Sé el primero en escribir!
@@ -123,13 +129,13 @@ const DirectChat = ({ chatId, otherUserId }) => {
         <div ref={messagesEndRef} />
       </div>
       {/* Formulario de envío */}
-      <form onSubmit={handleSend} className="p-4 border-t bg-white flex items-center gap-2">
+      <form onSubmit={handleSend} className="p-4 border-t bg-white/95 flex items-center gap-2 rounded-b-3xl">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Escribe un mensaje..."
-          className="flex-1 p-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-400 bg-purple-50 text-gray-800 shadow-sm"
+          className="flex-1 p-3 border-2 border-purple-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white text-gray-800 shadow-sm"
           disabled={loading}
         />
         <button

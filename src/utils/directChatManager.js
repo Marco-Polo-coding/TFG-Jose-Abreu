@@ -59,6 +59,15 @@ class DirectChatManager {
     });
     return this.handleResponse(response);
   }
+
+  async markChatAsRead(chatId) {
+    const headers = await this.getHeaders();
+    const response = await fetch(`${this.baseUrl}/direct-chats/${chatId}/read`, {
+      method: 'POST',
+      headers
+    });
+    return this.handleResponse(response);
+  }
 }
 
 // Exportar una única instancia

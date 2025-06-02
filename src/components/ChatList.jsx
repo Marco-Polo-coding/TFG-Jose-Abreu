@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { directChatManager } from '../utils/directChatManager';
 import { authManager } from '../utils/authManager';
 import { apiManager } from '../utils/apiManager';
+import { FaSpinner } from 'react-icons/fa';
 
 const ChatList = ({ onSelectChat }) => {
   const [chats, setChats] = useState([]);
@@ -38,7 +39,12 @@ const ChatList = ({ onSelectChat }) => {
     loadChats();
   }, []);
 
-  if (loading) return <div>Cargando chats...</div>;
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center h-full py-16">
+      <FaSpinner className="animate-spin text-purple-500 text-3xl mb-4" />
+      <span className="text-purple-500 text-lg font-semibold">Cargando chats...</span>
+    </div>
+  );
   if (error) return <div className="text-red-500">{error}</div>;
 
   return (
@@ -56,7 +62,7 @@ const ChatList = ({ onSelectChat }) => {
           >
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-lg text-purple-700">
+                <h3 className="font-bold text-lg text-black-700">
                   {userNames[otherParticipantId] || otherParticipantId}
                 </h3>
                 {chat.last_message && (
