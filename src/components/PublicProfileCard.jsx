@@ -43,6 +43,7 @@ const PublicProfileCard = ({ userEmail }) => {
   const [loadingFollow, setLoadingFollow] = useState(false);
   const [showChatError, setShowChatError] = useState(false);
   const [chatErrorMsg, setChatErrorMsg] = useState('');
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -243,18 +244,19 @@ const PublicProfileCard = ({ userEmail }) => {
               <button
                 onClick={async () => {
                   try {
+                    setIsNavigating(true);
                     const chat = await import('../utils/directChatManager').then(m => m.directChatManager.createChat(userData.uid));
-                    if (chat && chat.id) {
-                      window.location.href = `/chat?id=${chat.id}&user=${userData.uid}`;
-                    }
+                    window.location.href = '/chat';
                   } catch (err) {
                     setChatErrorMsg('Error al iniciar el chat');
                     setShowChatError(true);
+                    setIsNavigating(false);
                   }
                 }}
                 className="mt-2 ml-2 inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-semibold shadow hover:scale-105 transition-all duration-300"
+                disabled={isNavigating}
               >
-                <FaUsers className="w-4 h-4" /> Iniciar chat
+                <FaUsers className="w-4 h-4" /> {isNavigating ? 'Iniciando chat...' : 'Iniciar chat'}
               </button>
             </>
           )}
@@ -402,6 +404,7 @@ const PublicProfileCard = ({ userEmail }) => {
         message={chatErrorMsg}
         buttonText="Aceptar"
       />
+      {isNavigating && <LoadingSpinner />}
     </div>
   );
 };
