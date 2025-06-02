@@ -72,6 +72,28 @@ class DirectChatManager {
     });
     return this.handleResponse(response);
   }
+
+  async editMessage(messageId, content) {
+    if (!content || typeof content !== 'string' || !content.trim()) {
+      throw new Error('El mensaje no puede estar vacío.');
+    }
+    const headers = await this.getHeaders();
+    const response = await fetch(`${this.baseUrl}/direct-messages/${messageId}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ content: content.trim() })
+    });
+    return this.handleResponse(response);
+  }
+
+  async deleteMessage(messageId) {
+    const headers = await this.getHeaders();
+    const response = await fetch(`${this.baseUrl}/direct-messages/${messageId}`, {
+      method: 'DELETE',
+      headers
+    });
+    return this.handleResponse(response);
+  }
 }
 
 // Exportar una única instancia

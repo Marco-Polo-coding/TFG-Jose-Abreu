@@ -45,7 +45,17 @@ const ChatList = ({ onSelectChat }) => {
       <span className="text-purple-500 text-lg font-semibold">Cargando chats...</span>
     </div>
   );
-  if (error) return <div className="text-red-500">{error}</div>;
+  if (error) return (
+    <div className="flex flex-col items-center justify-center h-full py-16">
+      <div className="bg-red-50 border border-red-200 rounded-2xl shadow-lg px-8 py-8 flex flex-col items-center animate-fade-in">
+        <span className="text-red-400 text-5xl mb-2">
+          <svg xmlns='http://www.w3.org/2000/svg' className='inline-block' width='48' height='48' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' /></svg>
+        </span>
+        <span className="text-red-500 text-xl font-semibold mb-1">¡Ups! No se pudieron cargar tus chats</span>
+        <span className="text-red-400 text-base text-center">Por favor, revisa tu conexión o inténtalo de nuevo más tarde.</span>
+      </div>
+    </div>
+  );
 
   return (
     <div className="flex flex-col space-y-2">

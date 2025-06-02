@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 from firebase_config import db
 from middleware import get_current_uid
 
@@ -13,6 +13,9 @@ class DirectMessage(BaseModel):
 
 class DirectChatCreate(BaseModel):
     participant_id: str
+
+class EditMessageBody(BaseModel):
+    content: str
 
 @router.post("/direct-chats")
 async def create_direct_chat(chat: DirectChatCreate, uid: str = Depends(get_current_uid)):
@@ -130,4 +133,37 @@ async def mark_chat_as_read(chat_id: str, uid: str = Depends(get_current_uid)):
             new_read_by = msg_data.get("read_by", []) + [uid]
             db.collection("direct_messages").document(msg.id).update({"read_by": new_read_by})
             updated_count += 1
-    return {"updated": updated_count} 
+    return {"updated": updated_count}
+
+@router.patch("/direct-messages/{message_id}")
+async def edit_direct_message(message_id: str, data: EditMessageBody, uid: str = Depends(get_current_uid)):
+    content = data.content
+    msg_ref = db.collection("direct_messages").document(message_id)
+    msg = msg_ref.get()
+    if not msg.exists:
+        raise HTTPException(status_code=404, detail="Mensaje no encontrado")
+    msg_data = msg.to_dict()
+    if msg_data["sender"] != uid:
+        raise HTTPException(status_code=403, detail="Solo puedes editar tus propios mensajes")
+    # Comprobar si han pasado más de 15 minutos
+    timestamp = msg_data.get("timestamp")
+    if isinstance(timestamp, str):
+        timestamp = datetime.fromisoformat(timestamp)
+    elif hasattr(timestamp, 'replace'):
+        timestamp = timestamp.replace(tzinfo=None)
+    if (datetime.utcnow() - timestamp) > timedelta(minutes=15):
+        raise HTTPException(status_code=403, detail="Solo puedes editar mensajes durante los primeros 15 minutos tras enviarlos")
+    msg_ref.update({"content": content, "edited": True})
+    return {"success": True}
+
+@router.delete("/direct-messages/{message_id}")
+async def delete_direct_message(message_id: str, uid: str = Depends(get_current_uid)):
+    msg_ref = db.collection("direct_messages").document(message_id)
+    msg = msg_ref.get()
+    if not msg.exists:
+        raise HTTPException(status_code=404, detail="Mensaje no encontrado")
+    msg_data = msg.to_dict()
+    if msg_data["sender"] != uid:
+        raise HTTPException(status_code=403, detail="Solo puedes eliminar tus propios mensajes")
+    msg_ref.delete()
+    return {"success": True} 
