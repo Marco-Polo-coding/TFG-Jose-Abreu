@@ -50,7 +50,7 @@ class AuthManager {
   setAuthData(data) {
     // Guardar en localStorage (mantener compatibilidad)
     safeSetItem('token', data.idToken);
-    safeSetItem('refreshToken', data.refreshToken); // Guardar refreshToken
+    safeSetItem('refreshToken', data.refreshToken);
     safeSetItem('userEmail', data.email);
     safeSetItem('userName', data.nombre || data.email);
     safeSetItem('uid', data.uid);
@@ -66,8 +66,10 @@ class AuthManager {
       uid: data.uid,
     }, data.idToken);
 
-    // Configurar cookie segura (nueva implementación)
-    this.setSecureCookie('auth_token', data.idToken);
+    // Configurar cookie segura con expiración de 7 días
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() + 7);
+    document.cookie = `auth_token=${data.idToken}; Path=/; Expires=${expirationDate.toUTCString()}; Secure; SameSite=Strict`;
   }
 
   // Limpiar datos de autenticación
@@ -102,20 +104,27 @@ class AuthManager {
   async getToken() {
     let token = this.store.getState().token || safeGetItem('token');
     if (!token) return null;
+    
     const payload = parseJwt(token);
     const now = Math.floor(Date.now() / 1000);
-    // Si el token expira en menos de 2 minutos, refrescarlo
-    if (payload && payload.exp && payload.exp - now < 120) {
+    
+    // Si el token expira en menos de 5 minutos, refrescarlo
+    if (payload && payload.exp && payload.exp - now < 300) {
+      console.log('Token expirando pronto, intentando refrescar...');
       const refreshToken = safeGetItem('refreshToken');
+      
       if (refreshToken) {
         try {
           const newToken = await this.refreshIdToken(refreshToken);
+          console.log('Token refrescado exitosamente');
           token = newToken;
         } catch (e) {
+          console.error('Error al refrescar token:', e);
           this.clearAuthData();
           return null;
         }
       } else {
+        console.error('No se encontró refreshToken');
         this.clearAuthData();
         return null;
       }

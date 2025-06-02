@@ -162,6 +162,11 @@ class ApiManager {
   async deleteArticle(id) {
     return this.delete(`/articulos/${id}`);
   }
+
+  // Obtener información de usuario por UID
+  async getUserByUid(uid) {
+    return this.get(`/usuarios/uid/${uid}`);
+  }
 }
 
 // Exportar una única instancia

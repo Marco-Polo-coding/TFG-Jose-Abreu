@@ -867,17 +867,21 @@ async def obtener_compras(uid: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# GET /usuarios/{email} → Devuelve un usuario específico por email
-@app.get("/usuarios/{email}")
+# GET /usuarios/uid/{uid} → Devuelve un usuario específico por UID
+@app.get("/usuarios/uid/{uid}")
+async def obtener_usuario_por_uid(uid: str):
+    doc = db.collection("usuarios").document(uid).get()
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    return {"id": doc.id, **doc.to_dict()}
+
+@app.get("/usuarios/email/{email}")
 async def obtener_usuario_por_email(email: str):
-    try:
-        usuarios_ref = db.collection("usuarios").where("email", "==", email).limit(1)
-        usuarios = list(usuarios_ref.stream())
-        if not usuarios:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
-        return {"id": usuarios[0].id, **usuarios[0].to_dict()}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    usuarios_ref = db.collection("usuarios").where("email", "==", email).limit(1)
+    usuarios = list(usuarios_ref.stream())
+    if not usuarios:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    return {"id": usuarios[0].id, **usuarios[0].to_dict()}
 
 @app.delete("/articulos/{articulo_id}/comentarios/{comentario_id}")
 async def eliminar_comentario(articulo_id: str, comentario_id: str, usuario: str = None):

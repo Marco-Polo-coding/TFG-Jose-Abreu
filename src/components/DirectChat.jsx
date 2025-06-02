@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { directChatManager } from '../utils/directChatManager';
 import { authManager } from '../utils/authManager';
+import { apiManager } from '../utils/apiManager';
 
 const DirectChat = ({ chatId, otherUserId }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
+  const [sendLoading, setSendLoading] = useState(false);
   const [error, setError] = useState(null);
   const [otherUser, setOtherUser] = useState(null);
   const messagesEndRef = useRef(null);
@@ -14,10 +16,12 @@ const DirectChat = ({ chatId, otherUserId }) => {
   useEffect(() => {
     const loadOtherUser = async () => {
       try {
-        // Aquí deberías hacer una petición a tu backend para obtener la info del usuario
-        setOtherUser({ name: otherUserId });
+        // Obtener la info real del usuario desde el backend
+        const userData = await apiManager.getUserByUid(otherUserId);
+        setOtherUser({ name: userData.nombre || userData.email || otherUserId });
       } catch (err) {
         console.error('Error al cargar usuario:', err);
+        setOtherUser({ name: otherUserId }); // fallback al UID
       }
     };
     if (otherUserId) {
@@ -25,22 +29,27 @@ const DirectChat = ({ chatId, otherUserId }) => {
     }
   }, [otherUserId]);
 
+  // Función reutilizable para cargar mensajes
+  const loadMessages = async () => {
+    try {
+      const chatMessages = await directChatManager.getMessages(chatId);
+      setMessages(chatMessages.reverse());
+      setError(null);
+    } catch (err) {
+      setError('Error al cargar los mensajes');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Cargar mensajes iniciales
   useEffect(() => {
-    const loadMessages = async () => {
-      try {
-        const chatMessages = await directChatManager.getMessages(chatId);
-        setMessages(chatMessages.reverse()); // Invertir para mostrar más recientes abajo
-      } catch (err) {
-        setError('Error al cargar los mensajes');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
     if (chatId) {
+      setLoading(true);
       loadMessages();
     }
+    // eslint-disable-next-line
   }, [chatId]);
 
   // Scroll al último mensaje
@@ -50,19 +59,18 @@ const DirectChat = ({ chatId, otherUserId }) => {
 
   const handleSend = async (e) => {
     e.preventDefault();
-    if (!input.trim() || loading) return;
-    setLoading(true);
+    if (!input.trim() || sendLoading) return;
+    setSendLoading(true);
     try {
       await directChatManager.sendMessage(chatId, input.trim());
       setInput('');
-      // Recargar mensajes después de enviar
-      const chatMessages = await directChatManager.getMessages(chatId);
-      setMessages(chatMessages.reverse());
+      await loadMessages();
+      setError(null);
     } catch (err) {
       setError('Error al enviar mensaje');
       console.error(err);
     } finally {
-      setLoading(false);
+      setSendLoading(false);
     }
   };
 
@@ -79,6 +87,11 @@ const DirectChat = ({ chatId, otherUserId }) => {
       </div>
       {/* Área de mensajes */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.length === 0 && !loading && !error && (
+          <div className="text-gray-400 text-center py-8">
+            No hay mensajes aún. ¡Sé el primero en escribir!
+          </div>
+        )}
         {messages.map((message) => {
           const isOwn = message.sender === authManager.getUser()?.uid;
           return (
@@ -116,10 +129,10 @@ const DirectChat = ({ chatId, otherUserId }) => {
           />
           <button
             type="submit"
-            disabled={loading || !input.trim()}
+            disabled={sendLoading || !input.trim() || loading}
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
           >
-            Enviar
+            {sendLoading ? 'Enviando...' : 'Enviar'}
           </button>
         </div>
       </form>

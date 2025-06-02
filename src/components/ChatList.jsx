@@ -1,17 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { directChatManager } from '../utils/directChatManager';
 import { authManager } from '../utils/authManager';
+import { apiManager } from '../utils/apiManager';
 
 const ChatList = ({ onSelectChat }) => {
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [userNames, setUserNames] = useState({});
 
   useEffect(() => {
     const loadChats = async () => {
       try {
         const userChats = await directChatManager.getChats();
         setChats(userChats);
+        const currentUid = authManager.getUser()?.uid;
+        const ids = userChats.map(chat => chat.participants.find(id => id !== currentUid));
+        const uniqueIds = [...new Set(ids)];
+        const namesObj = {};
+        await Promise.all(uniqueIds.map(async (uid) => {
+          try {
+            const userData = await apiManager.getUserByUid(uid);
+            namesObj[uid] = userData.nombre || userData.email || uid;
+          } catch {
+            namesObj[uid] = uid;
+          }
+        }));
+        setUserNames(namesObj);
       } catch (err) {
         setError('Error al cargar los chats');
         console.error(err);
@@ -42,7 +57,7 @@ const ChatList = ({ onSelectChat }) => {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-medium">
-                  {otherParticipantId} {/* Aquí irá el nombre del usuario */}
+                  {userNames[otherParticipantId] || otherParticipantId}
                 </h3>
                 {chat.last_message && (
                   <p className="text-sm text-gray-500">
