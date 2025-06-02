@@ -12,6 +12,8 @@ const DirectChat = ({ chatId, otherUserId }) => {
   const [error, setError] = useState(null);
   const [otherUser, setOtherUser] = useState(null);
   const messagesEndRef = useRef(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Cargar información del otro usuario (simulada, ya que no hay acceso directo a Firestore)
   useEffect(() => {
@@ -31,12 +33,19 @@ const DirectChat = ({ chatId, otherUserId }) => {
   }, [otherUserId]);
 
   // Función reutilizable para cargar mensajes
-  const loadMessages = async () => {
+  const loadMessages = async (opts = {}) => {
     try {
       // Marcar como leído antes de cargar mensajes
       await directChatManager.markChatAsRead(chatId);
-      const chatMessages = await directChatManager.getMessages(chatId);
-      setMessages(chatMessages.reverse());
+      const chatMessages = await directChatManager.getMessages(chatId, opts);
+      if (opts.before) {
+        // Paginación: añadir al principio
+        setMessages((prev) => [...chatMessages.reverse(), ...prev]);
+        setHasMore(chatMessages.length === (opts.limit || 50));
+      } else {
+        setMessages(chatMessages.reverse());
+        setHasMore(chatMessages.length === (opts.limit || 50));
+      }
       setError(null);
       // Refrescar el contador de chats sin leer si existe la función global
       if (window && typeof window.refreshUnreadChats === 'function') {
@@ -47,6 +56,7 @@ const DirectChat = ({ chatId, otherUserId }) => {
       console.error(err);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -81,6 +91,14 @@ const DirectChat = ({ chatId, otherUserId }) => {
     }
   };
 
+  // Handler para cargar más mensajes
+  const handleLoadMore = async () => {
+    if (messages.length === 0) return;
+    setLoadingMore(true);
+    const oldest = messages[0];
+    await loadMessages({ before: oldest.timestamp, limit: 50 });
+  };
+
   if (loading && messages.length === 0) return (
     <div className="flex flex-col items-center justify-center h-full py-16">
       <FaSpinner className="animate-spin text-purple-500 text-4xl mb-4" />
@@ -99,6 +117,17 @@ const DirectChat = ({ chatId, otherUserId }) => {
       </div>
       {/* Área de mensajes */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white/80">
+        {hasMore && messages.length > 0 && (
+          <div className="flex justify-center mb-4">
+            <button
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              className="px-4 py-1 rounded-full bg-purple-100 text-purple-700 font-semibold shadow hover:bg-purple-200 transition-all duration-200 disabled:opacity-50"
+            >
+              {loadingMore ? 'Cargando...' : 'Cargar más mensajes'}
+            </button>
+          </div>
+        )}
         {messages.length === 0 && !loading && !error && (
           <div className="text-gray-400 text-center py-8 italic text-lg">
             No hay mensajes aún. ¡Sé el primero en escribir!

@@ -52,9 +52,13 @@ class DirectChatManager {
     return this.handleResponse(response);
   }
 
-  async getMessages(chatId) {
+  async getMessages(chatId, { limit = 50, before = null } = {}) {
     const headers = await this.getHeaders();
-    const response = await fetch(`${this.baseUrl}/direct-chats/${chatId}/messages`, {
+    let url = `${this.baseUrl}/direct-chats/${chatId}/messages?limit=${limit}`;
+    if (before) {
+      url += `&before=${encodeURIComponent(before)}`;
+    }
+    const response = await fetch(url, {
       headers
     });
     return this.handleResponse(response);

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
@@ -92,21 +92,22 @@ async def send_message(chat_id: str, message: DirectMessage, uid: str = Depends(
     return {**message_data, "id": message_ref.id}
 
 @router.get("/direct-chats/{chat_id}/messages")
-async def get_chat_messages(chat_id: str, uid: str = Depends(get_current_uid)):
+async def get_chat_messages(chat_id: str, uid: str = Depends(get_current_uid), limit: int = Query(50, ge=1, le=100), before: Optional[str] = Query(None)):
     # Verificar que el chat existe y el usuario es participante
     chat = db.collection("direct_chats").document(chat_id).get()
     if not chat.exists:
         raise HTTPException(status_code=404, detail="Chat no encontrado")
-    
     chat_data = chat.to_dict()
     if uid not in chat_data["participants"]:
         raise HTTPException(status_code=403, detail="No tienes acceso a este chat")
-    
-    # Obtener mensajes
-    messages = db.collection("direct_messages").where(
+    # Obtener mensajes con paginación
+    query = db.collection("direct_messages").where(
         "chat_id", "==", chat_id
-    ).order_by("timestamp", direction="DESCENDING").limit(50).stream()
-    
+    )
+    if before:
+        query = query.where("timestamp", "<", before)
+    query = query.order_by("timestamp", direction="DESCENDING").limit(limit)
+    messages = query.stream()
     return [{"id": msg.id, **msg.to_dict()} for msg in messages]
 
 @router.post("/direct-chats/{chat_id}/read")
@@ -118,15 +119,15 @@ async def mark_chat_as_read(chat_id: str, uid: str = Depends(get_current_uid)):
     chat_data = chat.to_dict()
     if uid not in chat_data["participants"]:
         raise HTTPException(status_code=403, detail="No tienes acceso a este chat")
-    # Buscar el último mensaje de este chat
+    # Buscar todos los mensajes no leídos por el usuario
     messages = db.collection("direct_messages").where(
         "chat_id", "==", chat_id
-    ).order_by("timestamp", direction="DESCENDING").limit(1).stream()
-    updated = False
+    ).order_by("timestamp", direction="DESCENDING").limit(50).stream()
+    updated_count = 0
     for msg in messages:
         msg_data = msg.to_dict()
         if uid not in msg_data.get("read_by", []):
             new_read_by = msg_data.get("read_by", []) + [uid]
             db.collection("direct_messages").document(msg.id).update({"read_by": new_read_by})
-            updated = True
-    return {"success": updated} 
+            updated_count += 1
+    return {"updated": updated_count} 
