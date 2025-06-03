@@ -103,17 +103,19 @@ const DirectChat = ({ chatId, otherUserId }) => {
   }, [menuOpenId]);
 
   useEffect(() => {
+    console.log('DirectChat MONTADO', chatId); // LOG
     let isMounted = true;
     let token = null;
     const connectWS = async () => {
       token = await authManager.getToken();
+      console.log('DirectChat: Conectando WebSocket', chatId); // LOG
       wsChatManager.connect({ chatId, token });
       wsChatManager.on('message', handleWSMessage);
       wsChatManager.on('typing', handleWSTyping);
       wsChatManager.on('read', handleWSRead);
     };
     const handleWSMessage = (data) => {
-      if (!isMounted) return;
+      console.log('FRONTEND: Mensaje recibido por WS:', data); // LOG
       // Recibir mensaje nuevo en tiempo real
       setMessages((prev) => {
         // Evitar duplicados
@@ -121,6 +123,7 @@ const DirectChat = ({ chatId, otherUserId }) => {
         // Añadir el nuevo mensaje al final
         const newMessages = [...prev, data.message];
         // Ordenar por timestamp para asegurar el orden correcto
+        console.log('FRONTEND: Mensajes tras recibir WS:', newMessages); // LOG
         return newMessages.sort((a, b) => a.timestamp - b.timestamp);
       });
       // Scroll al último mensaje
@@ -156,6 +159,7 @@ const DirectChat = ({ chatId, otherUserId }) => {
     }
     return () => {
       isMounted = false;
+      console.log('DirectChat DESMONTADO', chatId); // LOG
       wsChatManager.disconnect();
       wsChatManager.off('message', handleWSMessage);
       wsChatManager.off('typing', handleWSTyping);
@@ -168,13 +172,14 @@ const DirectChat = ({ chatId, otherUserId }) => {
     if (!input.trim() || sendLoading) return;
     setSendLoading(true);
     try {
+      console.log('FRONTEND: Enviando mensaje por WS:', input); // LOG
       wsChatManager.sendMessage(input.trim());
       setInput('');
       setError(null);
       wsChatManager.sendStopTyping();
     } catch (err) {
       setError('Error al enviar mensaje');
-      console.error(err);
+      console.error('FRONTEND: Error al enviar mensaje:', err); // LOG
     } finally {
       setSendLoading(false);
     }
@@ -193,6 +198,7 @@ const DirectChat = ({ chatId, otherUserId }) => {
   // Marcar como leído al cargar mensajes o al recibir nuevos
   useEffect(() => {
     if (chatId && messages.length > 0) {
+      console.log('FRONTEND: Mensajes actuales:', messages); // LOG
       wsChatManager.sendRead();
     }
   }, [chatId, messages.length]);

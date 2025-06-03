@@ -21,21 +21,22 @@ class WSChatManager {
     this.ws = new WebSocket(wsUrl);
     this.ws.onopen = () => {
       this.isConnected = true;
-      // Enviar el token de autenticación en el header no es posible en WebSocket nativo,
-      // así que lo enviamos como el primer mensaje (handshake)
+      console.log('WEBSOCKET ABIERTO', wsUrl);
       this.ws.send(JSON.stringify({ event: 'auth', token }));
       this.emit('open');
     };
     this.ws.onmessage = (event) => {
+      console.log('WEBSOCKET MENSAJE RECIBIDO:', event.data);
       try {
         const data = JSON.parse(event.data);
         this.emit(data.event, data);
       } catch (e) {
-        // Mensaje no válido
+        console.error('ERROR PARSEANDO MENSAJE WS:', e, event.data);
       }
     };
     this.ws.onclose = () => {
       this.isConnected = false;
+      console.log('WEBSOCKET CERRADO', wsUrl);
       this.emit('close');
       // Intentar reconectar automáticamente
       if (this.chatId && this.token) {
@@ -45,6 +46,7 @@ class WSChatManager {
       }
     };
     this.ws.onerror = (e) => {
+      console.error('WEBSOCKET ERROR', e);
       this.emit('error', e);
     };
   }

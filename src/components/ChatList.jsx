@@ -16,32 +16,32 @@ const ChatList = ({ onSelectChat }) => {
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [chatToLeave, setChatToLeave] = useState(null);
 
-  useEffect(() => {
-    const loadChats = async () => {
-      try {
-        const userChats = await directChatManager.getChats();
-        setChats(userChats);
-        const currentUid = authManager.getUser()?.uid;
-        const ids = userChats.map(chat => chat.participants.find(id => id !== currentUid));
-        const uniqueIds = [...new Set(ids)];
-        const namesObj = {};
-        await Promise.all(uniqueIds.map(async (uid) => {
-          try {
-            const userData = await apiManager.getUserByUid(uid);
-            namesObj[uid] = userData.nombre || userData.email || uid;
-          } catch {
-            namesObj[uid] = uid;
-          }
-        }));
-        setUserNames(namesObj);
-      } catch (err) {
-        setError('Error al cargar los chats');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadChats = async () => {
+    try {
+      const userChats = await directChatManager.getChats();
+      setChats(userChats);
+      const currentUid = authManager.getUser()?.uid;
+      const ids = userChats.map(chat => chat.participants.find(id => id !== currentUid));
+      const uniqueIds = [...new Set(ids)];
+      const namesObj = {};
+      await Promise.all(uniqueIds.map(async (uid) => {
+        try {
+          const userData = await apiManager.getUserByUid(uid);
+          namesObj[uid] = userData.nombre || userData.email || uid;
+        } catch {
+          namesObj[uid] = uid;
+        }
+      }));
+      setUserNames(namesObj);
+    } catch (err) {
+      setError('Error al cargar los chats');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadChats();
   }, []);
 
