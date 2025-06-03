@@ -1,14 +1,10 @@
 import os
-from dotenv import load_dotenv
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-# Cargar variables del entorno
-load_dotenv()
-
 # Obtener la ruta absoluta
 base_dir = os.path.dirname(os.path.abspath(__file__))
-cred_path = os.path.join(base_dir, os.getenv("FIREBASE_CREDENTIALS"))
+cred_path = os.path.join(base_dir, "serviceAccountKey.json")
 
 # Inicializar Firebase
 cred = credentials.Certificate(cred_path)

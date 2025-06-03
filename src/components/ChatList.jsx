@@ -4,6 +4,7 @@ import { authManager } from '../utils/authManager';
 import { apiManager } from '../utils/apiManager';
 import { FaSpinner, FaEllipsisV, FaSignOutAlt } from 'react-icons/fa';
 import ConfirmDeleteModal from './ConfirmDeleteModal';
+import { wsChatManager } from '../utils/wsChatManager';
 
 const ChatList = ({ onSelectChat }) => {
   const [chats, setChats] = useState([]);
@@ -57,6 +58,21 @@ const ChatList = ({ onSelectChat }) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [menuOpenId]);
+
+  useEffect(() => {
+    const handleWSMessage = (data) => {
+      loadChats();
+    };
+    const handleWSRead = (data) => {
+      loadChats();
+    };
+    wsChatManager.on('message', handleWSMessage);
+    wsChatManager.on('read', handleWSRead);
+    return () => {
+      wsChatManager.off('message', handleWSMessage);
+      wsChatManager.off('read', handleWSRead);
+    };
+  }, []);
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center h-full py-16">

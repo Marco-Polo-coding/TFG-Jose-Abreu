@@ -5,6 +5,7 @@ import { apiManager } from '../utils/apiManager';
 import { FaSpinner, FaEdit, FaTrash, FaCheck, FaTimes, FaEllipsisV, FaInfoCircle } from 'react-icons/fa';
 import ConfirmDeleteModal from './ConfirmDeleteModal';
 import Toast from './Toast';
+import { wsChatManager } from '../utils/wsChatManager';
 
 const DirectChat = ({ chatId, otherUserId }) => {
   const [messages, setMessages] = useState([]);
@@ -25,6 +26,7 @@ const DirectChat = ({ chatId, otherUserId }) => {
   const [messageToDelete, setMessageToDelete] = useState(null);
   const [editError, setEditError] = useState(null);
   const [toast, setToast] = useState({ open: false, message: '', type: 'error' });
+  const [typingUsers, setTypingUsers] = useState([]);
 
   // Cargar información del otro usuario (simulada, ya que no hay acceso directo a Firestore)
   useEffect(() => {
@@ -100,15 +102,76 @@ const DirectChat = ({ chatId, otherUserId }) => {
     };
   }, [menuOpenId]);
 
+  useEffect(() => {
+    let isMounted = true;
+    let token = null;
+    const connectWS = async () => {
+      token = await authManager.getToken();
+      wsChatManager.connect({ chatId, token });
+      wsChatManager.on('message', handleWSMessage);
+      wsChatManager.on('typing', handleWSTyping);
+      wsChatManager.on('read', handleWSRead);
+    };
+    const handleWSMessage = (data) => {
+      if (!isMounted) return;
+      // Recibir mensaje nuevo en tiempo real
+      setMessages((prev) => {
+        // Evitar duplicados
+        if (prev.some(m => m.id === data.message.id)) return prev;
+        // Añadir el nuevo mensaje al final
+        const newMessages = [...prev, data.message];
+        // Ordenar por timestamp para asegurar el orden correcto
+        return newMessages.sort((a, b) => a.timestamp - b.timestamp);
+      });
+      // Scroll al último mensaje
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+      setError(null);
+    };
+    const handleWSTyping = (data) => {
+      if (!isMounted) return;
+      setTypingUsers((prev) => {
+        const newTypingUsers = new Set(prev);
+        if (data.typing) {
+          newTypingUsers.add(data.user);
+        } else {
+          newTypingUsers.delete(data.user);
+        }
+        return Array.from(newTypingUsers);
+      });
+    };
+    const handleWSRead = (data) => {
+      if (!isMounted) return;
+      // Actualizar el estado de lectura de los mensajes si es necesario
+      setMessages((prev) => 
+        prev.map(msg => ({
+          ...msg,
+          read: msg.read || data.user === msg.sender
+        }))
+      );
+    };
+    if (chatId) {
+      connectWS();
+    }
+    return () => {
+      isMounted = false;
+      wsChatManager.disconnect();
+      wsChatManager.off('message', handleWSMessage);
+      wsChatManager.off('typing', handleWSTyping);
+      wsChatManager.off('read', handleWSRead);
+    };
+  }, [chatId]);
+
   const handleSend = async (e) => {
     e.preventDefault();
     if (!input.trim() || sendLoading) return;
     setSendLoading(true);
     try {
-      await directChatManager.sendMessage(chatId, input.trim());
+      wsChatManager.sendMessage(input.trim());
       setInput('');
-      await loadMessages();
       setError(null);
+      wsChatManager.sendStopTyping();
     } catch (err) {
       setError('Error al enviar mensaje');
       console.error(err);
@@ -116,6 +179,23 @@ const DirectChat = ({ chatId, otherUserId }) => {
       setSendLoading(false);
     }
   };
+
+  // Evento typing
+  const handleInputChange = (e) => {
+    setInput(e.target.value);
+    if (e.target.value) {
+      wsChatManager.sendTyping();
+    } else {
+      wsChatManager.sendStopTyping();
+    }
+  };
+
+  // Marcar como leído al cargar mensajes o al recibir nuevos
+  useEffect(() => {
+    if (chatId && messages.length > 0) {
+      wsChatManager.sendRead();
+    }
+  }, [chatId, messages.length]);
 
   // Handler para cargar más mensajes
   const handleLoadMore = async () => {
@@ -211,6 +291,12 @@ const DirectChat = ({ chatId, otherUserId }) => {
       </div>
       {/* Área de mensajes */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white/80">
+        {/* Mostrar typing */}
+        {typingUsers.length > 0 && (
+          <div className="text-xs text-purple-400 mb-2 animate-pulse">
+            {typingUsers.length === 1 ? 'El usuario está escribiendo...' : 'Varios usuarios están escribiendo...'}
+          </div>
+        )}
         {hasMore && messages.length > 0 && (
           <div className="flex justify-center mb-4">
             <button
@@ -308,7 +394,7 @@ const DirectChat = ({ chatId, otherUserId }) => {
         <input
           type="text"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={handleInputChange}
           placeholder="Escribe un mensaje..."
           className="flex-1 p-3 border-2 border-purple-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white text-gray-800 shadow-sm"
           disabled={loading}

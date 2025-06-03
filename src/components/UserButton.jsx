@@ -6,6 +6,7 @@ import AuthModal from './AuthModal';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { directChatManager } from '../utils/directChatManager';
 import { authManager } from '../utils/authManager';
+import { wsChatManager } from '../utils/wsChatManager';
 const clientId = "1040096324756-vf83konj4f2794dpau2119934d5jbu0p.apps.googleusercontent.com";
 
 const UserButton = () => {
@@ -86,9 +87,16 @@ const UserButton = () => {
     window.refreshUnreadChats = fetchUnreadChats;
     // Polling cada 15 segundos
     const interval = setInterval(fetchUnreadChats, 15000);
+    // Suscribirse a eventos de WebSocket para refrescar en tiempo real
+    const handleWSMessage = () => fetchUnreadChats();
+    const handleWSRead = () => fetchUnreadChats();
+    wsChatManager.on('message', handleWSMessage);
+    wsChatManager.on('read', handleWSRead);
     return () => {
       clearInterval(interval);
       window.refreshUnreadChats = undefined;
+      wsChatManager.off('message', handleWSMessage);
+      wsChatManager.off('read', handleWSRead);
     };
   }, [authManager.isAuthenticated()]);
 

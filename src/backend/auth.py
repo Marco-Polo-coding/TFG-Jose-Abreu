@@ -1,6 +1,6 @@
 import os
 from typing import Dict, Optional, List
-from fastapi import APIRouter, HTTPException, Depends, Body, File, UploadFile, Form
+from fastapi import APIRouter, HTTPException, Depends, Body, File, UploadFile, Form, WebSocket
 from pydantic import BaseModel, EmailStr
 import firebase_admin
 from firebase_admin import auth
@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 import logging
 import base64
 import cloudinary
+import json
 
 from firebase_config import db
 
@@ -571,4 +572,31 @@ async def remove_follower(uid: str, body: FollowRequest):
                 db.collection("usuarios").document(follower_uid).update({"seguidos": seguidos})
         return {"message": "Seguidor eliminado correctamente"}
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) 
+        raise HTTPException(status_code=400, detail=str(e))
+
+async def get_current_uid_ws(websocket: WebSocket):
+    # Intentar obtener el token de los headers primero
+    token = websocket.headers.get('authorization')
+    
+    # Si no está en los headers, esperar el primer mensaje
+    if not token or not token.startswith('Bearer '):
+        try:
+            # Aceptar la conexión WebSocket primero
+            await websocket.accept()
+            # Esperar el primer mensaje que debe contener el token
+            data = await websocket.receive_text()
+            msg = json.loads(data)
+            if msg.get('event') == 'auth':
+                token = msg.get('token')
+            else:
+                raise Exception('Token de autenticación no proporcionado')
+        except Exception as e:
+            raise Exception('Token de autenticación no proporcionado')
+    else:
+        token = token.replace('Bearer ', '')
+    
+    try:
+        decoded_token = auth.verify_id_token(token)
+        return decoded_token['uid']
+    except Exception as e:
+        raise Exception('Token inválido o expirado') 
