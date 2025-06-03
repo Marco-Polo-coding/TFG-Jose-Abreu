@@ -12,14 +12,14 @@ const ChatContainer = () => {
   };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-gradient-to-br from-white via-purple-50 to-purple-100 p-6 rounded-3xl shadow-2xl max-w-7xl mx-auto mt-6">
-      {/* Lista de chats - 1/3 del ancho */}
-      <div className="w-1/3 border-r border-purple-100 pr-4 flex flex-col justify-between">
+    <div className="flex flex-col md:flex-row h-[100dvh] md:h-[calc(100vh-4rem)] bg-gradient-to-br from-white via-purple-50 to-purple-100 p-2 md:p-6 rounded-none md:rounded-3xl shadow-2xl max-w-full md:max-w-7xl mx-auto mt-0 md:mt-6 overflow-hidden gap-2 md:gap-0">
+      {/* Lista de chats - 1/3 del ancho en desktop, 100% en móvil */}
+      <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-purple-100 pr-0 md:pr-4 flex flex-col justify-between h-1/2 md:h-full bg-white/80 md:bg-transparent">
         <ChatList onSelectChat={handleSelectChat} />
       </div>
 
-      {/* Área de chat - 2/3 del ancho */}
-      <div className="w-2/3 pl-4 flex flex-col h-full">
+      {/* Área de chat - 2/3 del ancho en desktop, 100% en móvil */}
+      <div className="w-full md:w-2/3 pl-0 md:pl-4 flex flex-col h-1/2 md:h-full">
         {selectedChat ? (
           <DirectChat chatId={selectedChat} otherUserId={otherUserId} />
         ) : (

@@ -6,7 +6,7 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message }) => {
 
   return (
     <div className="fixed inset-0 z-[300] overflow-y-auto">
-      <div className="flex min-h-screen items-center justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+      <div className="flex min-h-screen items-start justify-center px-4 pb-20 text-center sm:block sm:p-0">
         {/* Fondo oscuro con gradiente */}
         <div 
           className="fixed inset-0 bg-gradient-to-br from-purple-900/80 via-indigo-900/70 to-black/80 transition-opacity"
@@ -14,7 +14,7 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message }) => {
         />
 
         {/* Modal */}
-        <div className="inline-block transform overflow-hidden rounded-3xl bg-white text-left align-bottom shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:align-middle animate-fade-in">
+        <div className="inline-block transform overflow-hidden rounded-3xl bg-white text-left align-bottom shadow-2xl transition-all sm:w-full sm:max-w-md sm:align-middle animate-fade-in">
           <div className="relative bg-white px-8 pt-8 pb-6 sm:p-10">
             {/* Botón de cerrar */}
             <button

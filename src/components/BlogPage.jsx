@@ -39,7 +39,7 @@ const BlogPage = () => {
       const userEmail = localStorage.getItem('userEmail');
       if (!userEmail) return;
 
-      const data = await apiManager.get(`/usuarios/${userEmail}/articulos-guardados`);
+      const data = await apiManager.get(`/usuarios/email/${userEmail}/articulos-guardados`);
       setSavedArticles(data);
     } catch (error) {
       console.error('Error fetching saved articles:', error);

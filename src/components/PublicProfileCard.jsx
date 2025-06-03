@@ -49,7 +49,7 @@ const PublicProfileCard = ({ userEmail }) => {
     const fetchUserData = async () => {
       try {
         const encodedEmail = encodeURIComponent(userEmail);
-        const data = await apiManager.get(`/usuarios/${encodedEmail}`);
+        const data = await apiManager.get(`/usuarios/email/${encodedEmail}`);
         setUserData(data);
         setUserUid(data.id);
         const currentUserData = authManager.getUser();
@@ -138,7 +138,7 @@ const PublicProfileCard = ({ userEmail }) => {
       setIsFollowing(true);
       const updatedFollowers = await apiManager.get(`/auth/followers/${userData.uid}`);
       setFollowers(updatedFollowers);
-      const refreshedUser = await apiManager.get(`/usuarios/${encodeURIComponent(userEmail)}`);
+      const refreshedUser = await apiManager.get(`/usuarios/email/${encodeURIComponent(userEmail)}`);
       setUserData(refreshedUser);
     } catch (error) {
       console.error('Error following user:', error);
@@ -155,7 +155,7 @@ const PublicProfileCard = ({ userEmail }) => {
       setIsFollowing(false);
       const updatedFollowers = await apiManager.get(`/auth/followers/${userData.uid}`);
       setFollowers(updatedFollowers);
-      const refreshedUser = await apiManager.get(`/usuarios/${encodeURIComponent(userEmail)}`);
+      const refreshedUser = await apiManager.get(`/usuarios/email/${encodeURIComponent(userEmail)}`);
       setUserData(refreshedUser);
     } catch (error) {
       console.error('Error unfollowing user:', error);

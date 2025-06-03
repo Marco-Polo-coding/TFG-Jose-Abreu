@@ -29,13 +29,13 @@ const MyProducts = () => {
   const fetchProductos = async () => {
     try {
       setLoading(true);
-      const userEmail = localStorage.getItem('userEmail');
-      if (!userEmail) {
-        setError('No se ha encontrado el email del usuario. Por favor, inicia sesión.');
+      const userUid = localStorage.getItem('uid');
+      if (!userUid) {
+        setError('No se ha encontrado el UID del usuario. Por favor, inicia sesión.');
         setProductos([]);
         return;
       }
-      const data = await apiManager.get(`/usuarios/${userEmail}/productos`);
+      const data = await apiManager.get(`/usuarios/${userUid}/productos`);
       setProductos(data);
       setError(null);
     } catch (err) {

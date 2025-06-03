@@ -292,7 +292,13 @@ async def eliminar_producto(producto_id: str):
 @app.get("/usuarios/{usuario_id}/productos", response_model=List[Dict[str, Any]])
 async def obtener_productos_usuario(usuario_id: str):
     try:
-        productos_ref = db.collection("productos").where("usuario_email", "==", usuario_id)
+        # Buscar el usuario por UID
+        user_doc = db.collection("usuarios").document(usuario_id).get()
+        if not user_doc.exists:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        user_email = user_doc.to_dict().get("email")
+        # Buscar productos por email
+        productos_ref = db.collection("productos").where("usuario_email", "==", user_email)
         productos = productos_ref.stream()
         return [{"id": producto.id, **producto.to_dict()} for producto in productos]
     except Exception as e:
@@ -877,9 +883,16 @@ async def obtener_usuario_por_uid(uid: str):
 
 @app.get("/usuarios/email/{email}")
 async def obtener_usuario_por_email(email: str):
+    email = email.strip().lower()
     usuarios_ref = db.collection("usuarios").where("email", "==", email).limit(1)
     usuarios = list(usuarios_ref.stream())
     if not usuarios:
+        # Buscar manualmente por si hay problemas de mayúsculas/minúsculas
+        all_users = db.collection("usuarios").stream()
+        for user in all_users:
+            data = user.to_dict()
+            if data.get("email", "").strip().lower() == email:
+                return {"id": user.id, **data}
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return {"id": usuarios[0].id, **usuarios[0].to_dict()}
 

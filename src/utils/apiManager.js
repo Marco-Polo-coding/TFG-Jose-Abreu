@@ -167,6 +167,11 @@ class ApiManager {
   async getUserByUid(uid) {
     return this.get(`/usuarios/uid/${uid}`);
   }
+
+  // Obtener información de usuario por email
+  async getUserByEmail(email) {
+    return this.get(`/usuarios/email/${encodeURIComponent(email)}`);
+  }
 }
 
 // Exportar una única instancia

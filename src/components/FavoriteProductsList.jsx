@@ -40,7 +40,7 @@ const FavoriteProductsList = () => {
         setError('No se ha encontrado el email del usuario. Por favor, inicia sesión.');
         return;
       }
-      const data = await apiManager.get(`/usuarios/${userEmail}/productos-favoritos`);
+      const data = await apiManager.get(`/usuarios/email/${userEmail}/productos-favoritos`);
       setProducts(data);
       setError(null);
     } catch (err) {

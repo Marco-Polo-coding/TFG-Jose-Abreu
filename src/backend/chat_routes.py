@@ -166,4 +166,26 @@ async def delete_direct_message(message_id: str, uid: str = Depends(get_current_
     if msg_data["sender"] != uid:
         raise HTTPException(status_code=403, detail="Solo puedes eliminar tus propios mensajes")
     msg_ref.delete()
+    return {"success": True}
+
+@router.patch("/direct-chats/{chat_id}/leave")
+async def leave_direct_chat(chat_id: str, uid: str = Depends(get_current_uid)):
+    chat_ref = db.collection("direct_chats").document(chat_id)
+    chat = chat_ref.get()
+    if not chat.exists:
+        raise HTTPException(status_code=404, detail="Chat no encontrado")
+    chat_data = chat.to_dict()
+    if uid not in chat_data["participants"]:
+        raise HTTPException(status_code=403, detail="No eres participante de este chat")
+    # Eliminar el usuario de los participantes
+    new_participants = [p for p in chat_data["participants"] if p != uid]
+    if new_participants:
+        chat_ref.update({"participants": new_participants})
+    else:
+        # Si no quedan participantes, elimina el chat y sus mensajes
+        chat_ref.delete()
+        # Elimina los mensajes asociados
+        messages = db.collection("direct_messages").where("chat_id", "==", chat_id).stream()
+        for msg in messages:
+            db.collection("direct_messages").document(msg.id).delete()
     return {"success": True} 

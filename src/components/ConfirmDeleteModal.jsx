@@ -3,8 +3,8 @@ import React from 'react';
 const ConfirmDeleteModal = ({ open, onClose, onConfirm, articleTitle, title, message }) => {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 pt-16">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center animate-fade-in z-60">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">{title || '¿Eliminar artículo?'}</h2>
         <p className="text-gray-700 mb-6">
           {message || (<span>¿Estás seguro de que quieres eliminar <span className="font-semibold text-purple-700">{articleTitle}</span>? Esta acción no se puede deshacer.</span>)}

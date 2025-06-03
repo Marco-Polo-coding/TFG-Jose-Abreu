@@ -5,6 +5,7 @@ import LoadingSpinner from './LoadingSpinner';
 import useLoadingState from '../hooks/useLoadingState';
 import CompraDetalleModal from './CompraDetalleModal';
 import { apiManager } from '../utils/apiManager';
+import { authManager } from '../utils/authManager';
 
 function getInitials(email) {
   if (!email) return '';
@@ -25,10 +26,11 @@ function getRandomColor(email) {
 }
 
 const ProfileCard = () => {
-  const [userEmail, setUserEmail] = React.useState('');
-  const [userName, setUserName] = React.useState('');
-  const [userPhoto, setUserPhoto] = React.useState('');
-  const [token, setToken] = React.useState('');
+  const [user, setUser] = React.useState(authManager.getUser() || {});
+  const [token, setToken] = React.useState(authManager.store.getState().token);
+  const userEmail = user?.email || '';
+  const userName = user?.name || '';
+  const userPhoto = user?.photo || '';
   const [articles, setArticles] = React.useState([]);
   const [loadingArticles, setLoadingArticles] = React.useState(true);
   const [errorArticles, setErrorArticles] = React.useState(null);
@@ -52,39 +54,15 @@ const ProfileCard = () => {
   const [loadingRemoveFollower, setLoadingRemoveFollower] = React.useState(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const t = localStorage.getItem('token');
-      const email = localStorage.getItem('userEmail');
-      const name = localStorage.getItem('userName');
-      const photo = localStorage.getItem('userPhoto');
-      const bio = localStorage.getItem('userBio') || '';
-      setToken(t);
-      setUserEmail(email);
-      setUserName(name);
-      setUserPhoto(photo);
-      setUserBio(bio);
-      if (!t) {
-        window.location.href = '/';
-      }
-      setLoading(false);
-    }
-    // Escuchar cambios en localStorage
-    const handleStorage = (e) => {
-      if (e.key === 'userPhoto') {
-        setUserPhoto(e.newValue);
-      }
-      if (e.key === 'userName') {
-        setUserName(e.newValue);
-      }
-      if (e.key === 'userEmail') {
-        setUserEmail(e.newValue);
-      }
-      if (e.key === 'userBio') {
-        setUserBio(e.newValue);
-      }
-    };
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
+    // Suscribirse a cambios en el store global de autenticación
+    const unsub = authManager.store.subscribe((state) => {
+      setUser(state.user || {});
+      setToken(state.token);
+    });
+    setUser(authManager.getUser() || {});
+    setToken(authManager.store.getState().token);
+    setLoading(false);
+    return () => unsub();
   }, []);
 
   React.useEffect(() => {

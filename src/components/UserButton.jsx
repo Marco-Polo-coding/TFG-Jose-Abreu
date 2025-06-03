@@ -14,10 +14,10 @@ const UserButton = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [authMode, setAuthMode] = useState('login');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userEmail, setUserEmail] = useState('');
-  const [userName, setUserName] = useState('');
-  const [userPhoto, setUserPhoto] = useState('');
+  const [user, setUser] = useState(authManager.getUser() || {});
+  const userEmail = user?.email || '';
+  const userName = user?.name || '';
+  const userPhoto = user?.photo || '';
   const popoverRef = useRef(null);
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -43,14 +43,13 @@ const UserButton = () => {
   }, []);
 
   useEffect(() => {
-    // Verificar el estado de autenticación al cargar y cuando cambie el token
-    const token = localStorage.getItem('token');
-    setIsAuthenticated(!!token);
-    if (token) {
-      setUserEmail(localStorage.getItem('userEmail') || '');
-      setUserName(localStorage.getItem('userName') || '');
-      setUserPhoto(localStorage.getItem('userPhoto') || '');
-    }
+    // Suscribirse a cambios en el store global de autenticación
+    const unsub = authManager.store.subscribe((state) => {
+      setUser(state.user || {});
+    });
+    // Inicializar valores
+    setUser(authManager.getUser() || {});
+    return () => unsub();
   }, []);
 
   useEffect(() => {
@@ -66,7 +65,7 @@ const UserButton = () => {
 
   useEffect(() => {
     const fetchUnreadChats = async () => {
-      if (!isAuthenticated) return;
+      if (!authManager.isAuthenticated()) return;
       try {
         const userChats = await directChatManager.getChats();
         const currentUid = localStorage.getItem('uid');
@@ -91,7 +90,7 @@ const UserButton = () => {
       clearInterval(interval);
       window.refreshUnreadChats = undefined;
     };
-  }, [isAuthenticated]);
+  }, [authManager.isAuthenticated()]);
 
   const handleAuthClick = (mode) => {
     setAuthMode(mode);
@@ -105,19 +104,8 @@ const UserButton = () => {
   };
 
   const confirmLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userPhoto');
-    localStorage.removeItem('userBio');
-    localStorage.removeItem('uid');
-    localStorage.removeItem('userRole');
-    setIsAuthenticated(false);
-    setUserEmail('');
-    setUserName('');
-    setUserPhoto('');
+    authManager.clearAuthData();
     setShowConfirmModal(false);
-    // Redirigir a la homepage después de cerrar sesión
     window.location.href = '/';
   };
 
@@ -153,9 +141,9 @@ const UserButton = () => {
       <div className="relative" ref={popoverRef}>
         <button 
           onClick={() => setIsOpen(!isOpen)}
-          className={`bg-white ${isAuthenticated ? 'p-0' : 'p-3'} rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 group border-2 border-transparent hover:border-purple-300`}
+          className={`bg-white ${authManager.isAuthenticated() ? 'p-0' : 'p-3'} rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 group border-2 border-transparent hover:border-purple-300`}
         >
-          {isAuthenticated ? (
+          {authManager.isAuthenticated() ? (
             <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl font-bold bg-gradient-to-br from-purple-500 to-indigo-500 border-0 border-white shadow ${getRandomColor(userEmail)}`}>
               {isValidPhoto ? (
                 <img src={userPhoto} alt={userName || userEmail} className="w-full h-full object-cover rounded-full" />
@@ -170,7 +158,7 @@ const UserButton = () => {
 
         {isOpen && (
           <div className="absolute top-16 right-4 z-50 bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl p-6 w-80 border border-purple-100 ring-1 ring-purple-100 animate-fade-in">
-            {isAuthenticated ? (
+            {authManager.isAuthenticated() ? (
               <div className="space-y-5">
                 <div className="flex items-center space-x-4 pb-0.5">
                   <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl font-bold bg-gradient-to-br from-purple-500 to-indigo-500 border-2 border-white shadow ${getRandomColor(userEmail)}`}>
@@ -283,14 +271,11 @@ const UserButton = () => {
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
           mode={authMode}
-        onLoginSuccess={(email, name) => {
-          setUserEmail(email);
-          setUserName(name);
-          setIsAuthenticated(true);
-          // Recargar la página después de iniciar sesión
-          window.location.reload();
-        }}
-      />
+          onLoginSuccess={(email, name) => {
+            // Eliminar la recarga de página y usar solo el store global
+            setShowAuthModal(false);
+          }}
+        />
       </GoogleOAuthProvider>
       <ProfileModal 
         isOpen={showProfileModal}

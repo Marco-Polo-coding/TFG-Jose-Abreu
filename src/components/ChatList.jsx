@@ -2,13 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { directChatManager } from '../utils/directChatManager';
 import { authManager } from '../utils/authManager';
 import { apiManager } from '../utils/apiManager';
-import { FaSpinner } from 'react-icons/fa';
+import { FaSpinner, FaEllipsisV, FaSignOutAlt } from 'react-icons/fa';
+import ConfirmDeleteModal from './ConfirmDeleteModal';
 
 const ChatList = ({ onSelectChat }) => {
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userNames, setUserNames] = useState({});
+  const [menuOpenId, setMenuOpenId] = useState(null);
+  const menuRef = React.useRef(null);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [chatToLeave, setChatToLeave] = useState(null);
 
   useEffect(() => {
     const loadChats = async () => {
@@ -39,6 +44,20 @@ const ChatList = ({ onSelectChat }) => {
     loadChats();
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpenId(null);
+      }
+    };
+    if (menuOpenId !== null) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [menuOpenId]);
+
   if (loading) return (
     <div className="flex flex-col items-center justify-center h-full py-16">
       <FaSpinner className="animate-spin text-purple-500 text-3xl mb-4" />
@@ -57,6 +76,16 @@ const ChatList = ({ onSelectChat }) => {
     </div>
   );
 
+  if (!chats.length) return (
+    <div className="flex flex-col items-center justify-center h-full py-16 animate-fade-in">
+      <span className="text-purple-300 text-6xl mb-4">
+        <svg xmlns='http://www.w3.org/2000/svg' className='inline-block' width='64' height='64' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M7 8h10M7 12h4m-4 8h10a2 2 0 002-2V6a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z' /></svg>
+      </span>
+      <span className="text-purple-400 text-2xl font-bold mb-2">No tienes chats activos</span>
+      <span className="text-gray-400 text-base text-center">¡Cuando inicies una conversación aparecerá aquí!</span>
+    </div>
+  );
+
   return (
     <div className="flex flex-col space-y-2">
       {chats.map((chat) => {
@@ -67,9 +96,30 @@ const ChatList = ({ onSelectChat }) => {
         return (
           <div
             key={chat.id}
-            className="p-4 border rounded-2xl cursor-pointer bg-white shadow-sm hover:bg-purple-50 hover:shadow-md transition-all duration-200"
+            className="relative p-4 border rounded-2xl cursor-pointer bg-white shadow-sm hover:bg-purple-50 hover:shadow-md transition-all duration-200"
             onClick={() => onSelectChat(chat.id, otherParticipantId)}
           >
+            <button
+              className="absolute top-2 right-2 text-purple-400 hover:text-purple-600 z-10"
+              onClick={e => { e.stopPropagation(); setMenuOpenId(menuOpenId === chat.id ? null : chat.id); }}
+              title="Opciones"
+            >
+              <FaEllipsisV />
+            </button>
+            {menuOpenId === chat.id && (
+              <div
+                ref={menuRef}
+                className="absolute top-10 right-2 bg-white text-gray-800 rounded-xl shadow-lg border border-purple-100 py-2 w-40 animate-fade-in z-20"
+                onClick={e => e.stopPropagation()}
+              >
+                <button
+                  className="flex items-center w-full px-4 py-2 hover:bg-red-50 transition-colors gap-2 text-left"
+                  onClick={() => { setMenuOpenId(null); setChatToLeave(chat); setShowLeaveModal(true); }}
+                >
+                  <FaSignOutAlt className="text-red-500" /> Salir del chat
+                </button>
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-lg text-black-700">
@@ -90,6 +140,21 @@ const ChatList = ({ onSelectChat }) => {
           </div>
         );
       })}
+      <ConfirmDeleteModal
+        open={showLeaveModal}
+        onClose={() => { setShowLeaveModal(false); setChatToLeave(null); }}
+        onConfirm={async () => {
+          if (chatToLeave) {
+            await directChatManager.leaveChat(chatToLeave.id);
+            setShowLeaveModal(false);
+            setChatToLeave(null);
+            window.location.href = '/chat';
+          }
+        }}
+        articleTitle={chatToLeave ? (userNames[chatToLeave.participants.find(id => id !== authManager.getUser()?.uid)] || chatToLeave.id) : ''}
+        title="¿Salir del chat?"
+        message="¿Seguro que quieres salir de este chat? Ya no aparecerá en tu lista."
+      />
     </div>
   );
 };

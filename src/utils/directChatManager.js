@@ -94,6 +94,15 @@ class DirectChatManager {
     });
     return this.handleResponse(response);
   }
+
+  async leaveChat(chatId) {
+    const headers = await this.getHeaders();
+    const response = await fetch(`${this.baseUrl}/direct-chats/${chatId}/leave`, {
+      method: 'PATCH',
+      headers
+    });
+    return this.handleResponse(response);
+  }
 }
 
 // Exportar una única instancia

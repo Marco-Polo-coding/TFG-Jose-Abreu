@@ -33,7 +33,7 @@ const SavedArticlesList = () => {
         setError('No se ha encontrado el email del usuario. Por favor, inicia sesión.');
         return;
       }
-      const data = await apiManager.get(`/usuarios/${userEmail}/articulos-guardados`);
+      const data = await apiManager.get(`/usuarios/email/${userEmail}/articulos-guardados`);
       setArticles(data);
       setError(null);
     } catch (err) {

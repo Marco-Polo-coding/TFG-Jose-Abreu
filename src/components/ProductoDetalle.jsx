@@ -42,7 +42,7 @@ const ProductoDetalle = ({ id }) => {
         return;
       }
 
-      await apiManager.post(`/usuarios/${userEmail}/productos-favoritos/${producto.id}`);
+      await apiManager.post(`/usuarios/email/${userEmail}/productos-favoritos/${producto.id}`);
       showNotification('Producto guardado correctamente', 'success');
     } catch (error) {
       showNotification('Error al guardar el producto', 'error');

@@ -58,18 +58,23 @@ class AuthManager {
     if (data.role) safeSetItem('userRole', data.role);
 
     // Guardar en el store
-    this.store.getState().setAuth({
+    const userData = {
       email: data.email,
       name: data.nombre || data.email,
       photo: data.foto,
       role: data.role,
       uid: data.uid,
-    }, data.idToken);
+    };
+    
+    this.store.getState().setAuth(userData, data.idToken);
 
     // Configurar cookie segura con expiración de 7 días
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + 7);
     document.cookie = `auth_token=${data.idToken}; Path=/; Expires=${expirationDate.toUTCString()}; Secure; SameSite=Strict`;
+
+    // Disparar evento personalizado para notificar cambios
+    window.dispatchEvent(new CustomEvent('authStateChanged', { detail: userData }));
   }
 
   // Limpiar datos de autenticación
@@ -88,6 +93,9 @@ class AuthManager {
 
     // Limpiar cookie segura
     this.clearSecureCookie('auth_token');
+
+    // Disparar evento personalizado para notificar cambios
+    window.dispatchEvent(new CustomEvent('authStateChanged', { detail: null }));
   }
 
   // Métodos para cookies seguras

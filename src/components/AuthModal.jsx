@@ -16,7 +16,6 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
@@ -33,8 +32,6 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
 
   useEffect(() => {
     setIsLoginMode(mode === 'login');
-    const token = localStorage.getItem('token');
-    setIsAuthenticated(!!token);
     // Solo autocompletar si es login y hay email recordado
     if (mode === 'login') {
       const savedEmail = localStorage.getItem('rememberedEmail') || '';
@@ -101,11 +98,9 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
   // Centraliza la gestión de sesión para ambos flujos
   const handleAuthSuccess = (data) => {
     authManager.setAuthData(data);
-    setIsAuthenticated(true);
     onLoginSuccess?.(data.email, data.nombre || data.email, data.uid);
     showNotification('¡Inicio de sesión exitoso!', 'success');
     onClose();
-    setTimeout(() => window.location.reload(), 1500);
   };
 
   const handleSubmit = async (e) => {
@@ -315,14 +310,14 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                 <h2 className="text-3xl font-extrabold text-gray-900 mb-2">
                   {showResetPassword
                     ? 'Recuperar Contraseña'
-                    : isAuthenticated 
+                    : authManager.isAuthenticated() 
                       ? 'Tu Cuenta' 
                       : (isLoginMode ? 'Iniciar Sesión' : 'Crear Cuenta')}
                 </h2>
                 <p className="text-gray-600 text-base">
                   {showResetPassword
                     ? 'Introduce tu correo electrónico y te enviaremos instrucciones para restablecer tu contraseña.'
-                    : isAuthenticated 
+                    : authManager.isAuthenticated() 
                       ? 'Has iniciado sesión correctamente' 
                       : (isLoginMode 
                         ? 'Bienvenido de nuevo' 
@@ -437,7 +432,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                   </div>
                 </form>
               ) : (
-                isAuthenticated ? (
+                authManager.isAuthenticated() ? (
                   <div className="space-y-4">
                     <div className="text-center">
                       <div className="flex items-center justify-center mb-4">
@@ -619,7 +614,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                 )
               )}
 
-              {!isAuthenticated && (
+              {!authManager.isAuthenticated() && (
                 <div className="mt-4 text-center">
                   <p className="text-base text-gray-600">
                     {isLoginMode ? '¿No tienes una cuenta?' : '¿Ya tienes una cuenta?'}

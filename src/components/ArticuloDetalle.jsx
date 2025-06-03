@@ -37,7 +37,7 @@ const ArticuloDetalle = ({ id }) => {
       const userEmail = localStorage.getItem('userEmail');
       if (!userEmail) return;
 
-      const data = await apiManager.get(`/usuarios/${userEmail}/articulos-guardados`);
+      const data = await apiManager.get(`/usuarios/email/${userEmail}`);
       setIsSaved(data.some(article => article.id === id));
     } catch (error) {
       console.error('Error checking if article is saved:', error);
