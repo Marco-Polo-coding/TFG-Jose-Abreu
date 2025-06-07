@@ -1,5 +1,5 @@
 {
-  "name": "",
+  "name": "tfg-app",
   "type": "module",
   "version": "0.0.1",
   "scripts": {
@@ -9,7 +9,6 @@
     "astro": "astro"
   },
   "dependencies": {
-    "": "file:",
     "@astrojs/react": "^4.2.4",
     "@astrojs/tailwind": "^6.0.2",
     "@react-oauth/google": "^0.12.1",

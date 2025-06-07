@@ -11,7 +11,7 @@ import {
   Legend,
 } from 'chart.js';
 import LoadingSpinner from '../LoadingSpinner';
-import apiManager from '../../services/apiManager';
+import { apiManager } from '../../utils/apiManager';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 

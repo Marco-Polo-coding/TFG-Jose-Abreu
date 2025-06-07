@@ -10,7 +10,6 @@ class WSChatManager {
     this.isConnected = false;
     this.reconnectTimeout = null;
   }
-
   connect({ chatId, token }) {
     if (this.ws) {
       this.disconnect();

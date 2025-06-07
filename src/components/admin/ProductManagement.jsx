@@ -27,7 +27,7 @@ const ProductManagement = () => {
         throw new Error('No hay token de autenticación');
       }
 
-      const response = await fetch('http://127.0.0.1:8000/admin/products', {
+      const response = await fetch('http://localhost:8000/admin/products', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -54,7 +54,7 @@ const ProductManagement = () => {
     if (!deleteProduct) return;
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://127.0.0.1:8000/admin/products/${deleteProduct.id}`, {
+      const response = await fetch(`http://localhost:8000/admin/products/${deleteProduct.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -157,7 +157,7 @@ const ProductManagement = () => {
       formData.append('estado', form.estado);
       formData.append('usuario_email', localStorage.getItem('userEmail') || '');
       // No se envía imagen, el backend pone la de gato si no hay
-      const response = await fetch('http://127.0.0.1:8000/productos', {
+      const response = await fetch('http://localhost:8000/productos', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -187,7 +187,7 @@ const ProductManagement = () => {
       formData.append('categoria', form.categoria);
       formData.append('estado', form.estado);
       // No se envía imagen
-      const response = await fetch(`http://127.0.0.1:8000/productos/${editProduct.id}`, {
+      const response = await fetch(`http://localhost:8000/productos/${editProduct.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`

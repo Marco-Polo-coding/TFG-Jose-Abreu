@@ -1,8 +1,7 @@
 import { authManager } from './authManager';
 
-class ApiManager {
-  constructor() {
-    this.baseUrl = 'http://127.0.0.1:8000';
+class ApiManager {  constructor() {
+    this.baseUrl = 'http://localhost:8000';
     this.csrfToken = this.generateCSRFToken();
   }
 
@@ -10,10 +9,9 @@ class ApiManager {
   generateCSRFToken() {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
   }
-
   // Obtener headers comunes
-  getHeaders() {
-    const token = authManager.getToken();
+  async getHeaders() {
+    const token = await authManager.getToken();
     return {
       'Content-Type': 'application/json',
       'Authorization': token ? `Bearer ${token}` : '',
@@ -29,17 +27,16 @@ class ApiManager {
     }
     return response.json();
   }
-
   // Métodos HTTP
   async get(endpoint) {
+    const headers = await this.getHeaders();
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       method: 'GET',
-      headers: this.getHeaders(),
+      headers,
       credentials: 'include',
     });
     return this.handleResponse(response);
   }
-
   async post(endpoint, data) {
     let options = {
       method: 'POST',
@@ -49,23 +46,24 @@ class ApiManager {
     if (data instanceof FormData) {
       options.body = data;
       // Solo añade los headers de autorización y CSRF, pero NO Content-Type
+      const token = await authManager.getToken();
       options.headers = {
-        'Authorization': authManager.getToken() ? `Bearer ${authManager.getToken()}` : '',
+        'Authorization': token ? `Bearer ${token}` : '',
         'X-CSRF-Token': this.csrfToken,
       };
     } else {
       options.body = JSON.stringify(data);
-      options.headers = this.getHeaders();
+      options.headers = await this.getHeaders();
     }
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, options);
     return this.handleResponse(response);
   }
-
   async put(endpoint, data) {
+    const headers = await this.getHeaders();
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       method: 'PUT',
-      headers: this.getHeaders(),
+      headers,
       credentials: 'include',
       body: JSON.stringify(data),
     });
@@ -73,9 +71,10 @@ class ApiManager {
   }
 
   async delete(endpoint) {
+    const headers = await this.getHeaders();
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       method: 'DELETE',
-      headers: this.getHeaders(),
+      headers,
       credentials: 'include',
     });
     return this.handleResponse(response);

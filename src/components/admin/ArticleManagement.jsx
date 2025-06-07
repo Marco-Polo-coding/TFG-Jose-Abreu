@@ -128,7 +128,7 @@ const ArticleManagement = () => {
       formData.append('autor', localStorage.getItem('userName') || '');
       formData.append('autor_email', localStorage.getItem('userEmail') || '');
       // No se envía imagen, el backend pone la de gato si no hay
-      const response = await fetch('http://127.0.0.1:8000/articulos', {
+      const response = await fetch('http://localhost:8000/articulos', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -156,7 +156,7 @@ const ArticleManagement = () => {
       formData.append('contenido', form.contenido);
       formData.append('categoria', form.categoria);
       // No se envía imagen
-      const response = await fetch(`http://127.0.0.1:8000/articulos/${editArticle.id}`, {
+      const response = await fetch(`http://localhost:8000/articulos/${editArticle.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`

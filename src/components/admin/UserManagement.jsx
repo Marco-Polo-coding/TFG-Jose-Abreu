@@ -5,7 +5,7 @@ import ConfirmModal from '../ConfirmModal';
 import AdminDeleteModal from './AdminDeleteModal';
 import ReactDOM from 'react-dom';
 import PasswordRequirements from '../PasswordRequirements';
-import apiManager from '../../services/apiManager';
+import { apiManager } from '../../utils/apiManager';
 
 // Generador simple de UID si no hay uuid
 function generateUID() {

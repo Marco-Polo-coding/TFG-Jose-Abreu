@@ -58,7 +58,12 @@ app.include_router(ws_chat_router)
 # Configuración de CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4321"],  # Permitir solo el frontend
+    allow_origins=[
+        "http://localhost:4321",  # Frontend Astro
+        "http://localhost:8000",  # Backend FastAPI
+        "http://127.0.0.1:4321",  # Frontend alternativa
+        "http://127.0.0.1:8000"   # Backend alternativa
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

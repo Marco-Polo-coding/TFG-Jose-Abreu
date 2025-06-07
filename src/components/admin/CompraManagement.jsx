@@ -4,7 +4,7 @@ import AdminCompraDetalleModal from '../AdminCompraDetalleModal';
 import AdminDeleteModal from './AdminDeleteModal';
 import LoadingSpinner from '../LoadingSpinner';
 import ReactDOM from 'react-dom';
-import apiManager from '../../services/apiManager';
+import { apiManager } from '../../utils/apiManager';
 
 const columns = [
   { key: 'fecha', label: 'FECHA' },

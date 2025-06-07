@@ -115,10 +115,9 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
       return;
     }
 
-    try {
-      const endpoint = isLoginMode 
-        ? 'http://127.0.0.1:8000/auth/login'
-        : 'http://127.0.0.1:8000/auth/register';
+    try {      const endpoint = isLoginMode 
+        ? 'http://localhost:8000/auth/login'
+        : 'http://localhost:8000/auth/register';
 
       const requestBody = {
         email: formData.email,
@@ -193,7 +192,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
     setResetLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://127.0.0.1:8000/auth/direct-reset-password', {
+      const response = await fetch('http://localhost:8000/auth/direct-reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -204,7 +203,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || 'Error al actualizar la contraseña');
       // --- LOGIN AUTOMÁTICO ---
-      const loginResponse = await fetch('http://127.0.0.1:8000/auth/login', {
+      const loginResponse = await fetch('http://localhost:8000/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
