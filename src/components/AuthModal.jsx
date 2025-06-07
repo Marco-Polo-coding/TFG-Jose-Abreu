@@ -72,16 +72,18 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
       localStorage.removeItem('rememberedPassword');
     }
   };
-
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userPhoto');
-    localStorage.removeItem('uid');
+    // Limpiar datos de autenticación usando Zustand
+    authManager.clearAuthData();
+    
+    // Limpiar cookies
     document.cookie = 'userRole=; path=/; max-age=0';
+    document.cookie = 'auth_token=; path=/; max-age=0';
+    
+    // Limpiar carrito
     clearCartOnLogout();
+    
+    // Redirigir
     window.location.href = '/';
   };
 
@@ -117,12 +119,10 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
 
     try {      const endpoint = isLoginMode 
         ? 'http://localhost:8000/auth/login'
-        : 'http://localhost:8000/auth/register';
-
-      const requestBody = {
+        : 'http://localhost:8000/auth/register';      const requestBody = {
         email: formData.email,
         password: formData.password,
-        ...(isLoginMode ? {} : { nombre: formData.name })
+        ...(isLoginMode ? {} : formData.name ? { nombre: formData.name } : {})
       };
 
       const response = await fetch(endpoint, {
@@ -210,26 +210,12 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
           email: resetForm.email,
           password: resetForm.password
         })
-      });
-      const loginData = await loginResponse.json();
+      });      const loginData = await loginResponse.json();
       if (!loginResponse.ok) throw new Error(loginData.detail || 'Contraseña cambiada, pero error al iniciar sesión');
-      localStorage.setItem('token', loginData.idToken);
-      localStorage.setItem('userEmail', resetForm.email);
-      localStorage.setItem('userName', loginData.nombre || resetForm.email);
-      if (loginData.uid) {
-        localStorage.setItem('uid', loginData.uid);
-      }
-      if (loginData.foto) {
-        localStorage.setItem('userPhoto', loginData.foto);
-      } else {
-        localStorage.removeItem('userPhoto');
-      }
-      // Biografía: si viene en la respuesta, guardar; si no, limpiar
-      if (loginData.biografia !== undefined && loginData.biografia !== null) {
-        localStorage.setItem('userBio', loginData.biografia);
-      } else {
-        localStorage.removeItem('userBio');
-      }
+      
+      // Usar authManager en lugar de localStorage
+      authManager.setAuthData(loginData);
+      
       showNotification('Contraseña actualizada e inicio de sesión exitoso', 'success');
       setShowResetPassword(false);
       setResetForm({ email: '', password: '', confirmPassword: '' });

@@ -3,7 +3,8 @@ from firebase_admin import auth
 from firebase_config import db
 from dotenv import load_dotenv
 
-load_dotenv()
+# Cargar variables de entorno desde el archivo .env en la raíz del proyecto
+load_dotenv(dotenv_path="../../.env")
 
 def create_admin_user():
     try:

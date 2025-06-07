@@ -6,6 +6,7 @@ import UserButton from './UserButton';
 import Toast from './Toast';
 import useCartStore from '../store/cartStore';
 import { apiManager } from '../utils/apiManager';
+import { authManager } from '../utils/authManager';
 
 const ProductoDetalle = ({ id }) => {
   const [producto, setProducto] = useState(null);
@@ -31,21 +32,25 @@ const ProductoDetalle = ({ id }) => {
     };
 
     fetchProducto();
-  }, [id]);
-
-  const handleSaveProduct = async () => {
+  }, [id]);  const handleSaveProduct = async () => {
     try {
       setIsSaving(true);
-      const userEmail = localStorage.getItem('userEmail');
+      const user = authManager.getUser();
+      const userEmail = user?.email;
+      
       if (!userEmail) {
         showNotification('Debes iniciar sesión para guardar productos', 'error');
         return;
       }
 
-      await apiManager.post(`/usuarios/email/${userEmail}/productos-favoritos/${producto.id}`);
+      await apiManager.addFavoriteProduct(userEmail, producto.id);
       showNotification('Producto guardado correctamente', 'success');
     } catch (error) {
-      showNotification('Error al guardar el producto', 'error');
+      if (error.message && error.message.includes('ya está en favoritos')) {
+        showNotification('Este producto ya está en tus favoritos', 'warning');
+      } else {
+        showNotification('Error al guardar el producto', 'error');
+      }
     } finally {
       setIsSaving(false);
     }

@@ -43,9 +43,7 @@ const DirectChat = ({ chatId, otherUserId }) => {
     if (otherUserId) {
       loadOtherUser();
     }
-  }, [otherUserId]);
-
-  // Función reutilizable para cargar mensajes
+  }, [otherUserId]);  // Función reutilizable para cargar mensajes
   const loadMessages = async (opts = {}) => {
     try {
       // Marcar como leído antes de cargar mensajes

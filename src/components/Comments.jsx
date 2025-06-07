@@ -3,6 +3,7 @@ import { FaComment, FaReply, FaTrash } from 'react-icons/fa';
 import Toast from './Toast';
 import ImageUpload from './ImageUpload';
 import { apiManager } from '../utils/apiManager';
+import { authManager } from '../utils/authManager';
 import ConfirmDeleteCommentModal from './ConfirmDeleteCommentModal';
 
 const Comments = ({ articuloId }) => {
@@ -12,11 +13,11 @@ const Comments = ({ articuloId }) => {
   const [comentarioRespondiendo, setComentarioRespondiendo] = useState(null);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [toastType, setToastType] = useState('success');
-  const [loading, setLoading] = useState(true);
+  const [toastType, setToastType] = useState('success');  const [loading, setLoading] = useState(true);
   const [imagenComentario, setImagenComentario] = useState(null);
   const [imagenRespuesta, setImagenRespuesta] = useState(null);
-  const userEmail = localStorage.getItem('userEmail');
+  const user = authManager.getUser();
+  const userEmail = user?.email;
   const [modalDelete, setModalDelete] = useState({ open: false, type: null, comentarioId: null, respuestaId: null });
 
   useEffect(() => {
@@ -35,11 +36,11 @@ const Comments = ({ articuloId }) => {
       setLoading(false);
     }
   };
-
   const handleSubmitComentario = async (e) => {
     e.preventDefault();
     try {
-      const userEmail = localStorage.getItem('userEmail');
+      const user = authManager.getUser();
+      const userEmail = user?.email;
       if (!userEmail) {
         setToastMessage('Debes iniciar sesión para comentar');
         setToastType('error');
@@ -69,11 +70,11 @@ const Comments = ({ articuloId }) => {
       setShowToast(true);
     }
   };
-
   const handleSubmitRespuesta = async (e) => {
     e.preventDefault();
     try {
-      const userEmail = localStorage.getItem('userEmail');
+      const user = authManager.getUser();
+      const userEmail = user?.email;
       if (!userEmail) {
         setToastMessage('Debes iniciar sesión para responder');
         setToastType('error');

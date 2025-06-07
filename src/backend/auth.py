@@ -31,7 +31,8 @@ def sanitize_log_data(data):
         return {k: '***' if k in ['password', 'token', 'api_key'] else v for k, v in data.items()}
     return data
 
-load_dotenv()
+# Cargar variables de entorno desde el archivo .env en la raíz del proyecto
+load_dotenv(dotenv_path="../../.env")
 
 router = APIRouter()
 
@@ -319,7 +320,12 @@ async def update_profile(
     delete_photo: Optional[str] = Form(None)
 ):
     try:
+        logger.info(f"Updating profile for UID: {uid}")
+        logger.info(f"Received data - nombre: {nombre}, email: {email}, biografia: {biografia}, delete_photo: {delete_photo}")
+        
         user = auth.get_user(uid)
+        logger.info(f"Found user: {user.email}")
+        
         update_data = {}
         firestore_data = {}
         if nombre:
@@ -363,6 +369,7 @@ async def update_profile(
         # Actualizar en Firebase Auth
         if update_data:
             auth.update_user(uid, **update_data)
+            logger.info(f"Updated Firebase Auth for user {uid}")
         # Actualizar en Firestore
         if firestore_data:
             # Obtener el documento actual para preservar datos no actualizados
@@ -371,11 +378,19 @@ async def update_profile(
             # Combinar datos actuales con nuevos datos
             updated_data = {**current_data, **firestore_data}
             db.collection("usuarios").document(uid).set(updated_data, merge=True)
+            logger.info(f"Updated Firestore for user {uid}")
+        
+        logger.info(f"Profile update successful for user {uid}")
         return {"message": "Perfil actualizado con éxito", "data": firestore_data}
     except HTTPException as he:
+        logger.error(f"HTTP Exception in update_profile: {he.detail}")
         raise he
+    except auth.UserNotFoundError:
+        logger.error(f"User not found: {uid}")
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
     except Exception as e:
         logger.error(f"Error al actualizar perfil: {str(e)}")
+        logger.error(f"Exception type: {type(e).__name__}")
         raise HTTPException(status_code=400, detail="Error al actualizar el perfil")
 
 @router.delete("/delete-account")

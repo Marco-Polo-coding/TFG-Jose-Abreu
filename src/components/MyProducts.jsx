@@ -9,6 +9,7 @@ import Toast from './Toast';
 import LoadingSpinner from './LoadingSpinner';
 import useLoadingState from '../hooks/useLoadingState';
 import { apiManager } from '../utils/apiManager';
+import { authManager } from '../utils/authManager';
 
 const MyProducts = () => {
   const [productos, setProductos] = useState([]);
@@ -25,11 +26,11 @@ const MyProducts = () => {
   useEffect(() => {
     fetchProductos();
   }, []);
-
   const fetchProductos = async () => {
     try {
       setLoading(true);
-      const userUid = localStorage.getItem('uid');
+      const user = authManager.getUser();
+      const userUid = user?.uid;
       if (!userUid) {
         setError('No se ha encontrado el UID del usuario. Por favor, inicia sesión.');
         setProductos([]);

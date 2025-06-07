@@ -4,6 +4,7 @@ import LoadingSpinner from './LoadingSpinner';
 import useLoadingState from '../hooks/useLoadingState';
 import Toast from './Toast';
 import { apiManager } from '../utils/apiManager';
+import { authManager } from '../utils/authManager';
 
 // Datos de ejemplo (reemplazar por fetch a la API en el futuro)
 const favoriteProducts = [];
@@ -30,17 +31,16 @@ const FavoriteProductsList = () => {
     setToastMessage(message);
     setToastType(type);
     setShowToast(true);
-  };
-
-  const fetchFavoriteProducts = async () => {
+  };  const fetchFavoriteProducts = async () => {
     try {
       setLoading(true);
-      const userEmail = localStorage.getItem('userEmail');
+      const user = authManager.getUser();
+      const userEmail = user?.email;
       if (!userEmail) {
         setError('No se ha encontrado el email del usuario. Por favor, inicia sesión.');
         return;
       }
-      const data = await apiManager.get(`/usuarios/email/${userEmail}/productos-favoritos`);
+      const data = await apiManager.getFavoriteProducts(userEmail);
       setProducts(data);
       setError(null);
     } catch (err) {
@@ -49,18 +49,17 @@ const FavoriteProductsList = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleRemoveFavorite = async (productoId) => {
+  };  const handleRemoveFavorite = async (productoId) => {
     try {
       setIsDeleting(prev => ({ ...prev, [productoId]: true }));
-      const userEmail = localStorage.getItem('userEmail');
+      const user = authManager.getUser();
+      const userEmail = user?.email;
       if (!userEmail) {
         showNotification('No se ha encontrado el email del usuario', 'error');
         return;
       }
 
-      await apiManager.delete(`/usuarios/${userEmail}/productos-favoritos/${productoId}`);
+      await apiManager.removeFavoriteProduct(userEmail, productoId);
       setProducts(prev => prev.filter(p => p.id !== productoId));
       showNotification('Producto eliminado de favoritos', 'success');
     } catch (error) {

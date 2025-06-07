@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FaBell, FaUserCircle, FaSearch, FaSignOutAlt } from 'react-icons/fa';
+import { authManager } from '../../utils/authManager';
 
 const AdminNavbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -17,12 +18,7 @@ const AdminNavbar = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userPhoto');
-    localStorage.removeItem('uid');
+    authManager.logout();
     document.cookie = 'userRole=; path=/; max-age=0';
     window.location.href = '/';
   };

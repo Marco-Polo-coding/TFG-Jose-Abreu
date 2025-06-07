@@ -29,6 +29,16 @@ const UserButton = () => {
     return false;
   });
   const [unreadChats, setUnreadChats] = useState(0);
+  useEffect(() => {
+    // Escuchar cambios en el estado de autenticación
+    const handleAuthChange = (event) => {
+      const userData = event.detail;
+      setUser(userData || {});
+    };
+
+    window.addEventListener('authStateChanged', handleAuthChange);
+    return () => window.removeEventListener('authStateChanged', handleAuthChange);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -67,9 +77,12 @@ const UserButton = () => {
   useEffect(() => {
     const fetchUnreadChats = async () => {
       if (!authManager.isAuthenticated()) return;
-      try {
-        const userChats = await directChatManager.getChats();
-        const currentUid = localStorage.getItem('uid');
+      try {        const userChats = await directChatManager.getChats();
+        const currentUser = authManager.getUser();
+        const currentUid = currentUser?.uid;
+        
+        if (!currentUid) return;
+        
         let count = 0;
         userChats.forEach(chat => {
           const lastMsg = chat.last_message;

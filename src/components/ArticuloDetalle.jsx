@@ -6,6 +6,7 @@ import UserButton from './UserButton';
 import Comments from './Comments';
 import Toast from './Toast';
 import { apiManager } from '../utils/apiManager';
+import { authManager } from '../utils/authManager';
 
 const ArticuloDetalle = ({ id }) => {
   const [articulo, setArticulo] = useState(null);
@@ -30,36 +31,35 @@ const ArticuloDetalle = ({ id }) => {
     
     fetchArticulo();
     checkIfArticleIsSaved();
-  }, [id]);
-
-  const checkIfArticleIsSaved = async () => {
+  }, [id]);  const checkIfArticleIsSaved = async () => {
     try {
-      const userEmail = localStorage.getItem('userEmail');
+      const user = authManager.getUser();
+      const userEmail = user?.email;
       if (!userEmail) return;
 
-      const data = await apiManager.get(`/usuarios/email/${userEmail}`);
+      const data = await apiManager.getSavedArticles(userEmail);
       setIsSaved(data.some(article => article.id === id));
     } catch (error) {
       console.error('Error checking if article is saved:', error);
     }
   };
-
   const handleSaveArticle = async () => {
     try {
-      const userEmail = localStorage.getItem('userEmail');
-      if (!userEmail) {
+      const user = authManager.getUser();
+      const userEmail = user?.email;
+      const uid = user?.uid;
+      
+      if (!userEmail && !uid) {
         setToastMessage('Debes iniciar sesión para guardar artículos');
         setToastType('error');
         setShowToast(true);
         return;
-      }
-
-      if (isSaved) {
-        await apiManager.delete(`/usuarios/${userEmail}/articulos-guardados/${id}`);
+      }      if (isSaved) {
+        await apiManager.removeSavedArticle(userEmail, id);
         setIsSaved(false);
         setToastMessage('Artículo eliminado de guardados');
       } else {
-        await apiManager.post(`/usuarios/${userEmail}/articulos-guardados/${id}`);
+        await apiManager.addSavedArticle(userEmail, id);
         setIsSaved(true);
         setToastMessage('Artículo guardado correctamente');
       }

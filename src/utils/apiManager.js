@@ -1,6 +1,7 @@
 import { authManager } from './authManager';
 
-class ApiManager {  constructor() {
+class ApiManager {
+  constructor() {
     this.baseUrl = 'http://localhost:8000';
     this.csrfToken = this.generateCSRFToken();
   }
@@ -58,15 +59,26 @@ class ApiManager {  constructor() {
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, options);
     return this.handleResponse(response);
-  }
-  async put(endpoint, data) {
-    const headers = await this.getHeaders();
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+  }  async put(endpoint, data) {
+    let options = {
       method: 'PUT',
-      headers,
       credentials: 'include',
-      body: JSON.stringify(data),
-    });
+    };
+
+    if (data instanceof FormData) {
+      options.body = data;
+      // Solo añade los headers de autorización y CSRF, pero NO Content-Type
+      const token = await authManager.getToken();
+      options.headers = {
+        'Authorization': token ? `Bearer ${token}` : '',
+        'X-CSRF-Token': this.csrfToken,
+      };
+    } else {
+      options.body = JSON.stringify(data);
+      options.headers = await this.getHeaders();
+    }
+
+    const response = await fetch(`${this.baseUrl}${endpoint}`, options);
     return this.handleResponse(response);
   }
 
@@ -100,11 +112,10 @@ class ApiManager {  constructor() {
 
   async resetPassword(email) {
     return this.post('/auth/reset-password', { email });
-  }
-
-  async updateProfile(userData) {
-    const data = await this.put('/auth/profile', userData);
-    authManager.setAuthData(data);
+  }  async updateProfile(userData) {
+    // Use PUT method directly to handle FormData properly
+    const data = await this.put('/auth/update-profile', userData);
+    // Don't automatically set auth data since this is profile update, not login
     return data;
   }
 
@@ -171,7 +182,33 @@ class ApiManager {  constructor() {
   async getUserByEmail(email) {
     return this.get(`/usuarios/email/${encodeURIComponent(email)}`);
   }
+
+  // Métodos para productos favoritos
+  async addFavoriteProduct(userEmail, productoId) {
+    return this.post(`/usuarios/${encodeURIComponent(userEmail)}/productos-favoritos/${productoId}`);
+  }
+
+  async getFavoriteProducts(userEmail) {
+    return this.get(`/usuarios/${encodeURIComponent(userEmail)}/productos-favoritos`);
+  }
+
+  async removeFavoriteProduct(userEmail, productoId) {
+    return this.delete(`/usuarios/${encodeURIComponent(userEmail)}/productos-favoritos/${productoId}`);
+  }
+
+  // Métodos para artículos guardados
+  async addSavedArticle(userEmail, articuloId) {
+    return this.post(`/usuarios/${encodeURIComponent(userEmail)}/articulos-guardados/${articuloId}`);
+  }
+
+  async getSavedArticles(userEmail) {
+    return this.get(`/usuarios/${encodeURIComponent(userEmail)}/articulos-guardados`);
+  }
+
+  async removeSavedArticle(userEmail, articuloId) {
+    return this.delete(`/usuarios/${encodeURIComponent(userEmail)}/articulos-guardados/${articuloId}`);
+  }
 }
 
 // Exportar una única instancia
-export const apiManager = new ApiManager(); 
+export const apiManager = new ApiManager();

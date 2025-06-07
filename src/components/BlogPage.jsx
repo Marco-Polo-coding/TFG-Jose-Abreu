@@ -4,6 +4,7 @@ import CartButton from './CartButton';
 import UserButton from './UserButton';
 import LoadingSpinner from './LoadingSpinner';
 import { apiManager } from '../utils/apiManager';
+import { authManager } from '../utils/authManager';
 import Toast from './Toast';
 
 const BlogPage = () => {
@@ -32,39 +33,39 @@ const BlogPage = () => {
       console.error('Error fetching articles:', err);
       setLoading(false);
     }
-  };
-
-  const fetchSavedArticles = async () => {
+  };  const fetchSavedArticles = async () => {
     try {
-      const userEmail = localStorage.getItem('userEmail');
+      const user = authManager.getUser();
+      const userEmail = user?.email;
       if (!userEmail) return;
 
-      const data = await apiManager.get(`/usuarios/email/${userEmail}/articulos-guardados`);
+      const data = await apiManager.getSavedArticles(userEmail);
       setSavedArticles(data);
     } catch (error) {
       console.error('Error fetching saved articles:', error);
     }
   };
-
   const handleSaveArticle = async (articleId) => {
-    const userEmail = localStorage.getItem('userEmail');
-    const uid = localStorage.getItem('uid');
+    const user = authManager.getUser();
+    const userEmail = user?.email;
+    const uid = user?.uid;
+    
     if (!userEmail && !uid) {
       setToastMessage('Debes iniciar sesión para guardar artículos');
       setToastType('error');
       setShowToast(true);
       return;
     }
-    try {
+      try {
       const isSaved = savedArticles.some(article => article.id === articleId);
       if (isSaved) {
-        await apiManager.delete(`/usuarios/${userEmail}/articulos-guardados/${articleId}`);
+        await apiManager.removeSavedArticle(userEmail, articleId);
         setSavedArticles(prev => prev.filter(article => article.id !== articleId));
         setToastMessage('Artículo eliminado de guardados');
         setToastType('success');
         setShowToast(true);
       } else {
-        await apiManager.post(`/usuarios/${userEmail}/articulos-guardados/${articleId}`);
+        await apiManager.addSavedArticle(userEmail, articleId);
         const article = articulos.find(a => a.id === articleId);
         setSavedArticles(prev => [...prev, article]);
         setToastMessage('Artículo guardado correctamente');

@@ -369,9 +369,8 @@ const UserManagement = () => {
                           }}
                           style={{ display: user.foto ? 'block' : 'none' }}
                         />
-                      ) : null}
-                      <div
-                        className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center fallback-initial absolute top-0 left-0 w-full h-full"
+                      ) : null}                      <div
+                        className="absolute top-0 left-0 w-full h-full rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center fallback-initial"
                         style={{ display: !user.foto ? 'flex' : 'none' }}
                       >
                         <span className="text-purple-600 dark:text-purple-300 font-medium">

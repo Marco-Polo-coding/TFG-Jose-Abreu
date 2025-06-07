@@ -64,12 +64,12 @@ const ProfileCard = () => {
     setLoading(false);
     return () => unsub();
   }, []);
-
   React.useEffect(() => {
     const fetchArticles = async () => {
       try {
         setLoadingArticles(true);
-        const userEmail = localStorage.getItem('userEmail');
+        const user = authManager.getUser();
+        const userEmail = user?.email;
         if (!userEmail) {
           setErrorArticles('No se ha encontrado el email del usuario');
           setLoadingArticles(false);
@@ -87,12 +87,12 @@ const ProfileCard = () => {
     };
     fetchArticles();
   }, []);
-
   React.useEffect(() => {
     const fetchVentas = async () => {
       try {
         setLoadingVentas(true);
-        const userEmail = localStorage.getItem('userEmail');
+        const user = authManager.getUser();
+        const userEmail = user?.email;
         if (!userEmail) {
           setErrorVentas('No se ha encontrado el email del usuario');
           setLoadingVentas(false);
@@ -111,12 +111,12 @@ const ProfileCard = () => {
     };
     fetchVentas();
   }, [userEmail]);
-
   React.useEffect(() => {
     const fetchCompras = async () => {
       try {
         setLoadingCompras(true);
-        const uid = localStorage.getItem('uid');
+        const user = authManager.getUser();
+        const uid = user?.uid;
         if (!uid) {
           setErrorCompras('No se ha encontrado el ID del usuario');
           setLoadingCompras(false);
@@ -133,13 +133,11 @@ const ProfileCard = () => {
     };
     fetchCompras();
   }, []);
-
   // Obtener UID del usuario autenticado
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedUid = localStorage.getItem('uid');
-      setUid(storedUid);
-    }
+    const user = authManager.getUser();
+    const uid = user?.uid;
+    setUid(uid);
   }, []);
 
   // Obtener seguidores y seguidos

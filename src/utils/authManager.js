@@ -1,13 +1,39 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
-// Estado global para la autenticación
-const useAuthStore = create((set) => ({
-  isAuthenticated: false,
-  user: null,
-  token: null,
-  setAuth: (user, token) => set({ isAuthenticated: true, user, token }),
-  clearAuth: () => set({ isAuthenticated: false, user: null, token: null }),
-}));
+// Estado global para la autenticación con persistencia opcional
+const useAuthStore = create(
+  persist(
+    (set) => ({
+      isAuthenticated: false,
+      user: null,
+      token: null,
+      refreshToken: null,
+      setAuth: (user, token, refreshToken = null) => set({ 
+        isAuthenticated: true, 
+        user, 
+        token,
+        refreshToken: refreshToken || null
+      }),
+      clearAuth: () => set({ 
+        isAuthenticated: false, 
+        user: null, 
+        token: null,
+        refreshToken: null
+      }),
+      updateToken: (token, refreshToken = null) => set((state) => ({ 
+        ...state, 
+        token,
+        refreshToken: refreshToken || state.refreshToken
+      })),
+    }),
+    {
+      name: 'auth-storage', // clave única para el storage
+      // Solo persistir si no quieres usar localStorage, comentar la siguiente línea
+      // storage: createJSONStorage(() => sessionStorage),
+    }
+  )
+);
 
 // Añadir función para decodificar JWT y obtener la expiración
 function parseJwt (token) {
@@ -27,37 +53,11 @@ function parseJwt (token) {
 class AuthManager {
   constructor() {
     this.store = useAuthStore;
-    this.initializeFromStorage();
-  }
-
-  // Inicializar desde localStorage (mantener compatibilidad)
-  initializeFromStorage() {
-    const token = safeGetItem('token');
-    const user = {
-      email: safeGetItem('userEmail'),
-      name: safeGetItem('userName'),
-      photo: safeGetItem('userPhoto'),
-      role: safeGetItem('userRole'),
-      uid: safeGetItem('uid'),
-    };
-
-    if (token && user.email) {
-      this.store.getState().setAuth(user, token);
-    }
   }
 
   // Guardar datos de autenticación
   setAuthData(data) {
-    // Guardar en localStorage (mantener compatibilidad)
-    safeSetItem('token', data.idToken);
-    safeSetItem('refreshToken', data.refreshToken);
-    safeSetItem('userEmail', data.email);
-    safeSetItem('userName', data.nombre || data.email);
-    safeSetItem('uid', data.uid);
-    if (data.foto) safeSetItem('userPhoto', data.foto);
-    if (data.role) safeSetItem('userRole', data.role);
-
-    // Guardar en el store
+    // Guardar en el store de Zustand únicamente
     const userData = {
       email: data.email,
       name: data.nombre || data.email,
@@ -66,9 +66,9 @@ class AuthManager {
       uid: data.uid,
     };
     
-    this.store.getState().setAuth(userData, data.idToken);
+    this.store.getState().setAuth(userData, data.idToken, data.refreshToken);
 
-    // Configurar cookie segura con expiración de 7 días
+    // Configurar cookie segura con expiración de 7 días (opcional)
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + 7);
     document.cookie = `auth_token=${data.idToken}; Path=/; Expires=${expirationDate.toUTCString()}; Secure; SameSite=Strict`;
@@ -79,16 +79,7 @@ class AuthManager {
 
   // Limpiar datos de autenticación
   clearAuthData() {
-    // Limpiar localStorage (mantener compatibilidad)
-    safeRemoveItem('token');
-    safeRemoveItem('refreshToken');
-    safeRemoveItem('userEmail');
-    safeRemoveItem('userName');
-    safeRemoveItem('userPhoto');
-    safeRemoveItem('userRole');
-    safeRemoveItem('uid');
-
-    // Limpiar store
+    // Limpiar store únicamente
     this.store.getState().clearAuth();
 
     // Limpiar cookie segura
@@ -106,12 +97,13 @@ class AuthManager {
 
   clearSecureCookie(name) {
     document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-  }
-
-  // Obtener token actual (con refresco automático)
+  }  // Obtener token actual (con refresco automático)
   async getToken() {
-    let token = this.store.getState().token || safeGetItem('token');
-    if (!token) return null;
+    let token = this.store.getState().token;
+    
+    if (!token) {
+      return null;
+    }
     
     const payload = parseJwt(token);
     const now = Math.floor(Date.now() / 1000);
@@ -119,7 +111,7 @@ class AuthManager {
     // Si el token expira en menos de 5 minutos, refrescarlo
     if (payload && payload.exp && payload.exp - now < 300) {
       console.log('Token expirando pronto, intentando refrescar...');
-      const refreshToken = safeGetItem('refreshToken');
+      const refreshToken = this.store.getState().refreshToken;
       
       if (refreshToken) {
         try {
@@ -151,19 +143,28 @@ class AuthManager {
     });
     const data = await res.json();
     if (!res.ok) throw new Error('No se pudo refrescar el token');
-    // Guardar el nuevo token
-    safeSetItem('token', data.id_token);
-    safeSetItem('refreshToken', data.refresh_token);
-    this.store.getState().setAuth(this.getUser(), data.id_token);
+    
+    // Actualizar tokens en el store
+    this.store.getState().updateToken(data.id_token, data.refresh_token);
     this.setSecureCookie('auth_token', data.id_token);
     return data.id_token;
   }
-
   // Verificar si está autenticado
   isAuthenticated() {
-    return this.store.getState().isAuthenticated;
+    return this.store.getState().isAuthenticated && !!this.store.getState().token;
   }
 
+  // Verificar si el token es válido (no expirado)
+  isTokenValid() {
+    const token = this.store.getState().token;
+    if (!token) return false;
+    
+    const payload = parseJwt(token);
+    if (!payload || !payload.exp) return false;
+    
+    const now = Math.floor(Date.now() / 1000);
+    return payload.exp > now;
+  }
   // Obtener datos del usuario
   getUser() {
     return this.store.getState().user;
@@ -173,26 +174,12 @@ class AuthManager {
   isAdmin() {
     return this.store.getState().user?.role === 'admin';
   }
-}
 
-function safeGetItem(key) {
-  if (typeof window !== 'undefined' && window.localStorage) {
-    return window.localStorage.getItem(key);
-  }
-  return null;
-}
-
-function safeSetItem(key, value) {
-  if (typeof window !== 'undefined' && window.localStorage) {
-    window.localStorage.setItem(key, value);
-  }
-}
-
-function safeRemoveItem(key) {
-  if (typeof window !== 'undefined' && window.localStorage) {
-    window.localStorage.removeItem(key);
+  // Cerrar sesión
+  logout() {
+    this.clearAuthData();
   }
 }
 
 // Exportar una única instancia
-export const authManager = new AuthManager(); 
+export const authManager = new AuthManager();

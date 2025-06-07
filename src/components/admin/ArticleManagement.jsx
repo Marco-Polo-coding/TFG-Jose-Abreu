@@ -4,6 +4,7 @@ import LoadingSpinner from '../LoadingSpinner';
 import AdminDeleteModal from './AdminDeleteModal';
 import ReactDOM from 'react-dom';
 import { apiManager } from '../../utils/apiManager';
+import { authManager } from '../../utils/authManager';
 
 const ArticleManagement = () => {
   const [articles, setArticles] = useState([]);
@@ -117,16 +118,18 @@ const ArticleManagement = () => {
   const handleAddArticle = () => setShowAdd(true);
   const handleEditArticle = (article) => setEditArticle(article);
 
-  const handleCreateArticle = async (form) => {
-    try {
-      const token = localStorage.getItem('token');
+  const handleCreateArticle = async (form) => {    try {
+      const user = authManager.getUser();
+      const token = user?.accessToken;
+      const userName = user?.displayName;
+      const userEmail = user?.email;
       const formData = new FormData();
       formData.append('titulo', form.titulo);
       formData.append('descripcion', form.descripcion);
       formData.append('contenido', form.contenido);
       formData.append('categoria', form.categoria);
-      formData.append('autor', localStorage.getItem('userName') || '');
-      formData.append('autor_email', localStorage.getItem('userEmail') || '');
+      formData.append('autor', userName || '');
+      formData.append('autor_email', userEmail || '');
       // No se envía imagen, el backend pone la de gato si no hay
       const response = await fetch('http://localhost:8000/articulos', {
         method: 'POST',
@@ -147,9 +150,9 @@ const ArticleManagement = () => {
     }
   };
 
-  const handleUpdateArticle = async (form) => {
-    try {
-      const token = localStorage.getItem('token');
+  const handleUpdateArticle = async (form) => {    try {
+      const user = authManager.getUser();
+      const token = user?.accessToken;
       const formData = new FormData();
       formData.append('titulo', form.titulo);
       formData.append('descripcion', form.descripcion);

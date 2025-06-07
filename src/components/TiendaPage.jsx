@@ -4,6 +4,7 @@ import CartButton from './CartButton';
 import UserButton from './UserButton';
 import LoadingSpinner from './LoadingSpinner';
 import { apiManager } from '../utils/apiManager';
+import { authManager } from '../utils/authManager';
 import Toast from './Toast';
 import useCartStore from '../store/cartStore';
 import AuthModal from './AuthModal';
@@ -80,14 +81,16 @@ const TiendaPage = () => {
     setToastType(type);
     setShowToast(true);
   };
-
   const handleSaveProduct = async (productoId) => {
-    const userEmail = localStorage.getItem('userEmail');
-    const uid = localStorage.getItem('uid');
+    const user = authManager.getUser();
+    const userEmail = user?.email;
+    const uid = user?.uid;
+    
     if (!userEmail && !uid) {
       showNotification('Debes iniciar sesión para guardar productos en favoritos', 'error');
       return;
     }
+    
     try {
       setIsSaving(prev => ({ ...prev, [productoId]: true }));
       await apiManager.addFavoriteProduct(userEmail, productoId);
@@ -116,16 +119,18 @@ const TiendaPage = () => {
       [productoId]: prev[productoId] < total - 1 ? prev[productoId] + 1 : 0
     }));
   };
-
   const handleAddToCart = (producto) => {
-    const userEmail = localStorage.getItem('userEmail');
-    const uid = localStorage.getItem('uid');
+    const user = authManager.getUser();
+    const userEmail = user?.email;
+    const uid = user?.uid;
+    
     if (!userEmail && !uid) {
       setToastMessage('Debes iniciar sesión para añadir productos al carrito');
       setToastType('error');
       setShowToast(true);
       return;
     }
+    
     try {
       addItem(producto);
       setToastMessage('Producto añadido al carrito');

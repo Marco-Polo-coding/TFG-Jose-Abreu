@@ -112,13 +112,12 @@ async def chat(message: ChatMessage):
             assistant_response = assistant_response[:300] + "..."
 
         if contiene_ingles(assistant_response) or contiene_roleplay(assistant_response):
-            assistant_response = "Lo siento, solo puedo responder en español y de forma directa. ¿Puedes reformular tu pregunta?"
-
-        # --- MENSAJE DE FALLBACK SI LA RESPUESTA NO ES VÁLIDA ---
+            assistant_response = "Lo siento, solo puedo responder en español y de forma directa. ¿Puedes reformular tu pregunta?"        # --- MENSAJE DE FALLBACK SI LA RESPUESTA NO ES VÁLIDA ---
         if not assistant_response or assistant_response.strip() == '' or assistant_response.strip().lower() in ['no lo sé', 'no se', 'no sé', 'no tengo respuesta', 'no puedo responder', 'null', 'none']:
             assistant_response = "Lo siento, no he podido generar una respuesta válida. Por favor, intenta de nuevo o contacta con soporte."
 
         return {"response": assistant_response}
     except Exception as e:
         print("ERROR EN /chat:", e)
-        raise HTTPException(status_code=500, detail=str(e))
+        # No exponer detalles del error interno al cliente
+        raise HTTPException(status_code=500, detail="Error interno del servidor. El asistente no está disponible temporalmente.")

@@ -3,6 +3,7 @@ import { FaSearch, FaTrash, FaEdit, FaPlus, FaSort, FaSortUp, FaSortDown, FaExcl
 import LoadingSpinner from '../LoadingSpinner';
 import AdminDeleteModal from './AdminDeleteModal';
 import ReactDOM from 'react-dom';
+import { authManager } from '../../utils/authManager';
 
 const ProductManagement = () => {
   const [products, setProducts] = useState([]);
@@ -19,10 +20,10 @@ const ProductManagement = () => {
   useEffect(() => {
     fetchProducts();
   }, []);
-
   const fetchProducts = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const user = authManager.getUser();
+      const token = user?.accessToken;
       if (!token) {
         throw new Error('No hay token de autenticación');
       }
@@ -49,11 +50,11 @@ const ProductManagement = () => {
   const handleDeleteProduct = (product) => {
     setDeleteProduct(product);
   };
-
   const confirmDeleteProduct = async () => {
     if (!deleteProduct) return;
     try {
-      const token = localStorage.getItem('token');
+      const user = authManager.getUser();
+      const token = user?.accessToken;
       const response = await fetch(`http://localhost:8000/admin/products/${deleteProduct.id}`, {
         method: 'DELETE',
         headers: {
@@ -144,10 +145,11 @@ const ProductManagement = () => {
 
   const handleAddProduct = () => setShowAdd(true);
   const handleEditProduct = (product) => setEditProduct(product);
-
   const handleCreateProduct = async (form) => {
     try {
-      const token = localStorage.getItem('token');
+      const user = authManager.getUser();
+      const token = user?.accessToken;
+      const userEmail = user?.email;
       const formData = new FormData();
       formData.append('nombre', form.nombre);
       formData.append('descripcion', form.descripcion);
@@ -155,7 +157,7 @@ const ProductManagement = () => {
       formData.append('stock', form.stock);
       formData.append('categoria', form.categoria);
       formData.append('estado', form.estado);
-      formData.append('usuario_email', localStorage.getItem('userEmail') || '');
+      formData.append('usuario_email', userEmail || '');
       // No se envía imagen, el backend pone la de gato si no hay
       const response = await fetch('http://localhost:8000/productos', {
         method: 'POST',
@@ -175,10 +177,10 @@ const ProductManagement = () => {
       setError(err.message);
     }
   };
-
   const handleUpdateProduct = async (form) => {
     try {
-      const token = localStorage.getItem('token');
+      const user = authManager.getUser();
+      const token = user?.accessToken;
       const formData = new FormData();
       formData.append('nombre', form.nombre);
       formData.append('descripcion', form.descripcion);

@@ -14,9 +14,7 @@ const ChatList = ({ onSelectChat }) => {
   const [menuOpenId, setMenuOpenId] = useState(null);
   const menuRef = React.useRef(null);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
-  const [chatToLeave, setChatToLeave] = useState(null);
-
-  const loadChats = async () => {
+  const [chatToLeave, setChatToLeave] = useState(null);  const loadChats = async () => {
     try {
       const userChats = await directChatManager.getChats();
       setChats(userChats);

@@ -4,6 +4,7 @@ import LoadingSpinner from './LoadingSpinner';
 import useLoadingState from '../hooks/useLoadingState';
 import Toast from './Toast';
 import { apiManager } from '../utils/apiManager';
+import { authManager } from '../utils/authManager';
 
 // Datos de ejemplo (reemplazar por fetch a la API en el futuro)
 const savedArticles = [];
@@ -23,17 +24,16 @@ const SavedArticlesList = () => {
 
   useEffect(() => {
     fetchSavedArticles();
-  }, []);
-
-  const fetchSavedArticles = async () => {
+  }, []);  const fetchSavedArticles = async () => {
     try {
       setLoading(true);
-      const userEmail = localStorage.getItem('userEmail');
+      const user = authManager.getUser();
+      const userEmail = user?.email;
       if (!userEmail) {
         setError('No se ha encontrado el email del usuario. Por favor, inicia sesión.');
         return;
       }
-      const data = await apiManager.get(`/usuarios/email/${userEmail}/articulos-guardados`);
+      const data = await apiManager.getSavedArticles(userEmail);
       setArticles(data);
       setError(null);
     } catch (err) {
@@ -43,18 +43,17 @@ const SavedArticlesList = () => {
       setLoading(false);
     }
   };
-
   const handleDeleteArticle = async (articleId) => {
     try {
       setDeletingId(articleId);
-      const userEmail = localStorage.getItem('userEmail');
+      const user = authManager.getUser();
+      const userEmail = user?.email;
       if (!userEmail) {
         setToastMessage('No se ha encontrado el email del usuario');
         setToastType('error');
         setShowToast(true);
         return;
-      }
-      await apiManager.delete(`/usuarios/${userEmail}/articulos-guardados/${articleId}`);
+      }      await apiManager.removeSavedArticle(userEmail, articleId);
       setArticles(articles.filter(article => article.id !== articleId));
       setToastMessage('Artículo eliminado de guardados');
       setToastType('success');

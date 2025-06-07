@@ -50,12 +50,12 @@ const EditArticleModal = ({ open, onClose, onSave, initialData }) => {
       reader.readAsDataURL(file);
     }
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
       await onSave(formData, () => setLoading(false));
+      // Si llegamos aquí, la operación fue exitosa, no mostrar errores
     } catch (error) {
       setToastMessage('Error al guardar los cambios. Por favor, intenta de nuevo.');
       setToastType('error');
@@ -63,10 +63,20 @@ const EditArticleModal = ({ open, onClose, onSave, initialData }) => {
       setLoading(false);
     }
   };
-
   const handleClose = () => {
-    // Verificar si hay cambios sin guardar
-    const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialData);
+    // Verificar si hay cambios sin guardar (excluyendo campos de archivos)
+    const formDataFiltered = { ...formData };
+    const initialDataFiltered = { ...initialData };
+    
+    // Excluir el campo imagen de la comparación si es un File object
+    if (formDataFiltered.imagen instanceof File) {
+      delete formDataFiltered.imagen;
+    }
+    if (initialDataFiltered.imagen instanceof File) {
+      delete initialDataFiltered.imagen;
+    }
+    
+    const hasChanges = JSON.stringify(formDataFiltered) !== JSON.stringify(initialDataFiltered);
     if (hasChanges) {
       setToastMessage('Tienes cambios sin guardar. ¿Estás seguro de que quieres cerrar?');
       setToastType('warning');
@@ -105,9 +115,8 @@ const EditArticleModal = ({ open, onClose, onSave, initialData }) => {
 
         {/* Contenido con scroll */}
         <div className="overflow-y-auto pr-1" style={{ maxHeight: 'calc(95vh - 10rem)' }}>
-          <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 flex justify-between items-center">
+          <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">            <div>
+              <label className="flex justify-between items-center text-sm font-medium text-gray-700 mb-1">
                 Título
                 <span className="text-xs text-gray-500">{(formData.titulo || '').length}/{TITLE_LIMIT}</span>
               </label>
@@ -122,9 +131,8 @@ const EditArticleModal = ({ open, onClose, onSave, initialData }) => {
                 maxLength={TITLE_LIMIT}
                 className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 flex justify-between items-center">
+            </div>            <div>
+              <label className="flex justify-between items-center text-sm font-medium text-gray-700 mb-1">
                 Descripción
                 <span className="text-xs text-gray-500">{(formData.descripcion || '').length}/{DESC_LIMIT}</span>
               </label>
@@ -189,9 +197,8 @@ const EditArticleModal = ({ open, onClose, onSave, initialData }) => {
                   </>
                 )}
               </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 flex justify-between items-center">
+            </div>            <div>
+              <label className="flex justify-between items-center text-sm font-medium text-gray-700 mb-1">
                 Contenido
                 <span className="text-xs text-gray-500">{(formData.contenido || '').length}/{CONTENT_LIMIT}</span>
               </label>

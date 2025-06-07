@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaImage, FaSpinner, FaPaperPlane } from 'react-icons/fa';
 import LoadingSpinner from './LoadingSpinner';
 import useLoadingState from '../hooks/useLoadingState';
+import { authManager } from '../utils/authManager';
 
 const PostArticleForm = () => {
   const [formData, setFormData] = useState({
@@ -56,11 +57,10 @@ const PostArticleForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-
-    try {
-      const userEmail = localStorage.getItem('userEmail');
-      const userName = localStorage.getItem('userName');
+    setLoading(true);    try {
+      const user = authManager.getUser();
+      const userEmail = user?.email;
+      const userName = user?.displayName;
       const formDataToSend = new FormData();
       Object.keys(formData).forEach(key => {
         if (key === 'imagen') {

@@ -4,6 +4,8 @@ import { validateEmail, validateName, validatePassword } from '../utils/validati
 import { FaCreditCard, FaPaypal, FaMoneyBillWave } from 'react-icons/fa';
 import { getMetodosPago, saveMetodoPago, deleteMetodoPago } from '../utils/api';
 import { apiManager } from '../utils/apiManager';
+import { authManager } from '../utils/authManager';
+import PasswordRequirements from './PasswordRequirements';
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -43,11 +45,11 @@ const EditProfileForm = () => {
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState({ open: false, message: '', type: 'success' });
-  const [showPassword, setShowPassword] = useState(false);
+  const [toast, setToast] = useState({ open: false, message: '', type: 'success' });  const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ password: '', confirmPassword: '' });
   const [passwordErrors, setPasswordErrors] = useState({});
+  const [showPasswordErrors, setShowPasswordErrors] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -57,27 +59,27 @@ const EditProfileForm = () => {
   const [paymentSaved, setPaymentSaved] = useState(false);
   const [paymentError, setPaymentError] = useState('');
   const [metodosGuardados, setMetodosGuardados] = useState({});
-
   useEffect(() => {
-    // Cargar datos actuales del usuario
-    const nombre = localStorage.getItem('userName') || '';
-    const email = localStorage.getItem('userEmail') || '';
-    const foto = localStorage.getItem('userPhoto') || '';
-    const biografia = localStorage.getItem('userBio') || '';
-    setForm(f => ({ ...f, nombre, email, fotoPreview: foto, biografia }));
-
-    // Cargar métodos de pago guardados
-    const uid = localStorage.getItem('uid');
-    if (uid) {
-      getMetodosPago(uid).then(data => {
-        setMetodosGuardados(data || {});
-        // Si hay alguno guardado, selecciona el primero
-        const tipos = Object.keys(data || {});
-        if (tipos.length > 0) {
-          setSelectedMethod(tipos[0]);
-          setPaymentForm({ ...initialForms[tipos[0]], ...data[tipos[0]] });
-        }
-      });
+    // Cargar datos actuales del usuario desde Zustand
+    const user = authManager.getUser();
+    if (user) {
+      const nombre = user.name || '';
+      const email = user.email || '';
+      const foto = user.photo || '';
+      const biografia = user.biografia || '';
+      setForm(f => ({ ...f, nombre, email, fotoPreview: foto, biografia }));      // Cargar métodos de pago guardados
+      const uid = user.uid;
+      if (uid) {
+        getMetodosPago(uid).then(data => {
+          setMetodosGuardados(data || {});
+          // Si hay alguno guardado, selecciona el primero
+          const tipos = Object.keys(data || {});
+          if (tipos.length > 0) {
+            setSelectedMethod(tipos[0]);
+            setPaymentForm({ ...initialForms[tipos[0]], ...data[tipos[0]] });
+          }
+        });
+      }
     }
   }, []);
 
@@ -120,7 +122,6 @@ const EditProfileForm = () => {
       deletePhoto: true
     }));
   };
-
   const handleSubmit = async e => {
     e.preventDefault();
     const errs = validate();
@@ -128,7 +129,13 @@ const EditProfileForm = () => {
     if (Object.keys(errs).length > 0) return;
     setLoading(true);
     try {
-      const uid = localStorage.getItem('uid');
+      const user = authManager.getUser();
+      const uid = user?.uid;
+      
+      if (!uid) {
+        throw new Error('Usuario no autenticado');
+      }
+      
       const formData = new FormData();
       formData.append('uid', uid);
       formData.append('nombre', form.nombre);
@@ -136,24 +143,26 @@ const EditProfileForm = () => {
       formData.append('biografia', form.biografia);
       if (form.foto) formData.append('foto', form.foto);
       if (form.deletePhoto) formData.append('delete_photo', 'true');
+        const data = await apiManager.put('/auth/update-profile', formData);
       
-      const data = await apiManager.put('/auth/update-profile', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      // Actualizar datos del usuario en Zustand
+      const updatedUser = {
+        ...user,
+        name: form.nombre,
+        email: form.email,
+        biografia: data.data?.biografia || form.biografia,
+        photo: form.deletePhoto ? null : (data.data?.foto || user.photo)
+      };
       
-      // Actualizar localStorage
-      localStorage.setItem('userName', form.nombre);
-      localStorage.setItem('userEmail', form.email);
-      if (data.data && data.data.biografia !== undefined) {
-        localStorage.setItem('userBio', data.data.biografia);
-      }
-      if (form.deletePhoto) {
-        localStorage.removeItem('userPhoto');
-      } else if (data.data && data.data.foto) {
-        localStorage.setItem('userPhoto', data.data.foto);
-      }
+      // Actualizar el store de Zustand
+      authManager.store.getState().setAuth(updatedUser, authManager.store.getState().token, authManager.store.getState().refreshToken);
+      
       setToast({ open: true, message: 'Perfil actualizado con éxito', type: 'success' });
-      setTimeout(() => window.location.href = '/profile', 1200);
+      
+      // Redirigir al perfil después de un breve delay para mostrar el toast
+      setTimeout(() => {
+        window.location.href = '/profile';
+      }, 1500);
     } catch (err) {
       setToast({ open: true, message: err.message, type: 'error' });
     } finally {
@@ -170,20 +179,27 @@ const EditProfileForm = () => {
     else if (passwordForm.password !== passwordForm.confirmPassword) errs.confirmPassword = 'Las contraseñas no coinciden';
     return errs;
   };
-
   const handlePasswordChange = e => {
     const { name, value } = e.target;
     setPasswordForm(f => ({ ...f, [name]: value }));
-  };
-
-  const handlePasswordSubmit = async e => {
+    setShowPasswordErrors(false);
+  };  const handlePasswordSubmit = async e => {
     e.preventDefault();
     const errs = validatePasswordForm();
     setPasswordErrors(errs);
-    if (Object.keys(errs).length > 0) return;
+    if (Object.keys(errs).length > 0) {
+      setShowPasswordErrors(true);
+      return;
+    }
     setPasswordLoading(true);
     try {
-      const email = localStorage.getItem('userEmail');
+      const user = authManager.getUser();
+      const email = user?.email;
+      
+      if (!email) {
+        throw new Error('Usuario no autenticado');
+      }
+      
       await apiManager.post('/auth/direct-reset-password', {
         email,
         newPassword: passwordForm.password
@@ -196,7 +212,6 @@ const EditProfileForm = () => {
       setPasswordLoading(false);
     }
   };
-
   const handleDeleteAccount = async () => {
     if (!showDeleteConfirm) {
       setShowDeleteConfirm(true);
@@ -205,8 +220,9 @@ const EditProfileForm = () => {
 
     setDeleteLoading(true);
     try {
-      const uid = localStorage.getItem('uid');
-      const email = localStorage.getItem('userEmail');
+      const user = authManager.getUser();
+      const uid = user?.uid;
+      const email = user?.email;
       
       // Verificar que los datos coinciden con el usuario actual
       if (!uid || !email) {
@@ -218,8 +234,8 @@ const EditProfileForm = () => {
         email
       });
       
-      // Limpiar localStorage
-      localStorage.clear();
+      // Limpiar datos de autenticación con Zustand
+      authManager.clearAuthData();
       
       setToast({ open: true, message: 'Cuenta eliminada con éxito', type: 'success' });
       setTimeout(() => window.location.href = '/', 1200);
@@ -245,10 +261,15 @@ const EditProfileForm = () => {
     setPaymentSaved(false);
     setPaymentError('');
   };
-
   const handleSavePaymentMethod = async () => {
-    const uid = localStorage.getItem('uid');
-    if (!uid) return;
+    const user = authManager.getUser();
+    const uid = user?.uid;
+    
+    if (!uid) {
+      setPaymentError('Usuario no autenticado');
+      return;
+    }
+    
     setPaymentLoading(true);
     setPaymentError('');
     try {
@@ -260,10 +281,15 @@ const EditProfileForm = () => {
     }
     setPaymentLoading(false);
   };
-
   const handleDeletePaymentMethod = async (tipo) => {
-    const uid = localStorage.getItem('uid');
-    if (!uid) return;
+    const user = authManager.getUser();
+    const uid = user?.uid;
+    
+    if (!uid) {
+      setPaymentError('Usuario no autenticado');
+      return;
+    }
+    
     setPaymentLoading(true);
     try {
       await deleteMetodoPago(uid, tipo);
@@ -280,10 +306,9 @@ const EditProfileForm = () => {
       setPaymentError('Error al eliminar el método de pago');
     }
     setPaymentLoading(false);
-  };
-
-  return (
-    <form className="bg-white rounded-2xl shadow-xl p-8 space-y-6 border border-gray-100" onSubmit={handleSubmit}>
+  };return (
+    <div className="w-full flex justify-center px-2 py-10">
+      <form className="bg-white rounded-lg shadow-md p-8 space-y-6 border border-gray-200 w-full max-w-5xl" onSubmit={handleSubmit}>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
         <input type="text" name="nombre" value={form.nombre} onChange={handleChange} className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Tu nombre" required />
@@ -346,8 +371,7 @@ const EditProfileForm = () => {
       <hr className="my-8" />
       <div className="space-y-4">
         <h3 className="text-xl font-bold text-gray-800 mb-2">Cambiar contraseña</h3>
-        <form className="space-y-4" onSubmit={handlePasswordSubmit} autoComplete="off">
-          <div>
+        <form className="space-y-4" onSubmit={handlePasswordSubmit} autoComplete="off">          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña</label>
             <div className="relative">
               <input
@@ -373,6 +397,11 @@ const EditProfileForm = () => {
                 )}
               </button>
             </div>
+            <PasswordRequirements 
+              password={passwordForm.password} 
+              showErrors={showPasswordErrors} 
+              mostrar={true}
+            />
             {passwordErrors.password && <p className="text-red-600 text-sm mt-1">{passwordErrors.password}</p>}
           </div>
           <div>
@@ -411,12 +440,11 @@ const EditProfileForm = () => {
       <hr className="my-8" />
       <div className="space-y-4">
         <h3 className="text-xl font-bold text-gray-800 mb-2">Método de pago</h3>
-        <div className="space-y-4">
-          <div>
+        <div className="space-y-4">          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Selecciona un método de pago</label>
-            <div className="flex gap-4 mb-4">
+            <div className="flex flex-col gap-3 mb-4">
               {paymentMethods.map(method => (
-                <label key={method.value} className={`flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg border transition-all duration-200 ${selectedMethod === method.value ? 'border-purple-600 bg-purple-50' : 'border-gray-300 bg-white hover:bg-gray-100'}`}>
+                <label key={method.value} className={`flex items-center gap-2 cursor-pointer px-4 py-3 rounded-lg border transition-all duration-200 ${selectedMethod === method.value ? 'border-purple-600 bg-purple-50' : 'border-gray-300 bg-white hover:bg-gray-100'}`}>
                   <input
                     type="radio"
                     name="paymentMethod"
@@ -431,7 +459,7 @@ const EditProfileForm = () => {
                     <button
                       type="button"
                       title="Eliminar método"
-                      className="ml-2 text-red-500 hover:text-red-700 text-xs px-2 py-1 rounded"
+                      className="ml-auto text-red-500 hover:text-red-700 text-xs px-2 py-1 rounded"
                       onClick={e => { e.stopPropagation(); handleDeletePaymentMethod(method.value); }}
                       disabled={paymentLoading}
                     >
@@ -519,8 +547,14 @@ const EditProfileForm = () => {
           </button>
         )}
       </div>
-      <Toast isOpen={toast.open} message={toast.message} type={toast.type} onClose={() => setToast(t => ({ ...t, open: false }))} />
+      {toast.open && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type}        onClose={() => setToast(t => ({ ...t, open: false }))} 
+        />
+      )}
     </form>
+    </div>
   );
 };
 

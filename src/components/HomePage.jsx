@@ -5,6 +5,7 @@ import CartButton from './CartButton';
 import UserButton from './UserButton';
 import Slider from './Slider';
 import { apiManager } from '../utils/apiManager';
+import { authManager } from '../utils/authManager';
 
 const HomePage = () => {
   const [productos, setProductos] = useState([]);
@@ -13,22 +14,12 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
   const [showContent, setShowContent] = useState(false);
   const [imageIndexes, setImageIndexes] = useState({}); // { [productoId]: index }
-
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const expiresAt = localStorage.getItem('tokenExpiresAt');
-    if (token && expiresAt) {
-      const now = new Date();
-      if (now > new Date(expiresAt)) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('tokenExpiresAt');
-        localStorage.removeItem('userEmail');
-        localStorage.removeItem('userName');
-        localStorage.removeItem('userPhoto');
-        localStorage.removeItem('userBio');
-        localStorage.removeItem('uid');
-        window.location.reload();
-      }
+    // Check if user is authenticated (authManager handles token expiration internally)
+    const user = authManager.getUser();
+    if (user && !authManager.isTokenValid()) {
+      authManager.logout();
+      window.location.reload();
     }
   }, []);
 

@@ -1,13 +1,14 @@
 import { useEffect } from 'react';
+import { authManager } from '../utils/authManager';
 
-const AdminRedirect = () => {
-    useEffect(() => {
-        const userRole = localStorage.getItem('userRole');
+const AdminRedirect = () => {    useEffect(() => {
+        const user = authManager.getUser();
+        const userRole = user?.role;
         const cookies = document.cookie.split(';');
         const userRoleCookie = cookies.find(cookie => cookie.trim().startsWith('userRole='));
         const cookieRole = userRoleCookie ? userRoleCookie.split('=')[1] : null;
         
-        console.log('Rol del usuario (localStorage):', userRole);
+        console.log('Rol del usuario (authManager):', userRole);
         console.log('Rol del usuario (cookie):', cookieRole);
         
         // Solo redirigir si el usuario es admin y no está ya en la página de admin

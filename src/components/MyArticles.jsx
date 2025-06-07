@@ -8,6 +8,7 @@ import EditArticleModal from './EditArticleModal';
 import Toast from './Toast';
 import useLoadingState from '../hooks/useLoadingState';
 import { apiManager } from '../utils/apiManager';
+import { authManager } from '../utils/authManager';
 
 const MyArticles = () => {
   const [articles, setArticles] = useState([]);
@@ -19,10 +20,9 @@ const MyArticles = () => {
   const [articleToEdit, setArticleToEdit] = useState(null);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [toastType, setToastType] = useState('success');
-
-  useEffect(() => {
-    const userEmail = localStorage.getItem('userEmail');
+  const [toastType, setToastType] = useState('success');  useEffect(() => {
+    const user = authManager.getUser();
+    const userEmail = user?.email;
     if (!userEmail) {
       setError('No se ha encontrado el email del usuario. Por favor, inicia sesión.');
       setLoading(false);
@@ -68,11 +68,9 @@ const MyArticles = () => {
       console.error('Error deleting article:', err);
     }
   };
-
   // Guardar cambios de edición
   const handleEditSave = async (formData, stopLoading) => {
     try {
-      let updatedArticle = { ...formData };
       // Siempre usa FormData, aunque no haya imagen
       const data = new FormData();
       data.append('titulo', formData.titulo);
@@ -84,12 +82,9 @@ const MyArticles = () => {
       if (formData.imagen instanceof File) {
         data.append('imagen', formData.imagen);
       }
-      const response = await apiManager.put(
-        `/articulos/${formData.id}`,
-        data,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      );
-      updatedArticle = response.data;
+      
+      const updatedArticle = await apiManager.put(`/articulos/${formData.id}`, data);
+      
       setArticles(prev => prev.map(a => a.id === updatedArticle.id ? updatedArticle : a));
       setEditModalOpen(false);
       setArticleToEdit(null);

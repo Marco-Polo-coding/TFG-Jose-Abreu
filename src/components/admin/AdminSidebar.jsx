@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FaUsers, FaBox, FaNewspaper, FaChartBar, FaSignOutAlt, FaShoppingCart } from 'react-icons/fa';
 import useCartStore from '../../store/cartStore';
+import { authManager } from '../../utils/authManager';
 
 const navItems = [
   { href: '/admin/dashboard', icon: <FaChartBar />, label: 'Dashboard' },
@@ -12,14 +13,18 @@ const navItems = [
 
 const handleLogout = () => {
   const clearCartOnLogout = useCartStore.getState().clearCartOnLogout;
-  localStorage.removeItem('token');
-  localStorage.removeItem('userRole');
-  localStorage.removeItem('userEmail');
-  localStorage.removeItem('userName');
-  localStorage.removeItem('userPhoto');
-  localStorage.removeItem('uid');
+  
+  // Limpiar datos de autenticación usando Zustand
+  authManager.clearAuthData();
+  
+  // Limpiar cookies
   document.cookie = 'userRole=; path=/; max-age=0';
+  document.cookie = 'auth_token=; path=/; max-age=0';
+  
+  // Limpiar carrito
   clearCartOnLogout();
+  
+  // Redirigir
   window.location.href = '/';
 };
 

@@ -4,6 +4,7 @@ import { FaTimes, FaShoppingCart, FaTrash, FaMinus, FaPlus } from 'react-icons/f
 import useCartStore from '../store/cartStore';
 import Toast from './Toast';
 import LoadingSpinner from './LoadingSpinner';
+import { authManager } from '../utils/authManager';
 
 const CartModal = ({ isOpen, onClose, onOpenLoginModal }) => {
   const { items, removeItem, updateQuantity, clearCart } = useCartStore();
@@ -133,11 +134,11 @@ const CartModal = ({ isOpen, onClose, onOpenLoginModal }) => {
                   Seguir comprando
                 </button>
               )}
-              {items.length > 0 && (
-                <button
+              {items.length > 0 && (                <button
                   onClick={() => {
-                    const uid = localStorage.getItem('uid');
-                    const userEmail = localStorage.getItem('userEmail');
+                    const user = authManager.getUser();
+                    const uid = user?.uid;
+                    const userEmail = user?.email;
                     if (!uid && !userEmail) {
                       showNotification('Debes registrarte o iniciar sesión antes de poder comprar un producto', 'error');
                       return;

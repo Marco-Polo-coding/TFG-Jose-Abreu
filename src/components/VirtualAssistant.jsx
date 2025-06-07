@@ -29,6 +29,7 @@ const VirtualAssistant = () => {
   const [loadingChats, setLoadingChats] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [chatIdToDelete, setChatIdToDelete] = useState(null);
+  const inputRef = useRef(null);
 
   // Control de visibilidad durante la carga y actualización de la ruta
   useEffect(() => {
@@ -82,13 +83,41 @@ const VirtualAssistant = () => {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => {
+        setShowToast(false);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [showToast]);
+
+  // Manejo de teclas para cerrar el chat con Escape
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      // Enfocar el input cuando se abre el chat
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
 
+    const trimmedInput = input.trim();
     const userMessage = {
       type: 'user',
-      content: input
+      content: trimmedInput
     };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
@@ -104,12 +133,17 @@ const VirtualAssistant = () => {
     try {
       // Guardar mensaje del usuario en el historial del chat si hay chat seleccionado
       if (selectedChatId) {
-        await chatManager.addMessage(selectedChatId, {
-          role: 'user',
-          content: input
-        });
+        try {
+          await chatManager.addMessage(selectedChatId, {
+            role: 'user',
+            content: trimmedInput
+          });
+        } catch (authError) {
+          console.warn('No se pudo guardar el mensaje en el historial:', authError);
+          // Continuar sin interrumpir el flujo del chat
+        }
       }
-      const data = await chatManager.sendMessage(input, history);
+      const data = await chatManager.sendMessage(trimmedInput, history);
       const assistantMessage = {
         type: 'assistant',
         content: data.response || 'El asistente no está disponible ahora mismo. Por favor, contacta con soporte en info@crpghub.com.'
@@ -117,10 +151,15 @@ const VirtualAssistant = () => {
       setMessages(prev => [...prev, assistantMessage]);
       // Guardar respuesta del asistente en el historial del chat si hay chat seleccionado
       if (selectedChatId) {
-        await chatManager.addMessage(selectedChatId, {
-          role: 'assistant',
-          content: assistantMessage.content
-        });
+        try {
+          await chatManager.addMessage(selectedChatId, {
+            role: 'assistant',
+            content: assistantMessage.content
+          });
+        } catch (authError) {
+          console.warn('No se pudo guardar la respuesta en el historial:', authError);
+          // Continuar sin interrumpir el flujo del chat
+        }
       }
     } catch (error) {
       setMessages(prev => [...prev, {
@@ -141,7 +180,9 @@ const VirtualAssistant = () => {
       return;
     }
     try {
-      await chatManager.createChat(null, [
+      // Limpiar el chat seleccionado anterior
+      setSelectedChatId(null);
+      const newChat = await chatManager.createChat(null, [
         {
           role: 'assistant',
           content: '¡Hola! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?'
@@ -153,6 +194,7 @@ const VirtualAssistant = () => {
           content: '¡Hola! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?'
         }
       ]);
+      setSelectedChatId(newChat.id); // Vincular el nuevo chat con la conversación
       setInput('');
     } catch (error) {
       setToastMessage('No se pudo crear un nuevo chat. Inténtalo de nuevo.');
@@ -231,6 +273,8 @@ const VirtualAssistant = () => {
       setToastMessage('No se pudo borrar el chat.');
       setToastType('error');
       setShowToast(true);
+      // Refrescar la lista para mantener consistencia
+      fetchChats();
     } finally {
       setShowDeleteModal(false);
       setChatIdToDelete(null);
@@ -255,6 +299,8 @@ const VirtualAssistant = () => {
       setToastMessage('No se pudo renombrar el chat.');
       setToastType('error');
       setShowToast(true);
+      // Refrescar la lista en caso de error para mantener consistencia
+      fetchChats();
     }
   };
 
@@ -266,8 +312,10 @@ const VirtualAssistant = () => {
       <button
         onClick={() => setIsOpen(true)}
         className={`fixed ${getButtonPosition()} right-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 ${getZIndex()}`}
+        aria-label="Abrir asistente virtual"
+        title="Abrir asistente virtual"
       >
-        <FaRobot className="w-6 h-6" />
+        <FaRobot className="w-6 h-6" aria-hidden="true" />
       </button>
 
       {/* Ventana del chat */}
@@ -411,7 +459,12 @@ const VirtualAssistant = () => {
           {view === 'chat' && (
             <>
               {/* Mensajes */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div 
+                className="flex-1 overflow-y-auto p-4 space-y-4"
+                role="log" 
+                aria-label="Conversación con el asistente virtual"
+                aria-live="polite"
+              >
                 {messages.map((message, index) => (
                   <div
                     key={index}
@@ -423,6 +476,8 @@ const VirtualAssistant = () => {
                           ? 'bg-purple-600 text-white'
                           : 'bg-gray-100 text-gray-800'
                       }`}
+                      role={message.type === 'user' ? 'log' : 'status'}
+                      aria-label={message.type === 'user' ? 'Tu mensaje' : 'Respuesta del asistente'}
                     >
                       {message.content}
                     </div>
@@ -450,13 +505,17 @@ const VirtualAssistant = () => {
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Escribe tu mensaje..."
                     className="flex-1 p-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    aria-label="Escribe tu mensaje al asistente virtual"
+                    disabled={isLoading}
+                    ref={inputRef}
                   />
                   <button
                     type="submit"
-                    disabled={isLoading}
-                    className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700 transition-colors disabled:opacity-50"
+                    disabled={isLoading || !input.trim()}
+                    className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label="Enviar mensaje"
                   >
-                    <FaPaperPlane className="w-5 h-5" />
+                    <FaPaperPlane className="w-5 h-5" aria-hidden="true" />
                   </button>
                 </div>
               </form>

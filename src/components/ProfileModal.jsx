@@ -1,5 +1,6 @@
 import React from 'react';
 import { FaTimes, FaBook, FaShoppingBag, FaChartLine } from 'react-icons/fa';
+import { authManager } from '../utils/authManager';
 
 const ProfileModal = ({ isOpen, onClose, userData }) => {
   if (!isOpen) return null;
@@ -25,9 +26,9 @@ const ProfileModal = ({ isOpen, onClose, userData }) => {
     const index = email.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
     return colors[index];
   };
-
   // Utilidad para saber si la foto es válida
-  const userPhoto = localStorage.getItem('userPhoto');
+  const user = authManager.getUser();
+  const userPhoto = user?.photoURL;
   const isValidPhoto = userPhoto && !userPhoto.includes('googleusercontent.com') && userPhoto !== '';
 
   return (

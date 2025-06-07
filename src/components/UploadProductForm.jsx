@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaImage, FaSpinner, FaPaperPlane, FaTrash } from 'react-icons/fa';
 import LoadingSpinner from './LoadingSpinner';
+import { authManager } from '../utils/authManager';
 
 const UploadProductForm = () => {
   const [formData, setFormData] = useState({
@@ -100,9 +101,9 @@ const UploadProductForm = () => {
         } else if (key !== 'stock') {
           formDataToSend.append(key, formData[key]);
         }
-      });
-      formDataToSend.append('stock', 1);
-      const userEmail = localStorage.getItem('userEmail');
+      });      formDataToSend.append('stock', 1);
+      const user = authManager.getUser();
+      const userEmail = user?.email;
       if (userEmail) {
         formDataToSend.append('usuario_email', userEmail);
       }

@@ -59,9 +59,13 @@ app.include_router(ws_chat_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:4321",  # Frontend Astro
+        "http://localhost:4321",  # Frontend Astro (puerto original)
+        "http://localhost:4322",  # Frontend Astro (puerto alternativo)
+        "http://localhost:4323",  # Frontend Astro (puerto alternativo 2)
         "http://localhost:8000",  # Backend FastAPI
         "http://127.0.0.1:4321",  # Frontend alternativa
+        "http://127.0.0.1:4322",  # Frontend alternativa
+        "http://127.0.0.1:4323",  # Frontend alternativa 2
         "http://127.0.0.1:8000"   # Backend alternativa
     ],
     allow_credentials=True,

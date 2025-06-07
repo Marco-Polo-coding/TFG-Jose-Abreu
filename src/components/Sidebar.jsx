@@ -1,14 +1,16 @@
 import React from 'react';
 import { FaUsers, FaBox, FaNewspaper, FaChartBar, FaSignOutAlt } from 'react-icons/fa';
+import { authManager } from '../utils/authManager';
 
 const handleLogout = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('userRole');
-  localStorage.removeItem('userEmail');
-  localStorage.removeItem('userName');
-  localStorage.removeItem('userPhoto');
-  localStorage.removeItem('uid');
+  // Limpiar datos de autenticación usando Zustand
+  authManager.clearAuthData();
+  
+  // Limpiar cookies
   document.cookie = 'userRole=; path=/; max-age=0';
+  document.cookie = 'auth_token=; path=/; max-age=0';
+  
+  // Redirigir
   window.location.href = '/';
 };
 

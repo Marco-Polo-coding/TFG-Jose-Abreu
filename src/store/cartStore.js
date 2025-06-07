@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { authManager } from '../utils/authManager';
 
 const useCartStore = create(
   persist(
@@ -12,8 +13,10 @@ const useCartStore = create(
       setError: (error) => set({ error }),
       
       addItem: (item) => {
-        const userEmail = localStorage.getItem('userEmail');
-        const uid = localStorage.getItem('uid');
+        const user = authManager.getUser();
+        const userEmail = user?.email;
+        const uid = user?.uid;
+        
         if (!userEmail && !uid) {
           throw new Error('Debes iniciar sesión para añadir productos al carrito');
         }

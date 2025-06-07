@@ -4,14 +4,18 @@ class ChatManager {
   constructor() {
     this.baseUrl = 'http://localhost:8000';
   }
-
   // Obtener headers comunes
   async getHeaders() {
     const token = await authManager.getToken();
-    return {
+    const headers = {
       'Content-Type': 'application/json',
-      'Authorization': token ? `Bearer ${token}` : '',
     };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return headers;
   }
 
   // Manejar respuesta
