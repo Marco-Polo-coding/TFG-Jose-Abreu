@@ -53,8 +53,10 @@ function parseJwt (token) {
 class AuthManager {
   constructor() {
     this.store = useAuthStore;
+    this.expirationTimer = null;
+    this.warningShown = false;
+    this.isMonitoring = false;
   }
-
   // Guardar datos de autenticación
   setAuthData(data) {
     // Guardar en el store de Zustand únicamente
@@ -75,8 +77,10 @@ class AuthManager {
 
     // Disparar evento personalizado para notificar cambios
     window.dispatchEvent(new CustomEvent('authStateChanged', { detail: userData }));
-  }
 
+    // Iniciar monitoreo de expiración
+    this.startExpirationMonitoring();
+  }
   // Limpiar datos de autenticación
   clearAuthData() {
     // Limpiar store únicamente
@@ -84,6 +88,9 @@ class AuthManager {
 
     // Limpiar cookie segura
     this.clearSecureCookie('auth_token');
+
+    // Detener monitoreo de expiración
+    this.stopExpirationMonitoring();
 
     // Disparar evento personalizado para notificar cambios
     window.dispatchEvent(new CustomEvent('authStateChanged', { detail: null }));
@@ -169,17 +176,157 @@ class AuthManager {
   getUser() {
     return this.store.getState().user;
   }
-
   // Verificar si es admin
   isAdmin() {
     return this.store.getState().user?.role === 'admin';
   }
 
+  // Inicializar monitoreo para usuarios ya autenticados
+  initializeForExistingAuth() {
+    // Solo ejecutar si estamos en el navegador
+    if (typeof window === 'undefined') return;
+    
+    // Verificar si ya hay un usuario autenticado
+    if (this.isAuthenticated() && this.isTokenValid()) {
+      console.log('Usuario ya autenticado detectado, iniciando monitoreo de expiración');
+      this.startExpirationMonitoring();
+    }
+  }
   // Cerrar sesión
   logout() {
     this.clearAuthData();
+  }
+
+  // Iniciar monitoreo de expiración del token
+  startExpirationMonitoring() {
+    // Detener cualquier monitoreo previo
+    this.stopExpirationMonitoring();
+    
+    // Resetear flag de advertencia
+    this.warningShown = false;
+    this.isMonitoring = true;
+    
+    // Verificar cada 30 segundos
+    this.expirationTimer = setInterval(() => {
+      this.checkTokenExpiration();
+    }, 30000); // 30 segundos
+    
+    // Verificar inmediatamente
+    this.checkTokenExpiration();
+  }
+
+  // Detener monitoreo de expiración
+  stopExpirationMonitoring() {
+    if (this.expirationTimer) {
+      clearInterval(this.expirationTimer);
+      this.expirationTimer = null;
+    }
+    this.isMonitoring = false;
+    this.warningShown = false;
+  }
+
+  // Verificar si el token está cerca de expirar o ya expiró
+  checkTokenExpiration() {
+    const token = this.store.getState().token;
+    if (!token || !this.isAuthenticated()) {
+      this.stopExpirationMonitoring();
+      return;
+    }
+
+    const payload = parseJwt(token);
+    if (!payload || !payload.exp) {
+      return;
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    const timeUntilExpiration = payload.exp - now;
+
+    // Si el token ya expiró, cerrar sesión y redirigir
+    if (timeUntilExpiration <= 0) {
+      console.log('Token expirado, cerrando sesión automáticamente');
+      this.handleTokenExpired();
+      return;
+    }
+
+    // Si faltan 3 minutos o menos (180 segundos) y no se ha mostrado la advertencia
+    if (timeUntilExpiration <= 180 && !this.warningShown) {
+      this.showExpirationWarning(timeUntilExpiration);
+      this.warningShown = true;
+    }
+  }
+
+  // Manejar token expirado
+  handleTokenExpired() {
+    // Detener monitoreo
+    this.stopExpirationMonitoring();
+    
+    // Limpiar datos de autenticación
+    this.clearAuthData();
+    
+    // Mostrar notificación de sesión expirada
+    this.showSessionExpiredNotification();
+    
+    // Redirigir a la página principal después de un breve delay
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 2000);
+  }
+
+  // Mostrar advertencia de expiración próxima
+  showExpirationWarning(timeUntilExpiration) {
+    const minutes = Math.ceil(timeUntilExpiration / 60);
+    const message = `Tu sesión expirará en ${minutes} minuto${minutes !== 1 ? 's' : ''}. ¿Deseas continuar?`;
+    
+    // Crear evento personalizado para mostrar notificación
+    window.dispatchEvent(new CustomEvent('tokenExpirationWarning', { 
+      detail: { 
+        message,
+        timeUntilExpiration,
+        onContinue: () => this.refreshTokenManually()
+      }
+    }));
+  }
+
+  // Mostrar notificación de sesión expirada
+  showSessionExpiredNotification() {
+    const message = 'Tu sesión ha expirado. Serás redirigido a la página principal.';
+    
+    // Crear evento personalizado para mostrar notificación
+    window.dispatchEvent(new CustomEvent('sessionExpired', { 
+      detail: { message }
+    }));
+  }
+
+  // Refrescar token manualmente cuando el usuario elige continuar
+  async refreshTokenManually() {
+    try {
+      const refreshToken = this.store.getState().refreshToken;
+      if (refreshToken) {
+        await this.refreshIdToken(refreshToken);
+        this.warningShown = false; // Permitir mostrar advertencia nuevamente si es necesario
+        
+        // Notificar que la sesión se extendió
+        window.dispatchEvent(new CustomEvent('sessionExtended', { 
+          detail: { message: 'Sesión extendida exitosamente' }
+        }));
+      } else {
+        throw new Error('No se encontró refresh token');
+      }
+    } catch (error) {
+      console.error('Error al extender sesión:', error);
+      this.handleTokenExpired();
+    }
   }
 }
 
 // Exportar una única instancia
 export const authManager = new AuthManager();
+
+// Inicializar monitoreo automáticamente si ya hay un usuario autenticado
+// Solo ejecutar en el lado del cliente
+if (typeof window !== 'undefined') {
+  // Usar un pequeño delay para asegurar que el store esté hidratado
+  setTimeout(() => {
+    authManager.initializeForExistingAuth();
+  }, 100);
+}

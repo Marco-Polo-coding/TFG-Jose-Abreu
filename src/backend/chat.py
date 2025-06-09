@@ -72,27 +72,30 @@ INSTRUCCIONES GENERALES:
 
 @router.post("/chat")
 async def chat(message: ChatMessage):
-    try:
-        # Construir historial para el modelo (máximo 3 previos)
+    try:        # Construir historial para el modelo (máximo 3 previos)
         history_msgs = []
         if message.history:
             # Solo los últimos 3 mensajes previos
             history_msgs = message.history[-3:]
+        
         # Mensajes para el modelo: contexto, historial y mensaje actual
         model_messages = [
             {"role": "system", "content": ASSISTANT_CONTEXT},
             *history_msgs,
             {"role": "user", "content": message.message}
         ]
+        
         response = ollama.chat(
             model='mistral:instruct',
             messages=model_messages,
             options={
-                "num_predict": 60,
+                "num_predict": 500,  # Aumentado significativamente para respuestas más completas
                 "temperature": 0.5,
                 "top_k": 40,
                 "top_p": 0.9,
-                "repeat_penalty": 1.2
+                "repeat_penalty": 1.2,
+                "num_ctx": 2048,  # Contexto más amplio
+                "stop": []  # No parar en tokens específicos
             }
         )
         assistant_response = response['message']['content']
@@ -106,13 +109,14 @@ async def chat(message: ChatMessage):
         def contiene_roleplay(texto):
             # Solo bloquea si detecta frases muy claras de roleplay
             return bool(re.search(r"imagine that you are|supongamos que eres|act as|actúa como|let's pretend|escenario:|scenario:", texto, re.IGNORECASE))
-
-        # Limitar la respuesta a 300 caracteres (más estricto)
-        if len(assistant_response) > 300:
-            assistant_response = assistant_response[:300] + "..."
+          # Limitar la respuesta a 1200 caracteres (permite respuestas aún más completas)
+        if len(assistant_response) > 1200:
+            assistant_response = assistant_response[:1200] + "..."
 
         if contiene_ingles(assistant_response) or contiene_roleplay(assistant_response):
-            assistant_response = "Lo siento, solo puedo responder en español y de forma directa. ¿Puedes reformular tu pregunta?"        # --- MENSAJE DE FALLBACK SI LA RESPUESTA NO ES VÁLIDA ---
+            assistant_response = "Lo siento, solo puedo responder en español y de forma directa. ¿Puedes reformular tu pregunta?"
+        
+        # --- MENSAJE DE FALLBACK SI LA RESPUESTA NO ES VÁLIDA ---
         if not assistant_response or assistant_response.strip() == '' or assistant_response.strip().lower() in ['no lo sé', 'no se', 'no sé', 'no tengo respuesta', 'no puedo responder', 'null', 'none']:
             assistant_response = "Lo siento, no he podido generar una respuesta válida. Por favor, intenta de nuevo o contacta con soporte."
 

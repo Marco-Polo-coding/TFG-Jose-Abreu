@@ -540,7 +540,7 @@ const VirtualAssistant = () => {
             <h2 className="text-2xl font-bold text-gray-900 mb-4">¿Eliminar chat?</h2>
             <p className="text-gray-700 mb-6">
               ¿Estás seguro de que quieres eliminar
-              <span className="font-semibold text-purple-700"> {chats.find(c => c.id === chatIdToDelete)?.name || 'este chat'}</span>? Esta acción no se puede deshacer.
+              <span className="font-semibold text-purple-700"> {chats.find(c => c.id === chatIdToDelete)?.name?.replace(/(\d{1,2}\/\d{1,2}\/\d{4}),? (\d{1,2}):(\d{2})(?::\d{2})?/g, (match, d, h, m) => `${h}:${m}`) || 'este chat'}</span>? Esta acción no se puede deshacer.
             </p>
             <div className="flex justify-center gap-4">
               <button
