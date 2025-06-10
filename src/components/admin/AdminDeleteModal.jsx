@@ -3,9 +3,15 @@ import { FaTrash } from 'react-icons/fa';
 
 const AdminDeleteModal = ({ isOpen, onClose, onConfirm, title, message, itemName }) => {
   if (!isOpen) return null;
+  
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+  
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center animate-fade-in">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center" onClick={handleOverlayClick}>
+      <div className="fixed inset-0 bg-black bg-opacity-50"></div>
+      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center animate-fade-in relative z-10">
         <div className="flex justify-center mb-4">
           <div className="h-16 w-16 flex items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-pink-500 shadow-lg animate-pulse">
             <FaTrash className="h-8 w-8 text-white" />

@@ -86,7 +86,6 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
     // Redirigir
     window.location.href = '/';
   };
-
   const validatePassword = (password) => {
     const minLength = 8;
     const hasUpperCase = /[A-Z]/.test(password);
@@ -97,22 +96,172 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
     return password.length >= minLength && hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar;
   };
 
-  // Centraliza la gestión de sesión para ambos flujos
+  // Función para convertir errores técnicos en mensajes amigables
+  const getErrorMessage = (error, isLoginMode) => {
+    const errorMessage = error.message || error.detail || error;
+    
+    // Errores de red/conexión
+    if (errorMessage.includes('fetch') || errorMessage.includes('Network')) {
+      return 'Sin conexión a internet. Verifica tu conexión e inténtalo de nuevo.';
+    }
+      // Errores de Firebase Auth
+    if (errorMessage.includes('INVALID_PASSWORD') || errorMessage.includes('EMAIL_NOT_FOUND')) {
+      return 'Email o contraseña incorrectos. Verifica tus datos e inténtalo de nuevo.';
+    }
+    
+    if (errorMessage.includes('WEAK_PASSWORD')) {
+      return 'La contraseña es muy débil. Debe tener al menos 8 caracteres, incluyendo mayúsculas, minúsculas, números y símbolos.';
+    }
+    
+    if (errorMessage.includes('EMAIL_EXISTS') || errorMessage.includes('already exists')) {
+      return 'Este email ya está registrado. Intenta iniciar sesión o usa otro email.';
+    }
+    
+    if (errorMessage.includes('INVALID_EMAIL')) {
+      return 'El formato del email no es válido. Verifica que esté escrito correctamente.';
+    }
+    
+    if (errorMessage.includes('TOO_MANY_ATTEMPTS')) {
+      return 'Demasiados intentos fallidos. Por favor, espera unos minutos antes de intentarlo de nuevo.';
+    }
+    
+    if (errorMessage.includes('USER_DISABLED')) {
+      return 'Esta cuenta ha sido deshabilitada. Contacta al soporte para más información.';
+    }
+    
+    if (errorMessage.includes('OPERATION_NOT_ALLOWED')) {
+      return 'Este método de autenticación no está habilitado. Contacta al soporte.';
+    }
+    
+    // Errores de Google Auth
+    if (errorMessage.includes('popup_closed_by_user')) {
+      return 'Has cerrado la ventana de Google. Inténtalo de nuevo si quieres autenticarte con Google.';
+    }
+    
+    if (errorMessage.includes('access_denied')) {
+      return 'Has denegado el acceso a tu cuenta de Google. Necesitamos permisos para crear tu cuenta.';
+    }
+    
+    if (errorMessage.includes('CREDENTIAL_TOO_OLD')) {
+      return 'Tu sesión de Google ha expirado. Inténtalo de nuevo.';
+    }
+    
+    // Errores de servidor HTTP
+    if (errorMessage.includes('400')) {
+      return isLoginMode 
+        ? 'Datos de inicio de sesión inválidos. Verifica tu email y contraseña.'
+        : 'Datos de registro inválidos. Revisa que todos los campos estén correctos.';
+    }
+    
+    if (errorMessage.includes('401')) {
+      return 'Credenciales incorrectas. Verifica tu email y contraseña.';
+    }
+    
+    if (errorMessage.includes('403')) {
+      return 'Acceso denegado. No tienes permisos para realizar esta acción.';
+    }
+    
+    if (errorMessage.includes('409')) {
+      return 'Este email ya está registrado. Intenta iniciar sesión en su lugar.';
+    }
+    
+    if (errorMessage.includes('422')) {
+      return isLoginMode
+        ? 'Los datos proporcionados no son válidos. Verifica tu email y contraseña.'
+        : 'Los datos de registro no son válidos. Asegúrate de que la contraseña cumpla todos los requisitos.';
+    }
+    
+    if (errorMessage.includes('429')) {
+      return 'Demasiadas solicitudes. Espera un momento antes de intentarlo de nuevo.';
+    }
+    
+    if (errorMessage.includes('500') || errorMessage.includes('Internal Server Error')) {
+      return 'Error del servidor. Por favor, inténtalo de nuevo en unos momentos.';
+    }
+    
+    if (errorMessage.includes('503')) {
+      return 'Servicio temporalmente no disponible. Inténtalo de nuevo más tarde.';
+    }
+    
+    // Errores específicos de validación de contraseña
+    if (errorMessage.includes('contraseña') && errorMessage.includes('requisitos')) {
+      return 'La contraseña debe tener al menos 8 caracteres, incluyendo una mayúscula, una minúscula, un número y un símbolo especial.';
+    }
+    
+    // Errores de campos requeridos
+    if (errorMessage.includes('required') || errorMessage.includes('requerido')) {
+      return 'Por favor, completa todos los campos obligatorios.';
+    }
+    
+    // Error genérico pero amigable
+    return isLoginMode 
+      ? 'No se pudo iniciar sesión. Verifica tus datos e inténtalo de nuevo.'
+      : 'No se pudo completar el registro. Verifica tus datos e inténtalo de nuevo.';
+  };// Centraliza la gestión de sesión para ambos flujos
   const handleAuthSuccess = (data) => {
+    console.log('AuthModal: handleAuthSuccess llamado con data:', data);
     authManager.setAuthData(data);
     onLoginSuccess?.(data.email, data.nombre || data.email, data.uid);
-    showNotification('¡Inicio de sesión exitoso!', 'success');
+    
+    // Mensaje específico según si es registro o login
+    const isRegistration = data.message && data.message.includes('registrado');
+    const successMessage = isRegistration 
+      ? '¡Registro exitoso! Bienvenido a la plataforma!'
+      : '¡Inicio de sesión exitoso!';
+    
+    showNotification(successMessage, 'success');
+    
+    // Si es admin, redirigir directamente al dashboard
+    if (data.role === 'admin') {
+      console.log('AuthModal: Usuario admin detectado, redirigiendo al dashboard...');
+      setTimeout(() => {
+        console.log('AuthModal: Ejecutando redirección a /admin/dashboard');
+        window.location.href = '/admin/dashboard';
+      }, 1000); // Aumenté el tiempo a 1 segundo para que sea más visible
+      return;
+    }
+    
     onClose();
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
 
+    // Validaciones de formulario
+    if (!formData.email || !formData.password) {
+      const errorMsg = 'Por favor, completa todos los campos obligatorios.';
+      setError(errorMsg);
+      showNotification(errorMsg, 'error');
+      setIsLoading(false);
+      return;
+    }
+
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      const errorMsg = 'Por favor, introduce un email válido.';
+      setError(errorMsg);
+      showNotification(errorMsg, 'error');
+      setIsLoading(false);
+      return;
+    }
+
     // Validar contraseña solo en registro
     if (!isLoginMode && !validatePassword(formData.password)) {
+      const errorMsg = 'La contraseña debe tener al menos 8 caracteres, incluyendo una mayúscula, una minúscula, un número y un símbolo especial.';
+      setError(errorMsg);
+      showNotification(errorMsg, 'error');
       setShowPasswordErrors(true);
+      setIsLoading(false);
+      return;
+    }
+
+    // Validar nombre en registro
+    if (!isLoginMode && !formData.name?.trim()) {
+      const errorMsg = 'Por favor, introduce tu nombre.';
+      setError(errorMsg);
+      showNotification(errorMsg, 'error');
       setIsLoading(false);
       return;
     }
@@ -145,12 +294,15 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
       } else if (isLoginMode) {
         localStorage.removeItem('rememberedEmail');
         localStorage.removeItem('rememberedPassword');
-      }
-
-      handleAuthSuccess(data);
+      }      handleAuthSuccess(data);
     } catch (err) {
-      setError(err.message);
-      showNotification(err.message, 'error');
+      console.error('Error en autenticación:', err);
+      
+      // Usar la función de manejo de errores amigables
+      const userFriendlyError = getErrorMessage(err, isLoginMode);
+      
+      setError(userFriendlyError);
+      showNotification(userFriendlyError, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -221,11 +373,15 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
       setResetForm({ email: '', password: '', confirmPassword: '' });
       setTimeout(() => {
         onClose();
-        window.location.reload();
-      }, 1500);
+        window.location.reload();      }, 1500);
     } catch (err) {
-      setError(err.message);
-      showNotification(err.message, 'error');
+      console.error('Error en reset de contraseña:', err);
+      
+      // Usar la función de manejo de errores amigables
+      const userFriendlyError = getErrorMessage(err, true); // true porque después hace login
+      
+      setError(userFriendlyError);
+      showNotification(userFriendlyError, 'error');
     } finally {
       setResetLoading(false);
     }
@@ -573,25 +729,34 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                       <div className="flex-grow h-px bg-gray-300" />
                       <span className="mx-3 text-gray-500 text-base">O continúa con</span>
                       <div className="flex-grow h-px bg-gray-300" />
-                    </div>
-
-                    <div className="mb-4 flex justify-center">
+                    </div>                    <div className="mb-4 flex justify-center">
                       <GoogleLogin
                         onSuccess={async (credentialResponse) => {
                           const id_token = credentialResponse.credential;
                           if (!id_token) {
-                            showNotification('No se pudo obtener el id_token de Google', 'error');
+                            const errorMsg = 'No se pudo obtener la autorización de Google. Inténtalo de nuevo.';
+                            setError(errorMsg);
+                            showNotification(errorMsg, 'error');
                             return;
                           }
                           try {
+                            setIsLoading(true);
                             const data = await apiManager.post('/auth/google', { id_token });
                             handleAuthSuccess(data);
                           } catch (error) {
-                            showNotification(error.message || 'Error en la autenticación con Google', 'error');
+                            console.error('Error en Google Auth:', error);
+                            const userFriendlyError = getErrorMessage(error, false); // false para Google Auth
+                            setError(userFriendlyError);
+                            showNotification(userFriendlyError, 'error');
+                          } finally {
+                            setIsLoading(false);
                           }
                         }}
-                        onError={() => {
-                          showNotification('Error en la autenticación con Google', 'error');
+                        onError={(error) => {
+                          console.error('Google Login Error:', error);
+                          const errorMsg = 'No se pudo conectar con Google. Verifica tu conexión e inténtalo de nuevo.';
+                          setError(errorMsg);
+                          showNotification(errorMsg, 'error');
                         }}
                       />
                     </div>

@@ -154,15 +154,28 @@ const EditProductModal = ({ open, onClose, onSave, initialData }) => {
       setLoading(false);
     }
   };
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div
-        ref={modalRef}
-        className="bg-white rounded-2xl shadow-2xl p-4 sm:p-8 w-full max-w-lg sm:max-w-2xl max-h-[90vh] overflow-y-auto relative transition-all duration-300"
-      >
+    <div className="fixed inset-0 z-[1000]">
+      {/* Background overlay */}
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-50" 
+        onClick={handleOverlayClick}
+      ></div>
+      
+      {/* Modal content */}
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <div
+          ref={modalRef}
+          className="bg-white rounded-2xl shadow-2xl p-4 sm:p-8 w-full max-w-lg sm:max-w-2xl max-h-[90vh] overflow-y-auto relative transition-all duration-300 z-10"
+        >
         {/* Botón de cierre (X) */}
         <button
           onClick={onClose}
@@ -172,10 +185,9 @@ const EditProductModal = ({ open, onClose, onSave, initialData }) => {
           <FaTimes />
         </button>
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Editar Producto</h2>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Nombre */}
+        <form onSubmit={handleSubmit} className="space-y-6">          {/* Nombre */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1 flex justify-between items-center">
+            <label className="flex justify-between items-center text-sm font-medium text-gray-700 mb-1">
               Nombre
               <span className="text-xs text-gray-500">{(formData.nombre || '').length}/{NAME_LIMIT}</span>
             </label>
@@ -190,11 +202,9 @@ const EditProductModal = ({ open, onClose, onSave, initialData }) => {
               maxLength={NAME_LIMIT}
               className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             />
-          </div>
-
-          {/* Descripción */}
+          </div>          {/* Descripción */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1 flex justify-between items-center">
+            <label className="flex justify-between items-center text-sm font-medium text-gray-700 mb-1">
               Descripción
               <span className="text-xs text-gray-500">{(formData.descripcion || '').length}/{DESC_LIMIT}</span>
             </label>
@@ -356,11 +366,11 @@ const EditProductModal = ({ open, onClose, onSave, initialData }) => {
                   <FaSave className="mr-2" /> Guardar cambios
                 </>
               )}
-            </button>
-          </div>
+            </button>          </div>
         </form>
       </div>
     </div>
+  </div>
   );
 };
 

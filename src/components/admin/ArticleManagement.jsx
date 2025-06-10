@@ -21,25 +21,53 @@ const ArticleManagement = () => {
   useEffect(() => {
     fetchArticles();
   }, []);
-
   const fetchArticles = async () => {
     try {
       const data = await apiManager.get('/admin/articles');
       setArticles(data);
     } catch (err) {
-      setError(err.message);
+      console.error('Error fetching articles:', err);
+      let userFriendlyMessage = 'Error al cargar los artículos. Por favor, intenta de nuevo.';
+      
+      if (err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed to fetch')) {
+        userFriendlyMessage = 'Error de conexión. Verifica tu conexión a internet.';
+      } else if (err.message.includes('401') || err.message.includes('unauthorized')) {
+        userFriendlyMessage = 'Sesión expirada. Por favor, inicia sesión de nuevo.';
+      } else if (err.message.includes('403') || err.message.includes('forbidden')) {
+        userFriendlyMessage = 'No tienes permisos para ver esta información.';
+      } else if (err.message.includes('500')) {
+        userFriendlyMessage = 'Error del servidor. Por favor, contacta al administrador.';
+      }
+      
+      setError(userFriendlyMessage);
     } finally {
       setLoading(false);
     }
   };
-
-  const handleDeleteArticle = async (article) => {
+  const handleDeleteArticle = (article) => {
+    setDeleteArticle(article);
+  };
+  const confirmDeleteArticle = async () => {
+    if (!deleteArticle) return;
     try {
-      await apiManager.delete(`/admin/articles/${article.id}`);
-      setArticles(prev => prev.filter(a => a.id !== article.id));
+      await apiManager.delete(`/admin/articles/${deleteArticle.id}`);
+      setArticles(prev => prev.filter(a => a.id !== deleteArticle.id));
       setDeleteArticle(null);
     } catch (err) {
-      setError(err.message);
+      console.error('Error deleting article:', err);
+      let userFriendlyMessage = 'Error al eliminar el artículo. Por favor, intenta de nuevo.';
+      
+      if (err.message.includes('fetch') || err.message.includes('network')) {
+        userFriendlyMessage = 'Error de conexión. Verifica tu conexión a internet.';
+      } else if (err.message.includes('401') || err.message.includes('unauthorized')) {
+        userFriendlyMessage = 'Sesión expirada. Por favor, inicia sesión de nuevo.';
+      } else if (err.message.includes('403') || err.message.includes('forbidden')) {
+        userFriendlyMessage = 'No tienes permisos para eliminar este artículo.';
+      } else if (err.message.includes('404')) {
+        userFriendlyMessage = 'El artículo ya no existe o ha sido eliminado.';
+      }
+      
+      setError(userFriendlyMessage);
     }
   };
 
@@ -117,11 +145,10 @@ const ArticleManagement = () => {
 
   const handleAddArticle = () => setShowAdd(true);
   const handleEditArticle = (article) => setEditArticle(article);
-
-  const handleCreateArticle = async (form) => {    try {
+  const handleCreateArticle = async (form) => {
+    try {
       const user = authManager.getUser();
-      const token = user?.accessToken;
-      const userName = user?.displayName;
+      const userName = user?.name;
       const userEmail = user?.email;
       const formData = new FormData();
       formData.append('titulo', form.titulo);
@@ -131,50 +158,26 @@ const ArticleManagement = () => {
       formData.append('autor', userName || '');
       formData.append('autor_email', userEmail || '');
       // No se envía imagen, el backend pone la de gato si no hay
-      const response = await fetch('http://localhost:8000/articulos', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      });
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.detail || 'Error al crear artículo');
-      }
-      const created = await response.json();
+      const created = await apiManager.post('/articulos', formData);
       setArticles([...articles, created]);
       setShowAdd(false);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Error al crear el artículo. Por favor, intenta de nuevo.');
     }
   };
-
-  const handleUpdateArticle = async (form) => {    try {
-      const user = authManager.getUser();
-      const token = user?.accessToken;
+  const handleUpdateArticle = async (form) => {
+    try {
       const formData = new FormData();
       formData.append('titulo', form.titulo);
       formData.append('descripcion', form.descripcion);
       formData.append('contenido', form.contenido);
       formData.append('categoria', form.categoria);
       // No se envía imagen
-      const response = await fetch(`http://localhost:8000/articulos/${editArticle.id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      });
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.detail || 'Error al actualizar artículo');
-      }
-      const updated = await response.json();
+      const updated = await apiManager.put(`/articulos/${editArticle.id}`, formData);
       setArticles(articles.map(a => a.id === editArticle.id ? updated : a));
       setEditArticle(null);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Error al actualizar el artículo. Por favor, intenta de nuevo.');
     }
   };
 
@@ -188,17 +191,25 @@ const ArticleManagement = () => {
   if (loading) {
     return <LoadingSpinner />;
   }
-
   if (error) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-8 py-6 rounded-2xl shadow-lg flex flex-col items-center animate-fade-in">
-          <FaExclamationTriangle className="text-4xl text-red-400 mb-2" />
-          <p className="text-lg font-semibold mb-1">Error al obtener artículos</p>
-          <span className="text-sm text-red-500">{error}</span>
+        <div className="bg-red-50 border border-red-200 text-red-700 px-8 py-6 rounded-2xl shadow-lg flex flex-col items-center animate-fade-in max-w-md">
+          <FaExclamationTriangle className="text-4xl text-red-400 mb-4" />
+          <p className="text-lg font-semibold mb-2">No se pudieron cargar los artículos</p>
+          <p className="text-sm text-red-600 mb-4 text-center">
+            {error.includes('fetch') || error.includes('network') || error.includes('Failed to fetch')
+              ? 'Error de conexión. Por favor, verifica tu conexión a internet.'
+              : error.includes('401') || error.includes('unauthorized')
+              ? 'No tienes permisos para ver esta información.'
+              : error.includes('403') || error.includes('forbidden')
+              ? 'Acceso denegado. Contacta al administrador.'
+              : 'Ha ocurrido un error inesperado. Por favor, intenta de nuevo.'
+            }
+          </p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-4 px-5 py-2 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600 transition"
+            className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-semibold"
           >
             Reintentar
           </button>
@@ -312,11 +323,10 @@ const ArticleManagement = () => {
             ))}
           </tbody>
         </table>
-      </div>
-      <AdminDeleteModal
+      </div>      <AdminDeleteModal
         isOpen={!!deleteArticle}
         onClose={() => setDeleteArticle(null)}
-        onConfirm={() => handleDeleteArticle(deleteArticle)}
+        onConfirm={confirmDeleteArticle}
         title="¿Eliminar artículo?"
         message="¿Estás seguro de que quieres eliminar este artículo? Esta acción no se puede deshacer."
         itemName={deleteArticle?.titulo}
@@ -381,11 +391,10 @@ const ArticleFormModal = ({ isOpen, onClose, onSubmit, initialData, mode }) => {
   if (!isOpen) return null;
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) onClose();
-  };
-  return (
+  };  return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center">
-      <div className="fixed inset-0 bg-black bg-opacity-40 z-[1000]" onClick={handleOverlayClick}></div>
-      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center animate-fade-in relative z-[1010]">
+      <div className="fixed inset-0 bg-black bg-opacity-50" onClick={handleOverlayClick}></div>
+      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center animate-fade-in relative z-10">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">{mode === 'edit' ? 'Editar artículo' : 'Añadir artículo'}</h2>
         <form onSubmit={handleSubmit} className="space-y-4 text-left">
           <div>

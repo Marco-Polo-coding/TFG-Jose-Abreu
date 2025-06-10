@@ -82,6 +82,7 @@ class FollowRequest(BaseModel):
 @router.post("/register")
 async def register_user(user: UserRegister):
     try:
+        # Crear usuario en Firebase Auth
         user_record = auth.create_user(
             email=user.email,
             password=user.password,
@@ -100,8 +101,50 @@ async def register_user(user: UserRegister):
         }
         db.collection("usuarios").document(user_record.uid).set(user_data)
         
-        return {"message": "Usuario registrado con éxito", "nombre": user.nombre or ""}
+        # Autenticar automáticamente al usuario después del registro
+        # usando la misma lógica que el login
+        firebase_api_key = os.getenv('FIREBASE_API_KEY')
+        if not firebase_api_key:
+            logger.error("FIREBASE_API_KEY no está configurada en el archivo .env")
+            raise HTTPException(
+                status_code=500,
+                detail="Error de configuración del servidor"
+            )
+
+        async with httpx.AsyncClient() as client:
+            auth_response = await client.post(
+                f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={firebase_api_key}",
+                json={
+                    "email": user.email,
+                    "password": user.password,
+                    "returnSecureToken": True
+                }
+            )
+            
+            if auth_response.status_code != 200:
+                # Si falla la autenticación automática, al menos el usuario se creó
+                logger.warning(f"Usuario creado pero falló la autenticación automática: {auth_response.text}")
+                return {"message": "Usuario registrado con éxito", "nombre": user.nombre or ""}
+            
+            auth_data = auth_response.json()
+            
+            # Devolver los mismos datos que el login para mantener al usuario autenticado
+            response_data = {
+                "idToken": auth_data["idToken"],
+                "refreshToken": auth_data["refreshToken"],
+                "email": user.email,
+                "nombre": user.nombre or "",
+                "uid": user_record.uid,
+                "foto": "",  # Nuevo usuario no tiene foto aún
+                "role": user.role or "user",
+                "message": "Usuario registrado e iniciado sesión exitosamente"
+            }
+            
+            logger.info(f"Usuario registrado y autenticado automáticamente: {user.email}")
+            return response_data
+        
     except Exception as e:
+        logger.error(f"Error en registro: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=400,
             detail=str(e)

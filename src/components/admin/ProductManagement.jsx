@@ -4,6 +4,7 @@ import LoadingSpinner from '../LoadingSpinner';
 import AdminDeleteModal from './AdminDeleteModal';
 import ReactDOM from 'react-dom';
 import { authManager } from '../../utils/authManager';
+import { apiManager } from '../../utils/apiManager';
 
 const ProductManagement = () => {
   const [products, setProducts] = useState([]);
@@ -19,29 +20,25 @@ const ProductManagement = () => {
 
   useEffect(() => {
     fetchProducts();
-  }, []);
-  const fetchProducts = async () => {
+  }, []);  const fetchProducts = async () => {
     try {
-      const user = authManager.getUser();
-      const token = user?.accessToken;
-      if (!token) {
-        throw new Error('No hay token de autenticación');
-      }
-
-      const response = await fetch('http://localhost:8000/admin/products', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al obtener productos');
-      }
-
-      const data = await response.json();
+      const data = await apiManager.get('/admin/products');
       setProducts(data);
     } catch (err) {
-      setError(err.message);
+      console.error('Error fetching products:', err);
+      let userFriendlyMessage = 'Error al cargar los productos. Por favor, intenta de nuevo.';
+      
+      if (err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed to fetch')) {
+        userFriendlyMessage = 'Error de conexión. Verifica tu conexión a internet.';
+      } else if (err.message.includes('401') || err.message.includes('unauthorized')) {
+        userFriendlyMessage = 'Sesión expirada. Por favor, inicia sesión de nuevo.';
+      } else if (err.message.includes('403') || err.message.includes('forbidden')) {
+        userFriendlyMessage = 'No tienes permisos para ver esta información.';
+      } else if (err.message.includes('500')) {
+        userFriendlyMessage = 'Error del servidor. Por favor, contacta al administrador.';
+      }
+      
+      setError(userFriendlyMessage);
     } finally {
       setLoading(false);
     }
@@ -49,25 +46,27 @@ const ProductManagement = () => {
 
   const handleDeleteProduct = (product) => {
     setDeleteProduct(product);
-  };
-  const confirmDeleteProduct = async () => {
+  };  const confirmDeleteProduct = async () => {
     if (!deleteProduct) return;
     try {
-      const user = authManager.getUser();
-      const token = user?.accessToken;
-      const response = await fetch(`http://localhost:8000/admin/products/${deleteProduct.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) {
-        throw new Error('Error al eliminar producto');
-      }
+      await apiManager.delete(`/admin/products/${deleteProduct.id}`);
       setProducts(products.filter(product => product.id !== deleteProduct.id));
       setDeleteProduct(null);
     } catch (err) {
-      setError(err.message);
+      console.error('Error deleting product:', err);
+      let userFriendlyMessage = 'Error al eliminar el producto. Por favor, intenta de nuevo.';
+      
+      if (err.message.includes('fetch') || err.message.includes('network')) {
+        userFriendlyMessage = 'Error de conexión. Verifica tu conexión a internet.';
+      } else if (err.message.includes('401') || err.message.includes('unauthorized')) {
+        userFriendlyMessage = 'Sesión expirada. Por favor, inicia sesión de nuevo.';
+      } else if (err.message.includes('403') || err.message.includes('forbidden')) {
+        userFriendlyMessage = 'No tienes permisos para eliminar productos.';
+      } else if (err.message.includes('404')) {
+        userFriendlyMessage = 'El producto ya no existe o ha sido eliminado.';
+      }
+      
+      setError(userFriendlyMessage);
     }
   };
 
@@ -144,11 +143,9 @@ const ProductManagement = () => {
   }
 
   const handleAddProduct = () => setShowAdd(true);
-  const handleEditProduct = (product) => setEditProduct(product);
-  const handleCreateProduct = async (form) => {
+  const handleEditProduct = (product) => setEditProduct(product);  const handleCreateProduct = async (form) => {
     try {
       const user = authManager.getUser();
-      const token = user?.accessToken;
       const userEmail = user?.email;
       const formData = new FormData();
       formData.append('nombre', form.nombre);
@@ -159,28 +156,31 @@ const ProductManagement = () => {
       formData.append('estado', form.estado);
       formData.append('usuario_email', userEmail || '');
       // No se envía imagen, el backend pone la de gato si no hay
-      const response = await fetch('http://localhost:8000/productos', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      });
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.detail || 'Error al crear producto');
-      }
-      const created = await response.json();
+      const created = await apiManager.post('/productos', formData);
       setProducts([...products, created]);
       setShowAdd(false);
     } catch (err) {
-      setError(err.message);
+      console.error('Error al crear producto:', err);
+      let errorMessage = 'Error al crear el producto. Por favor, inténtalo de nuevo.';
+      
+      if (err.message?.includes('Network Error') || err.message?.includes('fetch')) {
+        errorMessage = 'Error de conexión. Verifica tu conexión a internet e inténtalo de nuevo.';
+      } else if (err.message?.includes('401')) {
+        errorMessage = 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.';
+      } else if (err.message?.includes('403')) {
+        errorMessage = 'No tienes permisos para crear productos.';
+      } else if (err.message?.includes('409')) {
+        errorMessage = 'Ya existe un producto con ese nombre. Usa un nombre diferente.';
+      } else if (err.message?.includes('422') || err.message?.includes('400')) {
+        errorMessage = 'Los datos del producto no son válidos. Revisa todos los campos.';
+      } else if (err.message?.includes('500')) {
+        errorMessage = 'Error interno del servidor. Contacta al administrador.';
+      }
+      
+      setError(errorMessage);
     }
-  };
-  const handleUpdateProduct = async (form) => {
+  };  const handleUpdateProduct = async (form) => {
     try {
-      const user = authManager.getUser();
-      const token = user?.accessToken;
       const formData = new FormData();
       formData.append('nombre', form.nombre);
       formData.append('descripcion', form.descripcion);
@@ -189,22 +189,30 @@ const ProductManagement = () => {
       formData.append('categoria', form.categoria);
       formData.append('estado', form.estado);
       // No se envía imagen
-      const response = await fetch(`http://localhost:8000/productos/${editProduct.id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      });
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.detail || 'Error al actualizar producto');
-      }
-      const updated = await response.json();
+      const updated = await apiManager.put(`/productos/${editProduct.id}`, formData);
       setProducts(products.map(p => p.id === editProduct.id ? updated : p));
       setEditProduct(null);
     } catch (err) {
-      setError(err.message);
+      console.error('Error al actualizar producto:', err);
+      let errorMessage = 'Error al actualizar el producto. Por favor, inténtalo de nuevo.';
+      
+      if (err.message?.includes('Network Error') || err.message?.includes('fetch')) {
+        errorMessage = 'Error de conexión. Verifica tu conexión a internet e inténtalo de nuevo.';
+      } else if (err.message?.includes('401')) {
+        errorMessage = 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.';
+      } else if (err.message?.includes('403')) {
+        errorMessage = 'No tienes permisos para editar este producto.';
+      } else if (err.message?.includes('404')) {
+        errorMessage = 'El producto que intentas editar ya no existe.';
+      } else if (err.message?.includes('409')) {
+        errorMessage = 'Ya existe un producto con ese nombre. Usa un nombre diferente.';
+      } else if (err.message?.includes('422') || err.message?.includes('400')) {
+        errorMessage = 'Los datos del producto no son válidos. Revisa todos los campos.';
+      } else if (err.message?.includes('500')) {
+        errorMessage = 'Error interno del servidor. Contacta al administrador.';
+      }
+      
+      setError(errorMessage);
     }
   };
 

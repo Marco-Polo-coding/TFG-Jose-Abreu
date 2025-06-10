@@ -182,45 +182,85 @@ const UserManagement = () => {
   useEffect(() => {
     fetchUsers();
   }, []);
-
   const fetchUsers = async () => {
     try {
       const data = await apiManager.get('/admin/users');
       setUsers(data);
     } catch (err) {
-      setError(err.message);
+      console.error('Error fetching users:', err);
+      let userFriendlyMessage = 'Error al cargar los usuarios. Por favor, intenta de nuevo.';
+      
+      if (err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed to fetch')) {
+        userFriendlyMessage = 'Error de conexión. Verifica tu conexión a internet.';
+      } else if (err.message.includes('401') || err.message.includes('unauthorized')) {
+        userFriendlyMessage = 'Sesión expirada. Por favor, inicia sesión de nuevo.';
+      } else if (err.message.includes('403') || err.message.includes('forbidden')) {
+        userFriendlyMessage = 'No tienes permisos para ver esta información.';
+      } else if (err.message.includes('500')) {
+        userFriendlyMessage = 'Error del servidor. Por favor, contacta al administrador.';
+      }
+      
+      setError(userFriendlyMessage);
     } finally {
       setLoading(false);
     }
   };
-
-  const handleDeleteUser = async (userIdOrUser) => {
+  const handleDeleteUser = (user) => {
+    setDeleteUser(user);
+  };
+  const confirmDeleteUser = async () => {
+    if (!deleteUser) return;
     try {
-      const userId = typeof userIdOrUser === 'object' ? userIdOrUser.uid : userIdOrUser;
+      const userId = typeof deleteUser === 'object' ? deleteUser.uid : deleteUser;
       await apiManager.delete(`/admin/users/${userId}`);
       setUsers(prev => prev.filter(u => u.uid !== userId));
       setDeleteUser(null);
     } catch (err) {
-      setError(err.message);
+      console.error('Error deleting user:', err);
+      let userFriendlyMessage = 'Error al eliminar el usuario. Por favor, intenta de nuevo.';
+      
+      if (err.message.includes('fetch') || err.message.includes('network')) {
+        userFriendlyMessage = 'Error de conexión. Verifica tu conexión a internet.';
+      } else if (err.message.includes('401') || err.message.includes('unauthorized')) {
+        userFriendlyMessage = 'Sesión expirada. Por favor, inicia sesión de nuevo.';
+      } else if (err.message.includes('403') || err.message.includes('forbidden')) {
+        userFriendlyMessage = 'No tienes permisos para eliminar usuarios.';
+      } else if (err.message.includes('404')) {
+        userFriendlyMessage = 'El usuario ya no existe o ha sido eliminado.';
+      }
+      
+      setError(userFriendlyMessage);
     }
   };
 
   const handleEditUser = (user) => {
     setEditUser(user);
-  };
-
-  const handleUpdateUser = async (form) => {
+  };  const handleUpdateUser = async (form) => {
     try {
-      await apiManager.put(`/admin/users/${editUser.uid || editUser.id}`, {
+      const updated = await apiManager.put(`/admin/users/${editUser.uid || editUser.id}`, {
         nombre: form.nombre,
         email: form.email,
         role: form.role
       });
-      const updated = await apiManager.get(`/admin/users/${editUser.uid || editUser.id}`);
       setUsers(users.map(u => (u.uid || u.id) === (editUser.uid || editUser.id) ? updated : u));
       setEditUser(null);
     } catch (err) {
-      setErrorModal(err.message);
+      console.error('Error updating user:', err);
+      let userFriendlyMessage = 'Error al actualizar el usuario. Por favor, intenta de nuevo.';
+      
+      if (err.message.includes('fetch') || err.message.includes('network')) {
+        userFriendlyMessage = 'Error de conexión. Verifica tu conexión a internet.';
+      } else if (err.message.includes('401') || err.message.includes('unauthorized')) {
+        userFriendlyMessage = 'Sesión expirada. Por favor, inicia sesión de nuevo.';
+      } else if (err.message.includes('403') || err.message.includes('forbidden')) {
+        userFriendlyMessage = 'No tienes permisos para editar usuarios.';
+      } else if (err.message.includes('409') || err.message.includes('conflict')) {
+        userFriendlyMessage = 'El email ya está en uso por otro usuario.';
+      } else if (err.message.includes('400') || err.message.includes('bad request')) {
+        userFriendlyMessage = 'Datos inválidos. Por favor, verifica la información.';
+      }
+      
+      setErrorModal(userFriendlyMessage);
     }
   };
 
@@ -423,11 +463,10 @@ const UserManagement = () => {
           </tbody>
         </table>
       </div>
-      {/* Modales */}
-      <AdminDeleteModal
+      {/* Modales */}      <AdminDeleteModal
         isOpen={!!deleteUser}
         onClose={() => setDeleteUser(null)}
-        onConfirm={handleDeleteUser}
+        onConfirm={confirmDeleteUser}
         title="¿Eliminar usuario?"
         message="¿Estás seguro de que quieres eliminar este usuario? Esta acción no se puede deshacer."
         itemName={deleteUser ? `${deleteUser.nombre} (${deleteUser.email})` : ''}

@@ -54,6 +54,49 @@ const HomePage = () => {
     setEmail("");
   };
 
+  // Función de prueba para login directo de admin
+  const testAdminLogin = async () => {
+    console.log('Iniciando login de prueba para admin...');
+    try {
+      const response = await fetch('http://localhost:8000/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: 'admin@admin.com',
+          password: 'administrador'
+        })
+      });
+      
+      const data = await response.json();
+      console.log('Respuesta del login:', data);
+      
+      if (response.ok) {
+        console.log('Login exitoso, estableciendo datos de auth...');
+        authManager.setAuthData(data);
+        
+        // Verificar que las cookies se establecieron
+        setTimeout(() => {
+          console.log('Cookies después del login:', document.cookie);
+          const cookies = document.cookie.split(';');
+          const userRoleCookie = cookies.find(cookie => cookie.trim().startsWith('userRole='));
+          const cookieRole = userRoleCookie ? userRoleCookie.split('=')[1] : null;
+          console.log('Rol en cookie:', cookieRole);
+          
+          if (data.role === 'admin') {
+            console.log('Usuario es admin, redirigiendo...');
+            window.location.href = '/admin/dashboard';
+          }
+        }, 500);
+      } else {
+        console.error('Error en login:', data);
+      }
+    } catch (error) {
+      console.error('Error en login de prueba:', error);
+    }
+  };
+
   // Funciones para el slider de imágenes por producto
   const handlePrevImage = (productoId, total) => {
     setImageIndexes(prev => ({
@@ -187,8 +230,17 @@ const HomePage = () => {
               </a>
             </div>
           </div>
-        </div>
-      </section>
+        </div>      </section>
+
+      {/* Botón de prueba temporal para admin login */}
+      <div className="fixed bottom-4 left-4 z-50">
+        <button
+          onClick={testAdminLogin}
+          className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-lg text-sm"
+        >
+          🔧 Test Admin Login
+        </button>
+      </div>
 
       {/* Slider de Productos */}
       <Slider
@@ -358,8 +410,21 @@ const HomePage = () => {
           </div>
         </div>
       </footer>
+
+      {/* Botón de prueba para login directo de admin */}
+      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50">
+        <button
+          onClick={testAdminLogin}
+          className="bg-gradient-to-r from-red-600 to-red-400 text-white px-6 py-3 rounded-full text-lg font-semibold shadow-lg hover:from-red-700 hover:to-red-500 transition-all duration-300 flex items-center gap-2"
+        >
+          Login Admin
+          <svg className="w-5 h-5 animate-pulse" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path fillRule="evenodd" d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" clipRule="evenodd" />
+          </svg>
+        </button>
+      </div>
     </div>
   );
 };
 
-export default HomePage; 
+export default HomePage;
