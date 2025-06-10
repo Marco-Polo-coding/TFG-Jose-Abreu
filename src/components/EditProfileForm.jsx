@@ -82,7 +82,6 @@ const EditProfileForm = () => {
       }
     }
   }, []);
-
   const validate = () => {
     const errs = {};
     if (!form.nombre) errs.nombre = 'El nombre es requerido';
@@ -94,6 +93,15 @@ const EditProfileForm = () => {
     else if (!validateEmail(form.email)) errs.email = 'El email no es válido';
     if (form.foto && form.foto.size > MAX_IMAGE_SIZE) errs.foto = 'La imagen supera los 10MB';
     if (form.foto && !['image/png','image/jpeg','image/jpg','image/gif'].includes(form.foto.type)) errs.foto = 'Tipo de imagen no soportado';
+    
+    // Validar contraseña si está presente
+    if (passwordForm.password) {
+      const passwordErrs = validatePassword(passwordForm.password);
+      if (passwordErrs.length > 0) errs.password = passwordErrs[0];
+      if (!passwordForm.confirmPassword) errs.confirmPassword = 'Confirma tu contraseña';
+      else if (passwordForm.password !== passwordForm.confirmPassword) errs.confirmPassword = 'Las contraseñas no coinciden';
+    }
+    
     return errs;
   };
 
@@ -121,8 +129,7 @@ const EditProfileForm = () => {
       fotoPreview: '',
       deletePhoto: true
     }));
-  };
-  const handleSubmit = async e => {
+  };  const handleSubmit = async e => {
     e.preventDefault();
     const errs = validate();
     setErrors(errs);
@@ -135,30 +142,62 @@ const EditProfileForm = () => {
       if (!uid) {
         throw new Error('Usuario no autenticado');
       }
-      
-      const formData = new FormData();
-      formData.append('uid', uid);
-      formData.append('nombre', form.nombre);
-      formData.append('email', form.email);
-      formData.append('biografia', form.biografia);
-      if (form.foto) formData.append('foto', form.foto);
-      if (form.deletePhoto) formData.append('delete_photo', 'true');
+
+      // Verificar si hay una contraseña pendiente para cambiar junto con el perfil
+      const hasPasswordUpdate = passwordForm.password && passwordForm.password === passwordForm.confirmPassword;
+      const emailChanged = form.email !== user.email;
+        if (hasPasswordUpdate && emailChanged) {
+        // Usar el nuevo endpoint que maneja email y contraseña juntos
+        const formData = new FormData();
+        formData.append('uid', uid);
+        formData.append('nombre', form.nombre);
+        formData.append('email', form.email);
+        formData.append('biografia', form.biografia);
+        formData.append('password', passwordForm.password);
+        if (form.foto) formData.append('foto', form.foto);
+        if (form.deletePhoto) formData.append('delete_photo', 'true');
+        
+        const data = await apiManager.put('/auth/update-profile-with-password', formData);
+          // Limpiar el formulario de contraseña después del éxito
+        setPasswordForm({ password: '', confirmPassword: '' });
+        setToast({ open: true, message: 'Perfil y contraseña actualizados con éxito', type: 'success' });
+        
+        // Actualizar datos del usuario en Zustand con la respuesta del backend
+        const updatedUser = {
+          ...user,
+          name: data.data?.nombre || form.nombre,
+          email: data.data?.email || form.email,
+          biografia: data.data?.biografia || form.biografia,
+          photo: data.data?.foto || (form.deletePhoto ? null : user.photo)
+        };
+        
+        // Actualizar el store de Zustand
+        authManager.store.getState().setAuth(updatedUser, authManager.store.getState().token, authManager.store.getState().refreshToken);
+      } else {
+        // Usar el endpoint normal para solo actualizar perfil
+        const formData = new FormData();
+        formData.append('uid', uid);
+        formData.append('nombre', form.nombre);
+        formData.append('email', form.email);
+        formData.append('biografia', form.biografia);
+        if (form.foto) formData.append('foto', form.foto);
+        if (form.deletePhoto) formData.append('delete_photo', 'true');
+          
         const data = await apiManager.put('/auth/update-profile', formData);
-      
-      // Actualizar datos del usuario en Zustand
-      const updatedUser = {
-        ...user,
-        name: form.nombre,
-        email: form.email,
-        biografia: data.data?.biografia || form.biografia,
-        photo: form.deletePhoto ? null : (data.data?.foto || user.photo)
-      };
-      
-      // Actualizar el store de Zustand
-      authManager.store.getState().setAuth(updatedUser, authManager.store.getState().token, authManager.store.getState().refreshToken);
-      
-      setToast({ open: true, message: 'Perfil actualizado con éxito', type: 'success' });
-      
+        setToast({ open: true, message: 'Perfil actualizado con éxito', type: 'success' });
+        
+        // Actualizar datos del usuario en Zustand con la respuesta del backend
+        const updatedUser = {
+          ...user,
+          name: data.data?.nombre || form.nombre,
+          email: data.data?.email || form.email,
+          biografia: data.data?.biografia || form.biografia,
+          photo: data.data?.foto || (form.deletePhoto ? null : user.photo)
+        };
+        
+        // Actualizar el store de Zustand
+        authManager.store.getState().setAuth(updatedUser, authManager.store.getState().token, authManager.store.getState().refreshToken);
+      }      
       // Redirigir al perfil después de un breve delay para mostrar el toast
       setTimeout(() => {
         window.location.href = '/profile';
@@ -191,11 +230,23 @@ const EditProfileForm = () => {
       setShowPasswordErrors(true);
       return;
     }
+    
+    const user = authManager.getUser();
+    const email = user?.email;
+    const emailChanged = form.email !== email;
+    
+    if (emailChanged) {
+      // Si el email ha cambiado, mostrar mensaje para usar el botón de actualizar perfil
+      setToast({ 
+        open: true, 
+        message: 'Para cambiar email y contraseña juntos, usa el botón "Actualizar Perfil"', 
+        type: 'info' 
+      });
+      return;
+    }
+    
     setPasswordLoading(true);
     try {
-      const user = authManager.getUser();
-      const email = user?.email;
-      
       if (!email) {
         throw new Error('Usuario no autenticado');
       }
@@ -367,11 +418,31 @@ const EditProfileForm = () => {
         <button type="submit" disabled={loading} className="inline-flex items-center px-6 py-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105 disabled:opacity-50">
           {loading ? 'Guardando...' : 'Guardar cambios'}
         </button>
-      </div>
-      <hr className="my-8" />
+      </div>      <hr className="my-8" />
       <div className="space-y-4">
         <h3 className="text-xl font-bold text-gray-800 mb-2">Cambiar contraseña</h3>
-        <form className="space-y-4" onSubmit={handlePasswordSubmit} autoComplete="off">          <div>
+        
+        {/* Mensaje informativo sobre el comportamiento del formulario */}
+        {passwordForm.password && form.email !== authManager.getUser()?.email && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start">
+              <svg className="h-5 w-5 text-blue-400 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <h4 className="text-sm font-medium text-blue-800 mb-1">
+                  Cambio combinado detectado
+                </h4>
+                <p className="text-sm text-blue-700">
+                  Has cambiado tanto el email como la contraseña. Para evitar errores de credenciales, 
+                  usa el botón <strong>"Guardar cambios"</strong> del perfil para actualizar ambos a la vez.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <form className="space-y-4" onSubmit={handlePasswordSubmit} autoComplete="off"><div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña</label>
             <div className="relative">
               <input

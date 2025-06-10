@@ -81,14 +81,18 @@ class ApiManager {
     const response = await fetch(`${this.baseUrl}${endpoint}`, options);
     return this.handleResponse(response);
   }
-
-  async delete(endpoint) {
-    const headers = await this.getHeaders();
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+  async delete(endpoint, data = null) {
+    const options = {
       method: 'DELETE',
-      headers,
+      headers: await this.getHeaders(),
       credentials: 'include',
-    });
+    };
+    
+    if (data) {
+      options.body = JSON.stringify(data);
+    }
+    
+    const response = await fetch(`${this.baseUrl}${endpoint}`, options);
     return this.handleResponse(response);
   }
 

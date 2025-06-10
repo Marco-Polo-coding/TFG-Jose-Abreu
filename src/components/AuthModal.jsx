@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaTimes, FaUser, FaLock, FaEnvelope, FaSignOutAlt, FaEye, FaEyeSlash, FaGoogle } from 'react-icons/fa';
-import Toast from './Toast';
+import LoadingSpinner from './LoadingSpinner';
 import { GoogleLogin } from '@react-oauth/google';
 import useCartStore from '../store/cartStore';
 import PasswordRequirements from './PasswordRequirements';
@@ -13,63 +13,40 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
     email: '',
     password: '',
     name: ''
-  });
-  const [isLoading, setIsLoading] = useState(false);
+  });  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [toastType, setToastType] = useState('success');
+  const [fieldErrors, setFieldErrors] = useState({ email: '', password: '', name: '' });
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [resetForm, setResetForm] = useState({ email: '', password: '', confirmPassword: '' });
-  const [resetErrors, setResetErrors] = useState({});
-  const [resetLoading, setResetLoading] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [resetErrors, setResetErrors] = useState({});  const [resetLoading, setResetLoading] = useState(false);  const [showPassword, setShowPassword] = useState(false);
   const [showResetPassword1, setShowResetPassword1] = useState(false);
   const [showResetPassword2, setShowResetPassword2] = useState(false);
   const [showPasswordErrors, setShowPasswordErrors] = useState(false);
-  const clearCartOnLogout = useCartStore(state => state.clearCartOnLogout);
-
-  useEffect(() => {
+  const [isReloading, setIsReloading] = useState(false);
+  const clearCartOnLogout = useCartStore(state => state.clearCartOnLogout);  useEffect(() => {
     setIsLoginMode(mode === 'login');
-    // Solo autocompletar si es login y hay email recordado
-    if (mode === 'login') {
-      const savedEmail = localStorage.getItem('rememberedEmail') || '';
-      if (savedEmail) {
-        setFormData({ email: savedEmail, password: '', name: '' });
-        setRememberMe(true);
-      } else {
-        setFormData({ email: '', password: '', name: '' });
-        setRememberMe(false);
-      }
-    } else {
-      setFormData({ email: '', password: '', name: '' });
-      setRememberMe(false);
-      // Limpiar datos recordados al cambiar a registro
-      localStorage.removeItem('rememberedEmail');
-      localStorage.removeItem('rememberedPassword');
-    }
+    // Limpiar formulario al cambiar de modo
+    setFormData({ email: '', password: '', name: '' });
   }, [mode]);
-
-  const showNotification = (message, type = 'success') => {
-    setToastMessage(message);
-    setToastType(type);
-    setShowToast(true);
-  };
-
-  const handleInputChange = (e) => {
+  useEffect(() => {
+    // Limpiar errores cuando se abre/cierra el modal
+    if (isOpen) {
+      setFieldErrors({ email: '', password: '', name: '' });
+      setError(null);
+    }
+  }, [isOpen]);  const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
-  };
-
-  const handleRememberMe = (e) => {
-    setRememberMe(e.target.checked);
-    if (!e.target.checked) {
-      localStorage.removeItem('rememberedEmail');
-      localStorage.removeItem('rememberedPassword');
+    
+    // Limpiar errores del campo cuando el usuario escriba
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
     }
   };
   const handleLogout = () => {
@@ -197,19 +174,13 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
     return isLoginMode 
       ? 'No se pudo iniciar sesión. Verifica tus datos e inténtalo de nuevo.'
       : 'No se pudo completar el registro. Verifica tus datos e inténtalo de nuevo.';
-  };// Centraliza la gestión de sesión para ambos flujos
+  };  // Centraliza la gestión de sesión para ambos flujos
   const handleAuthSuccess = (data) => {
     console.log('AuthModal: handleAuthSuccess llamado con data:', data);
-    authManager.setAuthData(data);
-    onLoginSuccess?.(data.email, data.nombre || data.email, data.uid);
+    authManager.setAuthData(data);    onLoginSuccess?.(data.email, data.nombre || data.email, data.uid);
     
-    // Mensaje específico según si es registro o login
-    const isRegistration = data.message && data.message.includes('registrado');
-    const successMessage = isRegistration 
-      ? '¡Registro exitoso! Bienvenido a la plataforma!'
-      : '¡Inicio de sesión exitoso!';
-    
-    showNotification(successMessage, 'success');
+    // Mostrar spinner de recarga
+    setIsReloading(true);
     
     // Si es admin, redirigir directamente al dashboard
     if (data.role === 'admin') {
@@ -217,22 +188,28 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
       setTimeout(() => {
         console.log('AuthModal: Ejecutando redirección a /admin/dashboard');
         window.location.href = '/admin/dashboard';
-      }, 1000); // Aumenté el tiempo a 1 segundo para que sea más visible
+      }, 2000);
       return;
     }
     
-    onClose();
-  };
-  const handleSubmit = async (e) => {
+    // Para usuarios normales, recargar la página
+    setTimeout(() => {
+      window.location.reload();
+    }, 2000);
+  };  const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setFieldErrors({ email: '', password: '', name: '' });
     setIsLoading(true);
 
     // Validaciones de formulario
     if (!formData.email || !formData.password) {
-      const errorMsg = 'Por favor, completa todos los campos obligatorios.';
-      setError(errorMsg);
-      showNotification(errorMsg, 'error');
+      if (!formData.email) {
+        setFieldErrors(prev => ({ ...prev, email: 'Este campo es obligatorio' }));
+      }
+      if (!formData.password) {
+        setFieldErrors(prev => ({ ...prev, password: 'Este campo es obligatorio' }));
+      }
       setIsLoading(false);
       return;
     }
@@ -240,18 +217,14 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
     // Validar formato de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      const errorMsg = 'Por favor, introduce un email válido.';
-      setError(errorMsg);
-      showNotification(errorMsg, 'error');
+      setFieldErrors(prev => ({ ...prev, email: 'Introduce un email válido' }));
       setIsLoading(false);
       return;
     }
 
     // Validar contraseña solo en registro
     if (!isLoginMode && !validatePassword(formData.password)) {
-      const errorMsg = 'La contraseña debe tener al menos 8 caracteres, incluyendo una mayúscula, una minúscula, un número y un símbolo especial.';
-      setError(errorMsg);
-      showNotification(errorMsg, 'error');
+      setFieldErrors(prev => ({ ...prev, password: 'La contraseña debe tener al menos 8 caracteres, incluyendo una mayúscula, una minúscula, un número y un símbolo especial' }));
       setShowPasswordErrors(true);
       setIsLoading(false);
       return;
@@ -259,9 +232,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
 
     // Validar nombre en registro
     if (!isLoginMode && !formData.name?.trim()) {
-      const errorMsg = 'Por favor, introduce tu nombre.';
-      setError(errorMsg);
-      showNotification(errorMsg, 'error');
+      setFieldErrors(prev => ({ ...prev, name: 'Este campo es obligatorio' }));
       setIsLoading(false);
       return;
     }
@@ -282,43 +253,54 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
         body: JSON.stringify(requestBody)
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
+      const data = await response.json();      if (!response.ok) {
         throw new Error(data.detail || 'Error en la autenticación');
       }
 
-      // Guardar email si el usuario marcó 'Recordarme' SOLO en login
-      if (isLoginMode && rememberMe) {
-        localStorage.setItem('rememberedEmail', formData.email);
-      } else if (isLoginMode) {
-        localStorage.removeItem('rememberedEmail');
-        localStorage.removeItem('rememberedPassword');
-      }      handleAuthSuccess(data);
-    } catch (err) {
+      handleAuthSuccess(data);    } catch (err) {
       console.error('Error en autenticación:', err);
       
-      // Usar la función de manejo de errores amigables
+      // Asegurar que el spinner de recarga se oculte en caso de error
+      setIsReloading(false);
+      
+      // Obtener mensaje de error amigable
       const userFriendlyError = getErrorMessage(err, isLoginMode);
       
-      setError(userFriendlyError);
-      showNotification(userFriendlyError, 'error');
+      // Determinar si es un error de credenciales para mostrar en campos específicos
+      const errorMessage = err.message.toLowerCase();
+      
+      if (isLoginMode && (errorMessage.includes('credenciales') || 
+          errorMessage.includes('incorrect') || 
+          errorMessage.includes('invalid') ||
+          errorMessage.includes('401') ||
+          errorMessage.includes('unauthorized') ||
+          errorMessage.includes('password') && errorMessage.includes('wrong') ||
+          errorMessage.includes('email') && errorMessage.includes('not found') ||
+          errorMessage.includes('user not found'))) {
+          // Para login con credenciales incorrectas: mostrar en campos
+        setFieldErrors(prev => ({ 
+          ...prev, 
+          email: 'Credenciales incorrectas', 
+          password: 'Verifica tu email y contraseña' 
+        }));
+        
+        setError(userFriendlyError);
+      } else {
+        // Para otros errores (registro, validaciones, etc.)
+        setError(userFriendlyError);
+      }
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleModeChange = () => {
+  };  const handleModeChange = () => {
     setFormData({
       email: '',
       password: '',
       name: ''
     });
+    setFieldErrors({ email: '', password: '', name: '' });
+    setError(null);
     setIsLoginMode(!isLoginMode);
-    setRememberMe(false);
-    // Limpiar datos recordados al cambiar de modo
-    localStorage.removeItem('rememberedEmail');
-    localStorage.removeItem('rememberedPassword');
   };
 
   const handleResetInput = (e) => {
@@ -363,25 +345,26 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
           password: resetForm.password
         })
       });      const loginData = await loginResponse.json();
-      if (!loginResponse.ok) throw new Error(loginData.detail || 'Contraseña cambiada, pero error al iniciar sesión');
-      
-      // Usar authManager en lugar de localStorage
+      if (!loginResponse.ok) throw new Error(loginData.detail || 'Contraseña cambiada, pero error al iniciar sesión');      // Usar authManager en lugar de localStorage
       authManager.setAuthData(loginData);
       
-      showNotification('Contraseña actualizada e inicio de sesión exitoso', 'success');
       setShowResetPassword(false);
       setResetForm({ email: '', password: '', confirmPassword: '' });
+      
+      // Mostrar spinner de recarga
+      setIsReloading(true);
+      
       setTimeout(() => {
-        onClose();
-        window.location.reload();      }, 1500);
-    } catch (err) {
+        window.location.reload();
+      }, 2000);} catch (err) {
       console.error('Error en reset de contraseña:', err);
       
-      // Usar la función de manejo de errores amigables
+      // Asegurar que el spinner de recarga se oculte en caso de error
+      setIsReloading(false);
+        // Usar la función de manejo de errores amigables
       const userFriendlyError = getErrorMessage(err, true); // true porque después hace login
       
       setError(userFriendlyError);
-      showNotification(userFriendlyError, 'error');
     } finally {
       setResetLoading(false);
     }
@@ -418,18 +401,10 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
   // Utilidad para saber si la foto es válida
   const userPhoto = (typeof window !== 'undefined') ? localStorage.getItem('userPhoto') : '';
   const isValidPhoto = userPhoto && !userPhoto.includes('googleusercontent.com') && userPhoto !== '';
-
   if (!isOpen) return null;
 
   return (
     <>
-      {showToast && (
-        <Toast
-          message={toastMessage}
-          type={toastType}
-          onClose={() => setShowToast(false)}
-        />
-      )}
       <div className="fixed inset-0 z-[100] overflow-y-auto">
         <div className="flex min-h-screen items-center justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
           <div 
@@ -611,16 +586,22 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                           <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                               <FaUser className="h-5 w-5 text-gray-400" />
-                            </div>
-                            <input
+                            </div>                            <input
                               type="text"
                               name="name"
                               value={formData.name}
                               onChange={handleInputChange}
-                              className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base"
+                              className={`block w-full pl-10 pr-3 py-3 border rounded-xl shadow focus:outline-none focus:ring-2 text-base ${
+                                fieldErrors.name 
+                                  ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                  : 'border-gray-300 focus:ring-purple-500 focus:border-transparent'
+                              }`}
                               placeholder="Tu nombre"
                             />
                           </div>
+                          {fieldErrors.name && (
+                            <p className="text-red-600 text-sm mt-1">{fieldErrors.name}</p>
+                          )}
                         </div>
                       )}
 
@@ -631,17 +612,23 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <FaEnvelope className="h-5 w-5 text-gray-400" />
-                          </div>
-                          <input
+                          </div>                          <input
                             type="email"
                             name="email"
                             value={formData.email}
                             onChange={handleInputChange}
                             required
-                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base"
+                            className={`block w-full pl-10 pr-3 py-3 border rounded-xl shadow focus:outline-none focus:ring-2 text-base ${
+                              fieldErrors.email 
+                                ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                : 'border-gray-300 focus:ring-purple-500 focus:border-transparent'
+                            }`}
                             placeholder="tu@email.com"
                           />
                         </div>
+                        {fieldErrors.email && (
+                          <p className="text-red-600 text-sm mt-1">{fieldErrors.email}</p>
+                        )}
                       </div>
 
                       <div>
@@ -651,8 +638,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <FaLock className="h-5 w-5 text-gray-400" />
-                          </div>
-                          <input
+                          </div>                          <input
                             type={showPassword ? 'text' : 'password'}
                             name="password"
                             value={formData.password}
@@ -661,7 +647,11 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                               setShowPasswordErrors(false);
                             }}
                             required
-                            className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl shadow focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base"
+                            className={`block w-full pl-10 pr-10 py-3 border rounded-xl shadow focus:outline-none focus:ring-2 text-base ${
+                              fieldErrors.password 
+                                ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                : 'border-gray-300 focus:ring-purple-500 focus:border-transparent'
+                            }`}
                             placeholder="••••••••"
                           />
                           <button
@@ -679,26 +669,17 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                             )}
                           </button>
                         </div>
+                        {fieldErrors.password && (
+                          <p className="text-red-600 text-sm mt-1">{fieldErrors.password}</p>
+                        )}
                         <PasswordRequirements 
                           password={formData.password} 
-                          showErrors={showPasswordErrors} 
+                          showErrors={showPasswordErrors}
                           mostrar={!isLoginMode}
-                        />
-                      </div>
+                        />                      </div>
 
                       {isLoginMode && (
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <input
-                              type="checkbox"
-                              className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                              checked={rememberMe}
-                              onChange={handleRememberMe}
-                            />
-                            <label className="ml-2 block text-sm text-gray-700">
-                              Recordarme
-                            </label>
-                          </div>
+                        <div className="flex justify-end">
                           <button
                             type="button"
                             className="text-sm text-purple-600 hover:text-purple-500"
@@ -732,22 +713,21 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                     </div>                    <div className="mb-4 flex justify-center">
                       <GoogleLogin
                         onSuccess={async (credentialResponse) => {
-                          const id_token = credentialResponse.credential;
-                          if (!id_token) {
+                          const id_token = credentialResponse.credential;                          if (!id_token) {
                             const errorMsg = 'No se pudo obtener la autorización de Google. Inténtalo de nuevo.';
                             setError(errorMsg);
-                            showNotification(errorMsg, 'error');
                             return;
                           }
                           try {
                             setIsLoading(true);
                             const data = await apiManager.post('/auth/google', { id_token });
-                            handleAuthSuccess(data);
-                          } catch (error) {
+                            handleAuthSuccess(data);                          } catch (error) {
                             console.error('Error en Google Auth:', error);
-                            const userFriendlyError = getErrorMessage(error, false); // false para Google Auth
+                            
+                            // Asegurar que el spinner de recarga se oculte en caso de error
+                            setIsReloading(false);
+                              const userFriendlyError = getErrorMessage(error, false); // false para Google Auth
                             setError(userFriendlyError);
-                            showNotification(userFriendlyError, 'error');
                           } finally {
                             setIsLoading(false);
                           }
@@ -756,7 +736,6 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                           console.error('Google Login Error:', error);
                           const errorMsg = 'No se pudo conectar con Google. Verifica tu conexión e inténtalo de nuevo.';
                           setError(errorMsg);
-                          showNotification(errorMsg, 'error');
                         }}
                       />
                     </div>
@@ -779,8 +758,10 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
               )}
             </div>
           </div>
-        </div>
-      </div>
+        </div>      </div>
+      
+      {/* Loading Spinner para recarga */}
+      {isReloading && <LoadingSpinner />}
     </>
   );
 };

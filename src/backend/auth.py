@@ -76,6 +76,13 @@ class DeleteAccount(BaseModel):
     uid: str
     email: EmailStr
 
+class ProfileWithPasswordUpdate(BaseModel):
+    uid: str
+    nombre: Optional[str] = None
+    email: Optional[EmailStr] = None
+    newPassword: Optional[str] = None
+    biografia: Optional[str] = None
+
 class FollowRequest(BaseModel):
     current_user_uid: str
 
@@ -412,8 +419,7 @@ async def update_profile(
         # Actualizar en Firebase Auth
         if update_data:
             auth.update_user(uid, **update_data)
-            logger.info(f"Updated Firebase Auth for user {uid}")
-        # Actualizar en Firestore
+            logger.info(f"Updated Firebase Auth for user {uid}")        # Actualizar en Firestore
         if firestore_data:
             # Obtener el documento actual para preservar datos no actualizados
             current_doc = db.collection("usuarios").document(uid).get()
@@ -424,7 +430,12 @@ async def update_profile(
             logger.info(f"Updated Firestore for user {uid}")
         
         logger.info(f"Profile update successful for user {uid}")
-        return {"message": "Perfil actualizado con éxito", "data": firestore_data}
+        
+        # Obtener los datos actualizados para retornar al frontend
+        updated_doc = db.collection("usuarios").document(uid).get()
+        updated_user_data = updated_doc.to_dict() if updated_doc.exists else {}
+        
+        return {"message": "Perfil actualizado con éxito", "data": updated_user_data}
     except HTTPException as he:
         logger.error(f"HTTP Exception in update_profile: {he.detail}")
         raise he
@@ -433,6 +444,103 @@ async def update_profile(
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     except Exception as e:
         logger.error(f"Error al actualizar perfil: {str(e)}")
+        logger.error(f"Exception type: {type(e).__name__}")
+        raise HTTPException(status_code=400, detail="Error al actualizar el perfil")
+
+@router.put("/update-profile-with-password")
+async def update_profile_with_password(
+    uid: str = Form(...),
+    nombre: Optional[str] = Form(None),
+    email: Optional[EmailStr] = Form(None),
+    password: Optional[str] = Form(None),
+    foto: Optional[UploadFile] = File(None),
+    biografia: Optional[str] = Form(None),
+    delete_photo: Optional[str] = Form(None)
+):
+    try:
+        logger.info(f"Updating profile with password for UID: {uid}")
+        
+        user = auth.get_user(uid)
+        logger.info(f"Found user: {user.email}")
+        
+        update_data = {}
+        firestore_data = {}
+        
+        # Preparar datos para Firebase Auth
+        if nombre:
+            update_data["display_name"] = nombre
+            firestore_data["nombre"] = nombre
+            
+        # Solo actualizar el email si realmente ha cambiado y no existe ya
+        if email and email != user.email:
+            # Verificar si el email ya existe en Firebase
+            try:
+                auth.get_user_by_email(email)
+                raise HTTPException(status_code=400, detail="El email ya está en uso por otro usuario")
+            except auth.UserNotFoundError:
+                update_data["email"] = email
+                firestore_data["email"] = email
+                
+        # Agregar contraseña si se proporciona
+        if password:
+            update_data["password"] = password
+            
+        if biografia is not None:
+            firestore_data["biografia"] = biografia
+
+        # Manejar la foto de perfil
+        if delete_photo == 'true':
+            # Eliminar la foto actual
+            firestore_data["foto"] = None
+        elif foto:
+            # Validar tipo y tamaño
+            if foto.content_type not in ["image/png", "image/jpeg", "image/jpg", "image/gif"]:
+                raise HTTPException(status_code=400, detail="Tipo de imagen no soportado")
+            contents = await foto.read()
+            if len(contents) > 10 * 1024 * 1024:
+                raise HTTPException(status_code=400, detail="La imagen supera los 10MB")
+            # Subir a Cloudinary
+            try:
+                result = cloudinary.uploader.upload(
+                    contents,
+                    folder="profile_images",
+                    resource_type="auto"
+                )
+                firestore_data["foto"] = result["secure_url"]
+            except Exception as img_err:
+                logger.error(f"Error subiendo imagen a Cloudinary: {str(img_err)}")
+                raise HTTPException(status_code=400, detail="Error al subir la imagen")
+
+        # Actualizar en Firebase Auth (email, nombre y contraseña en una sola operación)
+        if update_data:
+            auth.update_user(uid, **update_data)
+            logger.info(f"Updated Firebase Auth for user {uid}")
+              # Actualizar en Firestore
+        if firestore_data:
+            # Obtener el documento actual para preservar datos no actualizados
+            current_doc = db.collection("usuarios").document(uid).get()
+            current_data = current_doc.to_dict() if current_doc.exists else {}
+            # Combinar datos actuales con nuevos datos
+            updated_data = {**current_data, **firestore_data}
+            db.collection("usuarios").document(uid).set(updated_data, merge=True)
+            logger.info(f"Updated Firestore for user {uid}")
+        
+        logger.info(f"Profile with password update successful for user {uid}")
+        
+        # Obtener los datos actualizados para retornar al frontend
+        updated_doc = db.collection("usuarios").document(uid).get()
+        updated_user_data = updated_doc.to_dict() if updated_doc.exists else {}
+        
+        return {"message": "Perfil y contraseña actualizados con éxito", "data": updated_user_data}
+        
+    except HTTPException as he:
+        logger.error(f"HTTP Exception in update_profile_with_password: {he.detail}")
+        raise he
+    except auth.UserNotFoundError:
+        logger.error(f"User not found: {uid}")
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    except Exception as e:
+        logger.error(f"Error al actualizar perfil con contraseña: {str(e)}")
         logger.error(f"Exception type: {type(e).__name__}")
         raise HTTPException(status_code=400, detail="Error al actualizar el perfil")
 

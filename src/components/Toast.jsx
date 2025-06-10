@@ -2,6 +2,8 @@ import React, { useEffect } from 'react';
 import { FaCheckCircle, FaTimesCircle, FaInfoCircle, FaExclamationCircle } from 'react-icons/fa';
 
 const Toast = ({ message, type = 'success', onClose, duration = 3000 }) => {
+  console.log('🔔 Toast: Componente renderizado!', { message, type, duration });
+  
   useEffect(() => {
     if (duration) {
       const timer = setTimeout(() => {
@@ -39,13 +41,12 @@ const Toast = ({ message, type = 'success', onClose, duration = 3000 }) => {
       default:
         return 'bg-blue-50 border-blue-200';
     }
-  };
-
-  return (
-    <div className="fixed left-1/2 bottom-8 z-50 transform -translate-x-1/2 animate-slide-up">
+  };  return (
+    <div className="fixed left-1/2 bottom-8 z-[9999] transform -translate-x-1/2 animate-slide-up" style={{ zIndex: 9999 }}>
       <div
-        className={`flex items-center p-4 rounded-lg shadow-lg border ${getBackgroundColor()} max-w-md min-w-[300px] cursor-pointer`}
+        className={`flex items-center p-4 rounded-lg shadow-2xl border-2 ${getBackgroundColor()} max-w-md min-w-[300px] cursor-pointer`}
         onClick={onClose}
+        style={{ zIndex: 9999 }}
       >
         <div className="flex-shrink-0 mr-3">
           {getIcon()}

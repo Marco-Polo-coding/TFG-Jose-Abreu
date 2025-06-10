@@ -117,9 +117,7 @@ const UserButton = () => {
     setAuthMode(mode);
     setShowAuthModal(true);
     setIsOpen(false);
-  };
-
-  const handleLogout = () => {
+  };  const handleLogout = () => {
     setShowConfirmModal(true);
     setIsOpen(false);
   };

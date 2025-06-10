@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, Body
 from typing import List, Dict
 from firebase_config import db
+from firebase_admin import auth
 from middleware import verify_admin
 
 router = APIRouter()
@@ -70,14 +71,45 @@ async def get_all_compras(admin: Dict = Depends(verify_admin)):
 @router.delete("/users/{user_id}")
 async def delete_user(user_id: str, admin: Dict = Depends(verify_admin)):
     try:
-        # Verificar que el usuario existe
+        # Verificar que el usuario existe en Firestore
         user_ref = db.collection("usuarios").document(user_id)
-        if not user_ref.get().exists:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
-            
-        # Eliminar usuario
+        user_doc = user_ref.get()
+        if not user_doc.exists:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado en Firestore")
+        
+        user_data = user_doc.to_dict()
+        user_email = user_data.get("email")
+        
+        # Eliminar usuario de Firebase Auth
+        try:
+            auth.delete_user(user_id)
+        except auth.UserNotFoundError:
+            # Si el usuario no existe en Auth, continuar con la eliminación de Firestore
+            pass
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Error al eliminar usuario de Firebase Auth: {str(e)}"
+            )
+        
+        # Eliminar datos del usuario de Firestore
         user_ref.delete()
-        return {"message": "Usuario eliminado correctamente"}
+        
+        # Eliminar artículos y productos asociados si hay email
+        if user_email:
+            # Eliminar artículos del usuario
+            articles_ref = db.collection("articulos")
+            articles = articles_ref.where("email", "==", user_email).stream()
+            for article in articles:
+                article.reference.delete()
+                
+            # Eliminar productos del usuario
+            products_ref = db.collection("productos")
+            products = products_ref.where("email", "==", user_email).stream()
+            for product in products:
+                product.reference.delete()
+        
+        return {"message": "Usuario eliminado correctamente de Auth y Firestore"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

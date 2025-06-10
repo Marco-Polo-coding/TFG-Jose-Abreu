@@ -52,7 +52,6 @@ const ProfileCard = () => {
   const [uid, setUid] = React.useState('');
   const [loadingUnfollow, setLoadingUnfollow] = React.useState(null);
   const [loadingRemoveFollower, setLoadingRemoveFollower] = React.useState(null);
-
   useEffect(() => {
     // Suscribirse a cambios en el store global de autenticación
     const unsub = authManager.store.subscribe((state) => {
@@ -64,6 +63,11 @@ const ProfileCard = () => {
     setLoading(false);
     return () => unsub();
   }, []);
+
+  // Actualizar userBio cuando el usuario cambia
+  useEffect(() => {
+    setUserBio(user?.biografia || '');
+  }, [user]);
   React.useEffect(() => {
     const fetchArticles = async () => {
       try {
