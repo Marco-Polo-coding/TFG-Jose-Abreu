@@ -5,30 +5,21 @@ import AdminDashboard from '../../components/admin/AdminDashboard';
 // Indicar que esta página debe ser renderizada en el servidor
 export const prerender = false;
 
-// Verificar si el usuario es administrador usando cookies o localStorage
+// Verificar si el usuario es administrador usando solo cookies
 const userRole = Astro.cookies.get('userRole')?.value;
 const isAdmin = userRole === 'admin';
 
-// Si no hay cookie de admin, verificar localStorage en el cliente
+// Debug para entender qué está pasando
+console.log('Dashboard - userRole cookie:', userRole);
+console.log('Dashboard - isAdmin:', isAdmin);
+
+// Si no es admin, redirigir al inicio
 if (!isAdmin) {
-  // Agregar script para verificar localStorage
-  const script = `
-    const userRole = localStorage.getItem('userRole');
-    if (userRole !== 'admin') {
-      window.location.href = '/';
-    }
-  `;
+  console.log('Dashboard - No es admin, redirigiendo al inicio');
+  return Astro.redirect('/');
 }
 ---
 
 <AdminLayout title="Dashboard">
-  <script>
-    {`
-      const userRole = localStorage.getItem('userRole');
-      if (userRole !== 'admin') {
-        window.location.href = '/';
-      }
-    `}
-  </script>
   <AdminDashboard client:load />
-</AdminLayout> 
+</AdminLayout>

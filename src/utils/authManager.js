@@ -56,8 +56,7 @@ class AuthManager {
     this.expirationTimer = null;
     this.warningShown = false;
     this.isMonitoring = false;
-  }
-  // Guardar datos de autenticación
+  }  // Guardar datos de autenticación
   setAuthData(data) {
     // Guardar en el store de Zustand únicamente
     const userData = {
@@ -68,12 +67,20 @@ class AuthManager {
       uid: data.uid,
     };
     
-    this.store.getState().setAuth(userData, data.idToken, data.refreshToken);
-
-    // Configurar cookie segura con expiración de 7 días (opcional)
+    this.store.getState().setAuth(userData, data.idToken, data.refreshToken);    // Configurar cookies con expiración de 7 días
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + 7);
-    document.cookie = `auth_token=${data.idToken}; Path=/; Expires=${expirationDate.toUTCString()}; Secure; SameSite=Strict`;
+    
+    // En desarrollo no usar Secure para que funcione en HTTP
+    const isProduction = window.location.protocol === 'https:';
+    const cookieOptions = `Path=/; Expires=${expirationDate.toUTCString()}; SameSite=Strict${isProduction ? '; Secure' : ''}`;
+    
+    document.cookie = `auth_token=${data.idToken}; ${cookieOptions}`;
+    document.cookie = `userRole=${data.role}; ${cookieOptions}`;
+    
+    console.log('AuthManager: Cookies establecidas');
+    console.log('AuthManager: Rol del usuario:', data.role);
+    console.log('AuthManager: Cookies actuales:', document.cookie);
 
     // Disparar evento personalizado para notificar cambios
     window.dispatchEvent(new CustomEvent('authStateChanged', { detail: userData }));
@@ -82,12 +89,12 @@ class AuthManager {
     this.startExpirationMonitoring();
   }
   // Limpiar datos de autenticación
-  clearAuthData() {
-    // Limpiar store únicamente
+  clearAuthData() {    // Limpiar store únicamente
     this.store.getState().clearAuth();
 
-    // Limpiar cookie segura
+    // Limpiar cookies seguras
     this.clearSecureCookie('auth_token');
+    this.clearSecureCookie('userRole');
 
     // Detener monitoreo de expiración
     this.stopExpirationMonitoring();
@@ -179,6 +186,24 @@ class AuthManager {
   // Verificar si es admin
   isAdmin() {
     return this.store.getState().user?.role === 'admin';
+  }
+
+  // Verificar si es admin con respaldo en cookies
+  isAdminWithCookieBackup() {
+    // Primero verificar el store
+    if (this.store.getState().user?.role === 'admin') {
+      return true;
+    }
+
+    // Si no está en el store, verificar la cookie como respaldo
+    if (typeof document !== 'undefined') {
+      const cookies = document.cookie.split(';');
+      const userRoleCookie = cookies.find(cookie => cookie.trim().startsWith('userRole='));
+      const cookieRole = userRoleCookie ? userRoleCookie.split('=')[1] : null;
+      return cookieRole === 'admin';
+    }
+
+    return false;
   }
 
   // Inicializar monitoreo para usuarios ya autenticados

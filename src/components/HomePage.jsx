@@ -14,12 +14,15 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
   const [showContent, setShowContent] = useState(false);
   const [imageIndexes, setImageIndexes] = useState({}); // { [productoId]: index }
+  
   useEffect(() => {
     // Check if user is authenticated (authManager handles token expiration internally)
     const user = authManager.getUser();
     if (user && !authManager.isTokenValid()) {
+      console.log('HomePage: Token inválido, cerrando sesión');
       authManager.logout();
-      window.location.reload();
+      // NO hacer reload inmediatamente, dejar que el flujo normal maneje la redirección
+      // window.location.reload();
     }
   }, []);
 

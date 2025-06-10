@@ -303,10 +303,9 @@ const ProfileCard = () => {
             </div>
           ) : errorVentas ? (
             <div className="text-red-600 py-4">{errorVentas}</div>
-          ) : ventas.length === 0 ? (
-            <>
+          ) : ventas.length === 0 ? (            <>
               <p className="text-gray-500 text-base mb-4">No tienes ventas en curso todavía</p>
-              <a href="/post_product" className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow hover:scale-105 hover:from-purple-700 hover:to-indigo-700 transition-all duration-300">
+              <a href="/upload_product" className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow hover:scale-105 hover:from-purple-700 hover:to-indigo-700 transition-all duration-300">
                 <FaPlus className="w-4 h-4" /> Publicar producto
               </a>
             </>

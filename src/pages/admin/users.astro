@@ -1,8 +1,20 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import UserManagement from '../../components/admin/UserManagement';
+
+// Indicar que esta página debe ser renderizada en el servidor
+export const prerender = false;
+
+// Verificar si el usuario es administrador usando solo cookies
+const userRole = Astro.cookies.get('userRole')?.value;
+const isAdmin = userRole === 'admin';
+
+// Si no es admin, redirigir al inicio
+if (!isAdmin) {
+  return Astro.redirect('/');
+}
 ---
 
 <AdminLayout title="Gestión de Usuarios">
   <UserManagement client:load />
-</AdminLayout> 
+</AdminLayout>
