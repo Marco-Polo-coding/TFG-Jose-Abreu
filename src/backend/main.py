@@ -169,11 +169,9 @@ async def crear_producto(
                         result = cloudinary.uploader.upload(
                             contents,
                             folder="product_images",
-                            resource_type="auto"
-                        )
+                            resource_type="auto"                        )
                         urls_imagenes.append(result["secure_url"])
                 except Exception as img_err:
-                    print(f"Error subiendo imagen a Cloudinary: {img_err}")
                     continue
 
         # Si no se subió ninguna imagen, usar la imagen por defecto
@@ -216,34 +214,16 @@ async def actualizar_producto(
     imagenes_existentes: List[str] = Form(None)
 ):
     try:
-        # 🔍 DEBUG: Logging para investigar el problema de stock
-        print(f"🔍 DEBUG - PUT /productos/{producto_id}")
-        print(f"  Datos recibidos:")
-        print(f"    nombre: {nombre}")
-        print(f"    descripcion: {descripcion}")
-        print(f"    precio: {precio} (tipo: {type(precio)})")
-        print(f"    stock: {stock} (tipo: {type(stock)})")
-        print(f"    categoria: {categoria}")
-        print(f"    estado: {estado}")
-        print(f"    imagenes: {len(imagenes) if imagenes else 0} archivos")
-        print(f"    imagenes_existentes: {imagenes_existentes}")
-        
         producto_ref = db.collection("productos").document(producto_id)
         producto = producto_ref.get()
         if not producto.exists:
             raise HTTPException(status_code=404, detail="Producto no encontrado")
 
-        # 🔍 DEBUG: Stock antes de actualizar
-        stock_antes = producto.to_dict().get("stock", "No definido")
-        print(f"  Stock antes de actualizar: {stock_antes}")
-
         data = {}
         if nombre is not None: data["nombre"] = nombre
         if descripcion is not None: data["descripcion"] = descripcion
         if precio is not None: data["precio"] = precio
-        if stock is not None: 
-            data["stock"] = stock
-            print(f"  🎯 Stock que se va a guardar: {stock}")
+        if stock is not None: data["stock"] = stock
         if categoria is not None: data["categoria"] = categoria
         if estado is not None: data["estado"] = estado
 
@@ -280,21 +260,13 @@ async def actualizar_producto(
 
         if not data:
             raise HTTPException(status_code=400, detail="No se proporcionaron datos para actualizar")
-
-        # 🔍 DEBUG: Datos que se van a guardar
-        print(f"  📝 Datos completos a guardar: {data}")
         
         producto_ref.update(data)
         producto_actualizado = producto_ref.get().to_dict()
         producto_actualizado["id"] = producto_id
         
-        # 🔍 DEBUG: Resultado después de guardar
-        print(f"  ✅ Stock después de guardar: {producto_actualizado.get('stock', 'No definido')}")
-        print(f"  📋 Producto actualizado completo: {producto_actualizado}")
-        
         return producto_actualizado
     except Exception as e:
-        print("Error en actualizar_producto:", e)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/productos/{producto_id}")
@@ -307,7 +279,6 @@ async def eliminar_producto(producto_id: str):
             raise HTTPException(status_code=404, detail="Producto no encontrado")
         
         producto_data = producto.to_dict()
-        print(f"\n[ELIMINACIÓN] Iniciando eliminación del producto: {producto_data.get('nombre', 'Sin nombre')} (ID: {producto_id})")
         
         if producto_data.get("imagenes") and "cloudinary.com" in producto_data["imagenes"][0]:
             try:
@@ -316,15 +287,12 @@ async def eliminar_producto(producto_id: str):
                     upload_index = url_parts.index("upload") + 1
                     public_id = "/".join(url_parts[upload_index + 1:]).split(".")[0]
                     result = cloudinary.uploader.destroy(public_id)
-                    print(f"[ELIMINACIÓN] Resultado de eliminación de imagen: {result}")
-            except Exception as img_err:
-                print(f"[ERROR] Error eliminando imagen de Cloudinary: {str(img_err)}")
+            except Exception:
+                pass
         
         producto_ref.delete()
-        print(f"[ELIMINACIÓN] Producto eliminado correctamente de la base de datos")
         return {"message": "Producto eliminado correctamente"}
     except Exception as e:
-        print(f"[ERROR] Error en eliminar_producto: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # ✅ Endpoint para obtener productos de un usuario específico
@@ -498,6 +466,7 @@ async def crear_articulo(
     try:
         gatito_url = "https://cataas.com/cat"
         url_imagen = gatito_url
+        
         if imagen is not None:
             try:
                 if hasattr(imagen, 'filename') and imagen.filename and hasattr(imagen, 'content_type') and imagen.content_type and imagen.content_type.startswith("image/"):
@@ -508,8 +477,7 @@ async def crear_articulo(
                         resource_type="auto"
                     )
                     url_imagen = result["secure_url"]
-            except Exception as img_err:
-                print("Error subiendo imagen a Cloudinary:", img_err)
+            except Exception:
                 url_imagen = gatito_url
 
         articulo_ref = db.collection("articulos").document()
@@ -528,7 +496,7 @@ async def crear_articulo(
         articulo_ref.set(articulo)
         return {"id": articulo_ref.id, **articulo}
     except Exception as e:
-        print("Error en crear_articulo:", e)
+        logger.error(f"Error creating article: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/upload-image/")

@@ -144,10 +144,9 @@ const ChatList = ({ onSelectChat }) => {
                     {chat.last_message.content}
                   </p>
                 )}
-              </div>
-              {chat.last_message && (
+              </div>              {chat.last_message && (
                 <span className="text-xs text-purple-400 font-semibold">
-                  {new Date(chat.last_message.timestamp).toLocaleTimeString()}
+                  {new Date(chat.last_message.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                 </span>
               )}
             </div>

@@ -360,9 +360,8 @@ const DirectChat = ({ chatId, otherUserId }) => {
                   </div>
                 ) : (
                   <>
-                    <p className="mb-1 text-base">{message.content} {message.edited && <span className="text-xs italic opacity-70">(editado)</span>}</p>
-                    <span className="text-xs opacity-70 block text-right">
-                      {new Date(message.timestamp).toLocaleTimeString()}
+                    <p className="mb-1 text-base">{message.content} {message.edited && <span className="text-xs italic opacity-70">(editado)</span>}</p>                    <span className="text-xs opacity-70 block text-right">
+                      {new Date(message.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </>
                 )}

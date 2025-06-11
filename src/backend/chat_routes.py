@@ -56,7 +56,27 @@ async def get_user_chats(uid: str = Depends(get_current_uid)):
         "participants", "array_contains", uid
     ).order_by("updated_at", direction="DESCENDING").stream()
     
-    return [{"id": chat.id, **chat.to_dict()} for chat in chats]
+    result = []
+    for chat in chats:
+        chat_data = {"id": chat.id, **chat.to_dict()}
+        
+        # Obtener todos los mensajes de este chat y filtrar en memoria
+        all_messages = db.collection("direct_messages").where(
+            "chat_id", "==", chat.id
+        ).stream()
+        
+        unread_count = 0
+        for msg in all_messages:
+            msg_data = msg.to_dict()
+            # Solo contar mensajes que no son del usuario actual y que no ha leído
+            if msg_data.get("sender") != uid and uid not in msg_data.get("read_by", []):
+                unread_count += 1
+        
+        chat_data["has_unread_messages"] = unread_count > 0
+        chat_data["unread_count"] = unread_count
+        result.append(chat_data)
+    
+    return result
 
 @router.post("/direct-chats/{chat_id}/messages")
 async def send_message(chat_id: str, message: DirectMessage, uid: str = Depends(get_current_uid)):

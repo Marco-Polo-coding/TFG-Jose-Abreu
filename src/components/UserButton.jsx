@@ -74,19 +74,19 @@ const UserButton = () => {
     }
   }, [darkMode]);
 
-  useEffect(() => {
-    const fetchUnreadChats = async () => {
+  useEffect(() => {    const fetchUnreadChats = async () => {
       if (!authManager.isAuthenticated()) return;
-      try {        const userChats = await directChatManager.getChats();
+      try {
+        const userChats = await directChatManager.getChats();
         const currentUser = authManager.getUser();
         const currentUid = currentUser?.uid;
         
         if (!currentUid) return;
         
+        // Contar cuántos chats tienen mensajes sin leer
         let count = 0;
         userChats.forEach(chat => {
-          const lastMsg = chat.last_message;
-          if (lastMsg && lastMsg.sender !== currentUid && (!lastMsg.read_by || !lastMsg.read_by.includes(currentUid))) {
+          if (chat.has_unread_messages) {
             count++;
           }
         });
