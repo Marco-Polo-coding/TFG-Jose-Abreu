@@ -400,23 +400,21 @@ const ProductManagement = () => {
 };
 
 // Modal para añadir/editar producto
-const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData, mode }) => {
-  const [form, setForm] = React.useState({
+const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData, mode }) => {  const [form, setForm] = React.useState({
     nombre: initialData?.nombre || '',
     descripcion: initialData?.descripcion || '',
-    precio: initialData?.precio || '',
-    stock: initialData?.stock || '',
+    precio: initialData?.precio ?? '',
+    stock: initialData?.stock ?? '',
     categoria: initialData?.categoria || '',
     estado: initialData?.estado || 'Nuevo',
   });
   const [error, setError] = React.useState('');
-
   React.useEffect(() => {
     setForm({
       nombre: initialData?.nombre || '',
       descripcion: initialData?.descripcion || '',
-      precio: initialData?.precio || '',
-      stock: initialData?.stock || '',
+      precio: initialData?.precio ?? '',
+      stock: initialData?.stock ?? '',
       categoria: initialData?.categoria || '',
       estado: initialData?.estado || 'Nuevo',
     });

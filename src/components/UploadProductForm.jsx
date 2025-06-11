@@ -8,6 +8,7 @@ const UploadProductForm = () => {
     nombre: '',
     descripcion: '',
     precio: '',
+    stock: '',
     categoria: 'juego',
     estado: 'nuevo',
     imagenes: []
@@ -31,13 +32,24 @@ const UploadProductForm = () => {
   if (initialLoading) {
     return <LoadingSpinner />;
   }
-
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    // Validación especial para el campo stock
+    if (name === 'stock') {
+      // Solo permitir números enteros positivos
+      if (value === '' || (/^\d+$/.test(value) && parseInt(value) >= 1)) {
+        setFormData(prev => ({
+          ...prev,
+          [name]: value
+        }));
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleImageChange = (e) => {
@@ -86,9 +98,15 @@ const UploadProductForm = () => {
     }));
     setPreviewImages(prev => prev.filter((_, i) => i !== index));
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validación del stock antes de enviar
+    if (!formData.stock || parseInt(formData.stock) < 1) {
+      alert('La cantidad debe ser al menos 1 unidad');
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -98,10 +116,10 @@ const UploadProductForm = () => {
           formData.imagenes.forEach(imagen => {
             formDataToSend.append('imagenes', imagen);
           });
-        } else if (key !== 'stock') {
+        } else {
           formDataToSend.append(key, formData[key]);
         }
-      });      formDataToSend.append('stock', 1);
+      });
       const user = authManager.getUser();
       const userEmail = user?.email;
       if (userEmail) {
@@ -172,9 +190,7 @@ const UploadProductForm = () => {
             placeholder="Describe el producto..."
           />
           <div className="text-xs text-gray-500 text-right mt-1">{formData.descripcion.length}/{DESC_LIMIT}</div>
-        </div>
-
-        {/* Precio */}
+        </div>        {/* Precio */}
         <div>
           <label htmlFor="precio" className="block text-sm font-medium text-gray-700 mb-2">
             Precio (€)
@@ -191,6 +207,27 @@ const UploadProductForm = () => {
             className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
             placeholder="0.00"
           />
+        </div>
+
+        {/* Cantidad */}
+        <div>
+          <label htmlFor="stock" className="block text-sm font-medium text-gray-700 mb-2">
+            Cantidad
+          </label>
+          <input
+            type="number"
+            id="stock"
+            name="stock"
+            value={formData.stock}
+            onChange={handleChange}
+            required
+            min="1"
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+            placeholder="Cantidad"
+          />
+          {formData.stock && parseInt(formData.stock) < 1 && (
+            <div className="text-xs text-red-500 mt-1">La cantidad debe ser al menos 1 unidad</div>
+          )}
         </div>
 
         {/* Categoría */}

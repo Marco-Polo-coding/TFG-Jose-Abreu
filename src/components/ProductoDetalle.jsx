@@ -54,16 +54,30 @@ const ProductoDetalle = ({ id }) => {
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const handleAddToCart = async () => {
+  };  const handleAddToCart = async () => {
     if (!producto) return;
+    
+    // Verificar si el usuario es el vendedor del producto
+    const user = authManager.getUser();
+    const userEmail = user?.email;
+    
+    if (producto.usuario_email === userEmail) {
+      showNotification('No puedes comprar tu propio producto', 'error');
+      return;
+    }
+    
+    // Verificar stock antes de añadir
+    if (producto.stock === 0) {
+      showNotification('Este producto está agotado', 'error');
+      return;
+    }
+    
     setAddingToCart(true);
     try {
       addItem(producto);
       showNotification('Producto añadido al carrito', 'success');
     } catch (error) {
-      showNotification('Error al añadir al carrito', 'error');
+      showNotification(error.message || 'Error al añadir al carrito', 'error');
     } finally {
       setAddingToCart(false);
     }
@@ -239,8 +253,7 @@ const ProductoDetalle = ({ id }) => {
                 </p>
               </div>
 
-              <div className="border-t border-gray-200 pt-8">
-                <div className="flex items-center justify-between mb-8">
+              <div className="border-t border-gray-200 pt-8">                <div className="flex items-center justify-between mb-8">
                   <div>
                     <h3 className="text-3xl font-extrabold text-purple-700 mb-1">
                       {producto.precio}€
@@ -249,7 +262,57 @@ const ProductoDetalle = ({ id }) => {
                   </div>
                   <div className="flex items-center gap-4">
                   </div>
-                </div>
+                </div>                {/* Indicadores de stock */}
+                {producto.stock !== undefined && (
+                  <div className="mb-6">
+                    {(() => {
+                      const user = authManager.getUser();
+                      const userEmail = user?.email;
+                      const isOwnProduct = producto.usuario_email === userEmail;
+                      
+                      if (isOwnProduct) {
+                        return (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                            <span className="text-blue-600 font-bold text-lg">
+                              Tu Producto
+                            </span>
+                            <p className="text-blue-500 text-sm mt-1">Este es uno de tus productos en venta</p>
+                          </div>
+                        );
+                      }
+                      
+                      if (producto.stock === 0) {
+                        return (
+                          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                            <span className="text-red-600 font-bold text-lg">
+                              Agotado
+                            </span>
+                            <p className="text-red-500 text-sm mt-1">Este producto no está disponible</p>
+                          </div>
+                        );
+                      }
+                      
+                      if (producto.stock < 3) {
+                        return (
+                          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center animate-bounce">
+                            <span className="text-orange-600 font-bold text-lg">
+                              ¡Queda poco stock!
+                            </span>
+                            <p className="text-orange-500 text-sm mt-1">Solo quedan {producto.stock} unidades</p>
+                          </div>
+                        );
+                      }
+                      
+                      return (
+                        <div className="text-center">
+                          <p className="text-green-600 font-semibold">
+                            ✓ Disponible ({producto.stock} unidades)
+                          </p>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
 
                 <div className="bg-gradient-to-br from-purple-50 to-indigo-100 rounded-xl p-6 mt-4 shadow">
                   <h4 className="font-semibold text-purple-900 mb-2">
@@ -262,20 +325,35 @@ const ProductoDetalle = ({ id }) => {
                     <li>• Producto en excelente estado</li>
                   </ul>
                 </div>
-              </div>
-              <div className="flex justify-center mt-8">
-                <button
-                  onClick={handleAddToCart}
-                  disabled={addingToCart}
-                  className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-3 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 flex items-center gap-2 font-semibold shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {addingToCart ? (
-                    <FaSpinner className="animate-spin -ml-1 mr-3 h-5 w-5" />
-                  ) : (
-                    <FaShoppingCart className="mr-2 h-5 w-5" />
-                  )}
-                  {addingToCart ? 'Añadiendo...' : 'Añadir al carrito'}
-                </button>
+              </div>              <div className="flex justify-center mt-8">
+                {(() => {
+                  const user = authManager.getUser();
+                  const userEmail = user?.email;
+                  const isOwnProduct = producto.usuario_email === userEmail;
+                  
+                  return (
+                    <button
+                      onClick={handleAddToCart}
+                      disabled={addingToCart || producto.stock === 0 || isOwnProduct}
+                      className={`px-8 py-3 rounded-full transition-all duration-300 flex items-center gap-2 font-semibold shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
+                        producto.stock === 0 
+                          ? 'bg-gray-400 text-white cursor-not-allowed' 
+                          : isOwnProduct
+                          ? 'bg-blue-400 text-white cursor-not-allowed'
+                          : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700'
+                      }`}
+                    >
+                      {addingToCart ? (
+                        <FaSpinner className="animate-spin -ml-1 mr-3 h-5 w-5" />
+                      ) : (
+                        <FaShoppingCart className="mr-2 h-5 w-5" />
+                      )}
+                      {addingToCart ? 'Añadiendo...' : 
+                       producto.stock === 0 ? 'Producto agotado' :
+                       isOwnProduct ? 'Tu producto' : 'Añadir al carrito'}
+                    </button>
+                  );
+                })()}
               </div>
             </div>
           </div>

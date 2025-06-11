@@ -21,15 +21,14 @@ const EditProductModal = ({ open, onClose, onSave, initialData }) => {
   const NAME_LIMIT = 100;
   const DESC_LIMIT = 300;
   const MAX_IMAGES = 5;
-
   useEffect(() => {
     if (initialData) {
       setFormData({
         id: initialData.id,
         nombre: initialData.nombre || '',
         descripcion: initialData.descripcion || '',
-        precio: initialData.precio || '',
-        stock: initialData.stock || '',
+        precio: initialData.precio ?? '',
+        stock: initialData.stock ?? '',
         categoria: initialData.categoria || 'juegos',
         estado: initialData.estado || 'nuevo',
         imagenes: []
@@ -55,14 +54,24 @@ const EditProductModal = ({ open, onClose, onSave, initialData }) => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [open, onClose]);
-
-  const handleChange = (e) => {
+  }, [open, onClose]);  const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    // Validación especial para el campo stock
+    if (name === 'stock') {
+      // Permitir campo vacío o números enteros (incluyendo 0 temporalmente durante escritura)
+      if (value === '' || /^\d+$/.test(value)) {
+        setFormData(prev => ({
+          ...prev,
+          [name]: value
+        }));
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleImageChange = (e) => {
@@ -110,10 +119,22 @@ const EditProductModal = ({ open, onClose, onSave, initialData }) => {
       imagenes: prev.imagenes.filter((_, i) => i !== index)
     }));
     setPreviewImages(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleSubmit = async (e) => {
+  };  const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validación del stock antes de enviar
+    if (!formData.stock || parseInt(formData.stock) < 1) {
+      alert('La cantidad debe ser al menos 1 unidad');
+      return;
+    }
+    
+    // 🔍 DEBUG: Logging para investigar el problema
+    console.log('🔍 DEBUG - Datos antes de enviar:');
+    console.log('formData.stock:', formData.stock);
+    console.log('parseInt(formData.stock):', parseInt(formData.stock));
+    console.log('initialData.stock:', initialData?.stock);
+    console.log('formData completo:', formData);
+    
     setLoading(true);
     try {
       const formDataToSend = new FormData();
@@ -122,8 +143,15 @@ const EditProductModal = ({ open, onClose, onSave, initialData }) => {
       formDataToSend.append('nombre', formData.nombre);
       formDataToSend.append('descripcion', formData.descripcion);
       formDataToSend.append('precio', formData.precio);
+      formDataToSend.append('stock', formData.stock);
       formDataToSend.append('categoria', formData.categoria);
       formDataToSend.append('estado', formData.estado);
+      
+      // 🔍 DEBUG: Verificar qué se está enviando
+      console.log('🔍 DEBUG - FormData que se enviará:');
+      for (let pair of formDataToSend.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+      }
       
       // Añadir las imágenes nuevas si hay
       if (formData.imagenes && formData.imagenes.length > 0) {
@@ -139,11 +167,14 @@ const EditProductModal = ({ open, onClose, onSave, initialData }) => {
         } else if (initialData.imagen) {
           formDataToSend.append('imagenes_existentes', initialData.imagen);
         }
-      }
-
-      const updatedProduct = await apiManager.put(`/productos/${formData.id}`, formDataToSend, {
+      }      const updatedProduct = await apiManager.put(`/productos/${formData.id}`, formDataToSend, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
+      
+      // 🔍 DEBUG: Verificar la respuesta del servidor
+      console.log('🔍 DEBUG - Respuesta del servidor:');
+      console.log('updatedProduct:', updatedProduct);
+      console.log('updatedProduct.stock:', updatedProduct?.stock);
       
       onSave(updatedProduct);
       onClose();
@@ -219,9 +250,7 @@ const EditProductModal = ({ open, onClose, onSave, initialData }) => {
               rows={3}
               className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             />
-          </div>
-
-          {/* Precio */}
+          </div>          {/* Precio */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Precio (€)</label>
             <input
@@ -234,6 +263,31 @@ const EditProductModal = ({ open, onClose, onSave, initialData }) => {
               step="0.01"
               className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             />
+          </div>          {/* Stock */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad disponible</label>
+            <input
+              type="number"
+              name="stock"
+              value={formData.stock}
+              onChange={handleChange}
+              required
+              min="1"
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              placeholder="Ej: 5"
+            />
+            <div className="mt-1 text-sm text-gray-600">
+              <p>💡 <strong>Información:</strong> Las compras reducen automáticamente el stock disponible.</p>
+              <p>Puedes aumentar el stock aquí si tienes más unidades disponibles.</p>
+            </div>
+            {formData.stock && parseInt(formData.stock) < 1 && (
+              <p className="text-red-500 text-sm mt-1">La cantidad debe ser al menos 1 unidad</p>
+            )}
+            {initialData && initialData.stock !== undefined && formData.stock && parseInt(formData.stock) !== parseInt(initialData.stock) && (
+              <p className="text-blue-600 text-sm mt-1">
+                📝 Cambiarás el stock de {initialData.stock} a {formData.stock} unidades
+              </p>
+            )}
           </div>
 
           {/* Categoría */}

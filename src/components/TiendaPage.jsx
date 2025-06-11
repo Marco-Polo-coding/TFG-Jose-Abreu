@@ -118,14 +118,29 @@ const TiendaPage = () => {
       ...prev,
       [productoId]: prev[productoId] < total - 1 ? prev[productoId] + 1 : 0
     }));
-  };
-  const handleAddToCart = (producto) => {
+  };  const handleAddToCart = (producto) => {
     const user = authManager.getUser();
     const userEmail = user?.email;
     const uid = user?.uid;
     
     if (!userEmail && !uid) {
       setToastMessage('Debes iniciar sesión para añadir productos al carrito');
+      setToastType('error');
+      setShowToast(true);
+      return;
+    }
+    
+    // Verificar si el usuario es el vendedor del producto
+    if (producto.usuario_email === userEmail) {
+      setToastMessage('No puedes comprar tus propios productos');
+      setToastType('error');
+      setShowToast(true);
+      return;
+    }
+    
+    // Verificar stock antes de añadir
+    if (producto.stock === 0) {
+      setToastMessage('Este producto está agotado');
       setToastType('error');
       setShowToast(true);
       return;
@@ -336,26 +351,61 @@ const TiendaPage = () => {
                       </div>
                       <p className="text-gray-600 mb-4 line-clamp-2">
                         {producto.descripcion}
-                      </p>
-                      <div className="flex items-center justify-between mb-4">
+                      </p>                      <div className="flex items-center justify-between mb-4">
                         <p className="text-2xl font-extrabold text-purple-700">
                           {producto.precio}€
                         </p>
                       </div>
-                      <div className="flex gap-4">
+                      
+                      {/* Indicadores de stock */}
+                      {producto.stock !== undefined && (
+                        <div className="mb-4">
+                          {producto.stock === 0 ? (
+                            <span className="text-red-600 font-bold text-sm">
+                              Agotado
+                            </span>
+                          ) : producto.stock < 3 ? (
+                            <span className="text-orange-500 font-semibold text-sm animate-bounce">
+                              ¡Queda poco stock!
+                            </span>
+                          ) : null}
+                        </div>
+                      )}
+                        <div className="flex gap-4">
                         <a
                           href={`/producto/${producto.id}`}
                           className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-center py-3 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 font-semibold shadow"
                         >
                           Ver más <FaArrowRight className="w-4 h-4" />
                         </a>
-                        <button
-                          onClick={() => handleAddToCart(producto)}
-                          className="bg-purple-100 text-purple-600 p-3 rounded-full hover:bg-purple-200 transition-all duration-300 hover:scale-110 shadow"
-                          title="Añadir al carrito"
-                        >
-                          <FaShoppingCart className="w-5 h-5" />
-                        </button>
+                        {(() => {
+                          const user = authManager.getUser();
+                          const userEmail = user?.email;
+                          const isOwnProduct = producto.usuario_email === userEmail;
+                          
+                          return (
+                            <button
+                              onClick={() => handleAddToCart(producto)}
+                              disabled={producto.stock === 0 || isOwnProduct}
+                              className={`p-3 rounded-full transition-all duration-300 hover:scale-110 shadow ${
+                                producto.stock === 0 
+                                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                                  : isOwnProduct
+                                  ? 'bg-blue-100 text-blue-400 cursor-not-allowed'
+                                  : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
+                              }`}
+                              title={
+                                producto.stock === 0 
+                                  ? 'Producto agotado' 
+                                  : isOwnProduct 
+                                  ? 'No puedes comprar tu propio producto'
+                                  : 'Añadir al carrito'
+                              }
+                            >
+                              <FaShoppingCart className="w-5 h-5" />
+                            </button>
+                          );
+                        })()}
                       </div>
                     </div>
                   </div>

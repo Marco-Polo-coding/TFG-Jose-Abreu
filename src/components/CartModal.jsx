@@ -5,6 +5,7 @@ import useCartStore from '../store/cartStore';
 import Toast from './Toast';
 import LoadingSpinner from './LoadingSpinner';
 import { authManager } from '../utils/authManager';
+import { apiManager } from '../utils/apiManager';
 
 const CartModal = ({ isOpen, onClose, onOpenLoginModal }) => {
   const { items, removeItem, updateQuantity, clearCart } = useCartStore();
@@ -12,23 +13,66 @@ const CartModal = ({ isOpen, onClose, onOpenLoginModal }) => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
   const [loadingCheckout, setLoadingCheckout] = useState(false);
-
+  const [productStocks, setProductStocks] = useState({});
   useEffect(() => {
     if (isOpen) {
       setShowToast(false);
       setToastMessage('');
       setToastType('success');
+        // Verificar stock de productos en el carrito
+      const checkStocks = async () => {
+        const stocks = {};
+        for (const item of items) {
+          try {
+            const response = await apiManager.get(`/productos/${item.id}`);
+            stocks[item.id] = response.stock;
+          } catch (error) {
+            console.error(`Error obteniendo stock para producto ${item.id}:`, error);
+            stocks[item.id] = 0;
+          }
+        }
+        setProductStocks(stocks);
+      };
+      
+      if (items.length > 0) {
+        checkStocks();
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, items]);
 
   const showNotification = (message, type = 'success') => {
     setToastMessage(message);
     setToastType(type);
     setShowToast(true);
-  };
-
-  const handleUpdateQuantity = (id, newQuantity) => {
+  };  const handleUpdateQuantity = async (id, newQuantity) => {
     if (newQuantity < 1) return;
+    
+    // Usar el stock ya obtenido si está disponible
+    const availableStock = productStocks[id];
+    if (availableStock !== undefined && newQuantity > availableStock) {
+      showNotification(`Solo hay ${availableStock} unidades disponibles`, 'error');
+      return;
+    }
+      // Si no tenemos el stock en cache, verificarlo
+    if (availableStock === undefined) {
+      try {
+        const response = await apiManager.get(`/productos/${id}`);
+        const product = response;
+        
+        if (newQuantity > product.stock) {
+          showNotification(`Solo hay ${product.stock} unidades disponibles`, 'error');
+          return;
+        }
+        
+        // Actualizar cache
+        setProductStocks(prev => ({ ...prev, [id]: product.stock }));
+      } catch (error) {
+        console.error('Error verificando stock:', error);
+        showNotification('Error al verificar el stock disponible', 'error');
+        return;
+      }
+    }
+    
     updateQuantity(id, newQuantity);
   };
 
@@ -69,8 +113,11 @@ const CartModal = ({ isOpen, onClose, onOpenLoginModal }) => {
                 Tu carrito está vacío
               </div>
             ) : (
-              <div className="space-y-4">
-                {items.map((item) => (
+              <div className="space-y-4">                {items.map((item) => {
+                  const availableStock = productStocks[item.id];
+                  const isStockLimited = availableStock !== undefined && item.quantity >= availableStock;
+                  
+                  return (
                   <div key={item.id} className="flex items-center justify-between border-b pb-4">
                     <div className="flex items-center space-x-4">
                       <img
@@ -81,6 +128,9 @@ const CartModal = ({ isOpen, onClose, onOpenLoginModal }) => {
                       <div>
                         <h4 className="font-medium">{item.nombre.length > 18 ? item.nombre.slice(0, 18) + '...' : item.nombre}</h4>
                         <p className="text-gray-500">${item.precio}</p>
+                        {availableStock !== undefined && (
+                          <p className="text-xs text-gray-400">Stock: {availableStock}</p>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -93,7 +143,9 @@ const CartModal = ({ isOpen, onClose, onOpenLoginModal }) => {
                       <span className="w-8 text-center">{item.quantity}</span>
                       <button
                         onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                        className="p-1 text-gray-500 hover:text-gray-700"
+                        disabled={isStockLimited}
+                        className={`p-1 ${isStockLimited ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-gray-700'}`}
+                        title={isStockLimited ? 'Stock máximo alcanzado' : 'Aumentar cantidad'}
                       >
                         <FaPlus />
                       </button>
@@ -105,7 +157,8 @@ const CartModal = ({ isOpen, onClose, onOpenLoginModal }) => {
                       </button>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
                 <div className="border-t pt-4">
                   <div className="flex justify-between font-medium">
                     <span>Total:</span>

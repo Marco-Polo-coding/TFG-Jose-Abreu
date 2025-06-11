@@ -216,16 +216,34 @@ async def actualizar_producto(
     imagenes_existentes: List[str] = Form(None)
 ):
     try:
+        # 🔍 DEBUG: Logging para investigar el problema de stock
+        print(f"🔍 DEBUG - PUT /productos/{producto_id}")
+        print(f"  Datos recibidos:")
+        print(f"    nombre: {nombre}")
+        print(f"    descripcion: {descripcion}")
+        print(f"    precio: {precio} (tipo: {type(precio)})")
+        print(f"    stock: {stock} (tipo: {type(stock)})")
+        print(f"    categoria: {categoria}")
+        print(f"    estado: {estado}")
+        print(f"    imagenes: {len(imagenes) if imagenes else 0} archivos")
+        print(f"    imagenes_existentes: {imagenes_existentes}")
+        
         producto_ref = db.collection("productos").document(producto_id)
         producto = producto_ref.get()
         if not producto.exists:
             raise HTTPException(status_code=404, detail="Producto no encontrado")
 
+        # 🔍 DEBUG: Stock antes de actualizar
+        stock_antes = producto.to_dict().get("stock", "No definido")
+        print(f"  Stock antes de actualizar: {stock_antes}")
+
         data = {}
         if nombre is not None: data["nombre"] = nombre
         if descripcion is not None: data["descripcion"] = descripcion
         if precio is not None: data["precio"] = precio
-        if stock is not None: data["stock"] = stock
+        if stock is not None: 
+            data["stock"] = stock
+            print(f"  🎯 Stock que se va a guardar: {stock}")
         if categoria is not None: data["categoria"] = categoria
         if estado is not None: data["estado"] = estado
 
@@ -263,9 +281,17 @@ async def actualizar_producto(
         if not data:
             raise HTTPException(status_code=400, detail="No se proporcionaron datos para actualizar")
 
+        # 🔍 DEBUG: Datos que se van a guardar
+        print(f"  📝 Datos completos a guardar: {data}")
+        
         producto_ref.update(data)
         producto_actualizado = producto_ref.get().to_dict()
         producto_actualizado["id"] = producto_id
+        
+        # 🔍 DEBUG: Resultado después de guardar
+        print(f"  ✅ Stock después de guardar: {producto_actualizado.get('stock', 'No definido')}")
+        print(f"  📋 Producto actualizado completo: {producto_actualizado}")
+        
         return producto_actualizado
     except Exception as e:
         print("Error en actualizar_producto:", e)
@@ -870,8 +896,53 @@ async def guardar_compra(compra: CompraSinUid, uid: str = Depends(verify_user)):
     try:
         compra_dict = compra.dict()
         compra_dict['uid'] = uid
+        
+        # Obtener el email del usuario que realiza la compra
+        user_doc = db.collection("usuarios").document(uid).get()
+        if not user_doc.exists:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+        user_email = user_doc.to_dict().get('email')
+        
+        # Validar y actualizar stock de productos
+        for producto_item in compra_dict['productos']:
+            producto_id = producto_item['id']
+            cantidad_comprada = producto_item['quantity']
+            
+            # Obtener el producto actual
+            producto_ref = db.collection("productos").document(producto_id)
+            producto_doc = producto_ref.get()
+            
+            if not producto_doc.exists:
+                raise HTTPException(status_code=404, detail=f"Producto {producto_id} no encontrado")
+            
+            producto_data = producto_doc.to_dict()
+            
+            # Verificar que el usuario no esté comprando su propio producto
+            if producto_data.get('usuario_email') == user_email:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"No puedes comprar tu propio producto: {producto_data.get('nombre', 'producto')}"
+                )
+            
+            stock_actual = producto_data.get('stock', 0)
+            
+            # Verificar que hay suficiente stock
+            if stock_actual < cantidad_comprada:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Stock insuficiente para {producto_data.get('nombre', 'producto')}. Disponible: {stock_actual}, solicitado: {cantidad_comprada}"
+                )
+            
+            # Actualizar el stock
+            nuevo_stock = stock_actual - cantidad_comprada
+            producto_ref.update({"stock": nuevo_stock})
+        
+        # Registrar la compra después de actualizar el stock
         db.collection("compras").add(compra_dict)
-        return {"message": "Compra guardada correctamente"}
+        return {"message": "Compra guardada correctamente y stock actualizado"}
+    except HTTPException as he:
+        raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
