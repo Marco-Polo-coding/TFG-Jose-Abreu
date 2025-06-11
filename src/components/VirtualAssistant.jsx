@@ -286,10 +286,20 @@ const VirtualAssistant = () => {
     setChatIdToDelete(null);
   };
 
+  // Función para formatear fecha a hora
+  const formatChatTime = (chatName) => {
+    return chatName.replace(/(\d{1,2}\/\d{1,2}\/\d{4}),? (\d{1,2}):(\d{2})(?::\d{2})?/g, (match, d, h, m) => `${h}:${m}`);
+  };
   const handleRenameChat = async (chatId) => {
+    if (!renameValue.trim()) {
+      setToastMessage('El nombre del chat no puede estar vacío.');
+      setToastType('error');
+      setShowToast(true);
+      return;
+    }
     try {
-      await chatManager.renameChat(chatId, renameValue);
-      setChats(chats.map(c => c.id === chatId ? { ...c, name: renameValue } : c));
+      await chatManager.renameChat(chatId, renameValue.trim());
+      setChats(chats.map(c => c.id === chatId ? { ...c, name: renameValue.trim() } : c));
       setRenamingChatId(null);
       setRenameValue('');
       setToastMessage('Chat renombrado correctamente.');
@@ -396,11 +406,19 @@ const VirtualAssistant = () => {
                     <li key={chat.id} className="bg-white rounded-xl shadow p-3 flex items-center justify-between group transition hover:shadow-lg">
                       <div className="flex-1 min-w-0">
                         {renamingChatId === chat.id ? (
-                          <div className="flex flex-col gap-1">
-                            <input
+                          <div className="flex flex-col gap-1">                            <input
                               className="border rounded px-2 py-1 text-sm flex-1 mb-1"
                               value={renameValue}
                               onChange={e => setRenameValue(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleRenameChat(chat.id);
+                                } else if (e.key === 'Escape') {
+                                  setRenamingChatId(null);
+                                  setRenameValue('');
+                                }
+                              }}
                               autoFocus
                             />
                             <div className="flex gap-2 mb-4">
@@ -418,9 +436,8 @@ const VirtualAssistant = () => {
                               </button>
                             </div>
                           </div>
-                        ) : (
-                          <span className="font-medium text-gray-800 truncate">
-                            {chat.name.replace(/(\d{1,2}\/\d{1,2}\/\d{4}),? (\d{1,2}):(\d{2})(?::\d{2})?/g, (match, d, h, m) => `${h}:${m}`)}
+                        ) : (                          <span className="font-medium text-gray-800 truncate">
+                            {formatChatTime(chat.name)}
                           </span>
                         )}
                         <div className="text-xs text-gray-400">{new Date(chat.updated_at || chat.created_at).toLocaleString()}</div>
@@ -537,10 +554,9 @@ const VirtualAssistant = () => {
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center animate-fade-in">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">¿Eliminar chat?</h2>
-            <p className="text-gray-700 mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">¿Eliminar chat?</h2>            <p className="text-gray-700 mb-6">
               ¿Estás seguro de que quieres eliminar
-              <span className="font-semibold text-purple-700"> {chats.find(c => c.id === chatIdToDelete)?.name?.replace(/(\d{1,2}\/\d{1,2}\/\d{4}),? (\d{1,2}):(\d{2})(?::\d{2})?/g, (match, d, h, m) => `${h}:${m}`) || 'este chat'}</span>? Esta acción no se puede deshacer.
+              <span className="font-semibold text-purple-700"> {formatChatTime(chats.find(c => c.id === chatIdToDelete)?.name || 'este chat')}</span>? Esta acción no se puede deshacer.
             </p>
             <div className="flex justify-center gap-4">
               <button

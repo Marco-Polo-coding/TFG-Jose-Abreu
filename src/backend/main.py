@@ -49,7 +49,7 @@ app.include_router(chat_history_router)
 # Incluir el router de chat
 app.include_router(chat_router)
 
-# Incluir el router de chat directo
+# Incluir el router de direct chat
 app.include_router(direct_chat_router)
 
 # Incluir el router WebSocket de chat directo

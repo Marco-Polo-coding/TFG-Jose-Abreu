@@ -72,7 +72,8 @@ INSTRUCCIONES GENERALES:
 
 @router.post("/chat")
 async def chat(message: ChatMessage):
-    try:        # Construir historial para el modelo (máximo 3 previos)
+    try:
+        # Construir historial para el modelo (máximo 3 previos)
         history_msgs = []
         if message.history:
             # Solo los últimos 3 mensajes previos
@@ -108,8 +109,7 @@ async def chat(message: ChatMessage):
 
         def contiene_roleplay(texto):
             # Solo bloquea si detecta frases muy claras de roleplay
-            return bool(re.search(r"imagine that you are|supongamos que eres|act as|actúa como|let's pretend|escenario:|scenario:", texto, re.IGNORECASE))
-          # Limitar la respuesta a 1200 caracteres (permite respuestas aún más completas)
+            return bool(re.search(r"imagine that you are|supongamos que eres|act as|actúa como|let's pretend|escenario:|scenario:", texto, re.IGNORECASE))        # Limitar la respuesta a 1200 caracteres (permite respuestas completas)
         if len(assistant_response) > 1200:
             assistant_response = assistant_response[:1200] + "..."
 

@@ -219,7 +219,7 @@ const HomePage = () => {
           </div>
         </div>      </section>
 
-      {/* Botón de prueba temporal para admin login */}
+      {/* Botón de prueba temporal para admin login
       <div className="fixed bottom-4 left-4 z-50">
         <button
           onClick={testAdminLogin}
@@ -227,7 +227,7 @@ const HomePage = () => {
         >
           🔧 Test Admin Login
         </button>
-      </div>
+      </div>*/}
 
       {/* Slider de Productos */}
       <Slider
@@ -398,7 +398,7 @@ const HomePage = () => {
         </div>
       </footer>
 
-      {/* Botón de prueba para login directo de admin */}
+      {/* Botón de prueba para login directo de admin 
       <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50">
         <button
           onClick={testAdminLogin}
@@ -409,7 +409,7 @@ const HomePage = () => {
             <path fillRule="evenodd" d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" clipRule="evenodd" />
           </svg>
         </button>
-      </div>
+      </div>*/}
     </div>
   );
 };

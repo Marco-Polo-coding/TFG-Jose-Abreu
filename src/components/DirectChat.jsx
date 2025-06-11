@@ -24,9 +24,9 @@ const DirectChat = ({ chatId, otherUserId }) => {
   const menuRef = useRef(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [messageToDelete, setMessageToDelete] = useState(null);
-  const [editError, setEditError] = useState(null);
-  const [toast, setToast] = useState({ open: false, message: '', type: 'error' });
-  const [typingUsers, setTypingUsers] = useState([]);
+  const [editError, setEditError] = useState(null);  const [toast, setToast] = useState({ open: false, message: '', type: 'error' });
+  const [typingUsers, setTypingUsers] = useState([]); // Array de {uid, name}
+  const [typingTimeout, setTypingTimeout] = useState(null);
 
   // Cargar información del otro usuario (simulada, ya que no hay acceso directo a Firestore)
   useEffect(() => {
@@ -97,14 +97,13 @@ const DirectChat = ({ chatId, otherUserId }) => {
   }, [menuOpenId]);
   useEffect(() => {
     let isMounted = true;
-    let token = null;
-    const connectWS = async () => {
+    let token = null;    const connectWS = async () => {
       token = await authManager.getToken();
       wsChatManager.connect({ chatId, token });
       wsChatManager.on('message', handleWSMessage);
       wsChatManager.on('typing', handleWSTyping);
       wsChatManager.on('read', handleWSRead);
-    };    const handleWSMessage = (data) => {
+    };const handleWSMessage = (data) => {
       // Recibir mensaje nuevo en tiempo real
       setMessages((prev) => {
         // Evitar duplicados
@@ -119,61 +118,94 @@ const DirectChat = ({ chatId, otherUserId }) => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
       setError(null);
-    };
-    const handleWSTyping = (data) => {
+    };    const handleWSTyping = (data) => {
       if (!isMounted) return;
       setTypingUsers((prev) => {
-        const newTypingUsers = new Set(prev);
         if (data.typing) {
-          newTypingUsers.add(data.user);
+          // Añadir usuario que está escribiendo con su nombre
+          const newTypingUsers = prev.filter(user => user.uid !== data.user_uid);
+          newTypingUsers.push({
+            uid: data.user_uid,
+            name: data.user_name
+          });
+          return newTypingUsers;
         } else {
-          newTypingUsers.delete(data.user);
+          // Remover usuario que dejó de escribir
+          return prev.filter(user => user.uid !== data.user_uid);
         }
-        return Array.from(newTypingUsers);
       });
-    };
-    const handleWSRead = (data) => {
+    };const handleWSRead = (data) => {
       if (!isMounted) return;
-      // Actualizar el estado de lectura de los mensajes si es necesario
+      // Actualizar el estado de lectura de los mensajes
       setMessages((prev) => 
-        prev.map(msg => ({
-          ...msg,
-          read: msg.read || data.user === msg.sender
-        }))
+        prev.map(msg => {
+          // Si el mensaje es del usuario que leyó, actualizar read_by
+          if (!msg.read_by.includes(data.user)) {
+            return {
+              ...msg,
+              read_by: [...msg.read_by, data.user]
+            };
+          }
+          return msg;
+        })
       );
     };
     if (chatId) {
       connectWS();
     }    return () => {
       isMounted = false;
+      // Limpiar timeout de typing
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+      }
       wsChatManager.disconnect();
       wsChatManager.off('message', handleWSMessage);
       wsChatManager.off('typing', handleWSTyping);
       wsChatManager.off('read', handleWSRead);
     };
   }, [chatId]);
-
   const handleSend = async (e) => {
     e.preventDefault();
     if (!input.trim() || sendLoading) return;
-    setSendLoading(true);    try {
+    setSendLoading(true);
+    
+    // Limpiar timeout de typing y enviar stop typing
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+      setTypingTimeout(null);
+    }
+    wsChatManager.sendStopTyping();
+
+    try {
       wsChatManager.sendMessage(input.trim());
       setInput('');
       setError(null);
-      wsChatManager.sendStopTyping();
     } catch (err) {
       setError('Error al enviar mensaje');
     } finally {
       setSendLoading(false);
     }
-  };
-
-  // Evento typing
+  };  // Evento typing con timeout
   const handleInputChange = (e) => {
     setInput(e.target.value);
-    if (e.target.value) {
+    
+    // Limpiar timeout anterior
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+    }
+    
+    if (e.target.value.trim()) {
+      // Enviar evento de typing
       wsChatManager.sendTyping();
+      
+      // Establecer timeout para dejar de escribir automáticamente
+      const timeout = setTimeout(() => {
+        wsChatManager.sendStopTyping();
+      }, 3000); // 3 segundos
+      
+      setTypingTimeout(timeout);
     } else {
+      // Si el input está vacío, dejar de escribir inmediatamente
       wsChatManager.sendStopTyping();
     }
   };
@@ -265,21 +297,13 @@ const DirectChat = ({ chatId, otherUserId }) => {
   );
 
   return (
-    <div className="flex flex-col h-full bg-white/90 rounded-3xl shadow-xl border border-purple-100 overflow-hidden">
-      {/* Cabecera del chat */}
+    <div className="flex flex-col h-full bg-white/90 rounded-3xl shadow-xl border border-purple-100 overflow-hidden">      {/* Cabecera del chat */}
       <div className="p-4 border-b bg-white/95 rounded-t-3xl">
         <h2 className="font-medium">
           {otherUser?.name || 'Usuario'}
         </h2>
-      </div>
-      {/* Área de mensajes */}
+      </div>{/* Área de mensajes */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white/80">
-        {/* Mostrar typing */}
-        {typingUsers.length > 0 && (
-          <div className="text-xs text-purple-400 mb-2 animate-pulse">
-            {typingUsers.length === 1 ? 'El usuario está escribiendo...' : 'Varios usuarios están escribiendo...'}
-          </div>
-        )}
         {hasMore && messages.length > 0 && (
           <div className="flex justify-center mb-4">
             <button
@@ -295,9 +319,24 @@ const DirectChat = ({ chatId, otherUserId }) => {
           <div className="text-gray-400 text-center py-8 italic text-lg">
             No hay mensajes aún. ¡Sé el primero en escribir!
           </div>
-        )}
-        {messages.map((message) => {
+        )}        {messages.map((message, index) => {
           const isOwn = message.sender === authManager.getUser()?.uid;
+          const currentUserId = authManager.getUser()?.uid;
+          
+          // Determinar si este es el último mensaje enviado por el usuario actual que ha sido leído
+          const isLastOwnMessage = isOwn && index === messages.length - 1;
+          const isReadByOther = message.read_by && message.read_by.some(uid => uid !== currentUserId);
+          
+          // Encontrar el último mensaje propio leído por el otro usuario
+          let showReadIndicator = false;
+          if (isOwn && isReadByOther) {
+            // Buscar si hay mensajes más recientes del usuario actual
+            const laterOwnMessages = messages.slice(index + 1).filter(msg => msg.sender === currentUserId);
+            if (laterOwnMessages.length === 0) {
+              showReadIndicator = true; // Es el último mensaje propio
+            }
+          }
+
           return (
             <div
               key={message.id}
@@ -358,17 +397,42 @@ const DirectChat = ({ chatId, otherUserId }) => {
                     </div>
                     {editError && <span className="text-xs text-red-500 mt-1">{editError}</span>}
                   </div>
-                ) : (
-                  <>
-                    <p className="mb-1 text-base">{message.content} {message.edited && <span className="text-xs italic opacity-70">(editado)</span>}</p>                    <span className="text-xs opacity-70 block text-right">
+                ) : (                  <>
+                    <p className="mb-1 text-base">{message.content} {message.edited && <span className="text-xs italic opacity-70">(editado)</span>}</p>
+                    <span className="text-xs opacity-70 block text-right">
                       {new Date(message.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                     </span>
+                    {/* Indicador de "Leído" */}
+                    {showReadIndicator && (
+                      <span className="text-xs text-gray-400 block text-right mt-1">
+                        Leído.
+                      </span>
+                    )}
                   </>
                 )}
               </div>
             </div>
-          );
-        })}
+          );        })}
+        
+        {/* Mostrar typing */}
+        {typingUsers.length > 0 && (
+          <div className="text-sm text-purple-500 mb-2 animate-pulse italic flex items-center gap-2">
+            <div className="flex space-x-1">
+              <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+              <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+            </div>
+            <span>
+              {typingUsers.length === 1 
+                ? `${typingUsers[0].name} está escribiendo...`
+                : typingUsers.length === 2
+                ? `${typingUsers[0].name} y ${typingUsers[1].name} están escribiendo...`
+                : `${typingUsers[0].name} y ${typingUsers.length - 1} más están escribiendo...`
+              }
+            </span>
+          </div>
+        )}
+        
         <div ref={messagesEndRef} />
       </div>
       {/* Formulario de envío */}

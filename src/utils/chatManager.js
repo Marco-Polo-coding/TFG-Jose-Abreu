@@ -17,12 +17,30 @@ class ChatManager {
     
     return headers;
   }
-
   // Manejar respuesta
   async handleResponse(response) {
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Error en la petición');
+      let errorMessage = 'Error en la petición';
+      try {
+        const error = await response.json();
+        errorMessage = error.detail || error.message || errorMessage;
+      } catch (e) {
+        // Si no se puede parsear el JSON, usar el status text
+        errorMessage = response.statusText || errorMessage;
+      }
+      
+      // Personalizar mensajes según el código de estado
+      if (response.status === 401) {
+        errorMessage = 'Sesión expirada. Por favor, inicia sesión nuevamente.';
+      } else if (response.status === 403) {
+        errorMessage = 'No tienes permisos para realizar esta acción.';
+      } else if (response.status === 404) {
+        errorMessage = 'El recurso solicitado no fue encontrado.';
+      } else if (response.status >= 500) {
+        errorMessage = 'Error del servidor. Por favor, inténtalo más tarde.';
+      }
+      
+      throw new Error(errorMessage);
     }
     return response.json();
   }

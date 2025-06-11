@@ -9,8 +9,7 @@ class WSChatManager {
     this.token = null;
     this.isConnected = false;
     this.reconnectTimeout = null;
-  }
-  connect({ chatId, token }) {
+  }  connect({ chatId, token }) {
     if (this.ws) {
       this.disconnect();
     }
@@ -19,16 +18,19 @@ class WSChatManager {
     const wsUrl = `ws://localhost:8000/ws/direct-chats/${chatId}`;
     this.ws = new WebSocket(wsUrl);    this.ws.onopen = () => {
       this.isConnected = true;
+      // Enviar token de autenticación como primer mensaje
       this.ws.send(JSON.stringify({ event: 'auth', token }));
       this.emit('open');
-    };    this.ws.onmessage = (event) => {
+    };
+
+    this.ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
         this.emit(data.event, data);
       } catch (e) {
-        // Error parsing WebSocket message
+        console.error('Error parsing WebSocket message:', e);
       }
-    };    this.ws.onclose = () => {
+    };this.ws.onclose = () => {
       this.isConnected = false;
       this.emit('close');
       // Intentar reconectar automáticamente
@@ -58,9 +60,7 @@ class WSChatManager {
     if (this.ws && this.isConnected) {
       this.ws.send(JSON.stringify({ event: 'message', content }));
     }
-  }
-
-  sendTyping() {
+  }  sendTyping() {
     if (this.ws && this.isConnected) {
       this.ws.send(JSON.stringify({ event: 'typing' }));
     }

@@ -3,9 +3,9 @@ import { authManager } from './authManager';
 class DirectChatManager {
   constructor() {
     this.baseUrl = 'http://localhost:8000';
-  }
-  async getHeaders() {
+  }  async getHeaders() {
     const token = await authManager.getToken();
+    console.log('🎫 Token obtenido:', token ? 'SÍ' : 'NO');
     const headers = {
       'Content-Type': 'application/json',
     };
@@ -33,9 +33,7 @@ class DirectChatManager {
       body: JSON.stringify({ participant_id: participantId })
     });
     return this.handleResponse(response);
-  }
-
-  async getChats() {
+  }  async getChats() {
     const headers = await this.getHeaders();
     const response = await fetch(`${this.baseUrl}/direct-chats`, {
       headers
