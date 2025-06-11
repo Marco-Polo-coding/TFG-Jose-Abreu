@@ -18,12 +18,10 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
   const [fieldErrors, setFieldErrors] = useState({ email: '', password: '', name: '' });
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [resetForm, setResetForm] = useState({ email: '', password: '', confirmPassword: '' });
-  const [resetErrors, setResetErrors] = useState({});  const [resetLoading, setResetLoading] = useState(false);  const [showPassword, setShowPassword] = useState(false);
-  const [showResetPassword1, setShowResetPassword1] = useState(false);
+  const [resetErrors, setResetErrors] = useState({});  const [resetLoading, setResetLoading] = useState(false);  const [showPassword, setShowPassword] = useState(false);  const [showResetPassword1, setShowResetPassword1] = useState(false);
   const [showResetPassword2, setShowResetPassword2] = useState(false);
   const [showPasswordErrors, setShowPasswordErrors] = useState(false);
-  const [isReloading, setIsReloading] = useState(false);
-  const clearCartOnLogout = useCartStore(state => state.clearCartOnLogout);  useEffect(() => {
+  const clearCartOnLogout = useCartStore(state => state.clearCartOnLogout);useEffect(() => {
     setIsLoginMode(mode === 'login');
     // Limpiar formulario al cambiar de modo
     setFormData({ email: '', password: '', name: '' });
@@ -180,22 +178,15 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
 
     onLoginSuccess?.(data.email, data.nombre || data.email, data.uid);
     
-    // Mostrar spinner de recarga
-    setIsReloading(true);
-    
     // Si es admin, redirigir directamente al dashboard
     if (data.role === 'admin') {
-      setTimeout(() => {
-        window.location.href = '/admin/dashboard';
-      }, 2000);
+      window.location.href = '/admin/dashboard';
       return;
     }
     
-    // Para usuarios normales, recargar la página
-    setTimeout(() => {
-      window.location.reload();
-    }, 2000);
-  };  const handleSubmit = async (e) => {
+    // Para usuarios normales, recargar la página instantáneamente
+    window.location.reload();
+  };const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setFieldErrors({ email: '', password: '', name: '' });
@@ -254,12 +245,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
 
       const data = await response.json();      if (!response.ok) {
         throw new Error(data.detail || 'Error en la autenticación');
-      }      handleAuthSuccess(data);
-
-    } catch (err) {
-      // Asegurar que el spinner de recarga se oculte en caso de error
-      setIsReloading(false);
-      
+      }      handleAuthSuccess(data);    } catch (err) {
       // Obtener mensaje de error amigable
       const userFriendlyError = getErrorMessage(err, isLoginMode);
       
@@ -348,14 +334,9 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
       setShowResetPassword(false);
       setResetForm({ email: '', password: '', confirmPassword: '' });
       
-      // Mostrar spinner de recarga
-      setIsReloading(true);
-      
-      setTimeout(() => {
-        window.location.reload();      }, 2000);} catch (err) {
-      // Asegurar que el spinner de recarga se oculte en caso de error
-      setIsReloading(false);
-        // Usar la función de manejo de errores amigables
+      // Recarga instantánea después del reset password
+      window.location.reload();    } catch (err) {
+      // Usar la función de manejo de errores amigables
       const userFriendlyError = getErrorMessage(err, true); // true porque después hace login
       
       setError(userFriendlyError);
@@ -715,9 +696,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                           try {
                             setIsLoading(true);                            const data = await apiManager.post('/auth/google', { id_token });
                             handleAuthSuccess(data);                          } catch (error) {
-                            // Asegurar que el spinner de recarga se oculte en caso de error
-                            setIsReloading(false);
-                              const userFriendlyError = getErrorMessage(error, false); // false para Google Auth
+                            const userFriendlyError = getErrorMessage(error, false); // false para Google Auth
                             setError(userFriendlyError);
                           } finally {
                             setIsLoading(false);
@@ -746,11 +725,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                 </div>
               )}
             </div>
-          </div>
-        </div>      </div>
-      
-      {/* Loading Spinner para recarga */}
-      {isReloading && <LoadingSpinner />}
+          </div>        </div>      </div>
     </>
   );
 };

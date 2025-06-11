@@ -23,28 +23,35 @@ const Comments = ({ articuloId }) => {
   useEffect(() => {
     cargarComentarios();
   }, [articuloId]);
-
   const cargarComentarios = async () => {
     try {
       const data = await apiManager.get(`/articulos/${articuloId}/comentarios`);
       setComentarios(data);
       setLoading(false);
     } catch (error) {
-      setToastMessage('Error al cargar los comentarios');
-      setToastType('error');
-      setShowToast(true);
+      console.error('Error al cargar comentarios:', error);
+      showNotification('Error al cargar los comentarios', 'error');
       setLoading(false);
     }
+  };const showNotification = (message, type = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
   };
+
   const handleSubmitComentario = async (e) => {
     e.preventDefault();
+    
+    if (!nuevoComentario.trim()) {
+      showNotification('El comentario no puede estar vacío', 'warning');
+      return;
+    }
+
     try {
       const user = authManager.getUser();
       const userEmail = user?.email;
       if (!userEmail) {
-        setToastMessage('Debes iniciar sesión para comentar');
-        setToastType('error');
-        setShowToast(true);
+        showNotification('Debes iniciar sesión para comentar', 'error');
         return;
       }
 
@@ -60,25 +67,25 @@ const Comments = ({ articuloId }) => {
       
       setNuevoComentario('');
       setImagenComentario(null);
-      cargarComentarios();
-      setToastMessage('Comentario publicado correctamente');
-      setToastType('success');
-      setShowToast(true);
+      await cargarComentarios();
+      showNotification('Comentario publicado correctamente', 'success');
     } catch (error) {
-      setToastMessage('Error al publicar el comentario');
-      setToastType('error');
-      setShowToast(true);
+      console.error('Error al publicar comentario:', error);
+      showNotification('Error al publicar el comentario. Inténtalo de nuevo.', 'error');
     }
-  };
-  const handleSubmitRespuesta = async (e) => {
+  };  const handleSubmitRespuesta = async (e) => {
     e.preventDefault();
+
+    if (!respuestaComentario.trim()) {
+      showNotification('La respuesta no puede estar vacía', 'warning');
+      return;
+    }
+
     try {
       const user = authManager.getUser();
       const userEmail = user?.email;
       if (!userEmail) {
-        setToastMessage('Debes iniciar sesión para responder');
-        setToastType('error');
-        setShowToast(true);
+        showNotification('Debes iniciar sesión para responder', 'error');
         return;
       }
 
@@ -96,14 +103,11 @@ const Comments = ({ articuloId }) => {
       setRespuestaComentario('');
       setImagenRespuesta(null);
       setComentarioRespondiendo(null);
-      cargarComentarios();
-      setToastMessage('Respuesta publicada correctamente');
-      setToastType('success');
-      setShowToast(true);
+      await cargarComentarios();
+      showNotification('Respuesta publicada correctamente', 'success');
     } catch (error) {
-      setToastMessage('Error al publicar la respuesta');
-      setToastType('error');
-      setShowToast(true);
+      console.error('Error al publicar respuesta:', error);
+      showNotification('Error al publicar la respuesta. Inténtalo de nuevo.', 'error');
     }
   };
 

@@ -40,11 +40,10 @@ const Toast = ({ message, type = 'success', onClose, duration = 3000 }) => {
         return 'bg-blue-50 border-blue-200';
     }
   };  return (
-    <div className="fixed left-1/2 bottom-8 z-[9999] transform -translate-x-1/2 animate-slide-up" style={{ zIndex: 9999 }}>
+    <div className="fixed inset-x-0 bottom-8 z-[9999] flex justify-center animate-slide-up">
       <div
         className={`flex items-center p-4 rounded-lg shadow-2xl border-2 ${getBackgroundColor()} max-w-md min-w-[300px] cursor-pointer`}
         onClick={onClose}
-        style={{ zIndex: 9999 }}
       >
         <div className="flex-shrink-0 mr-3">
           {getIcon()}

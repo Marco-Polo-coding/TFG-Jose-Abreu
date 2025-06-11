@@ -62,20 +62,13 @@ const HomePage = () => {
       });
       
       const data = await response.json();
-      
-      if (response.ok) {
+        if (response.ok) {
         authManager.setAuthData(data);
         
-        // Verificar que las cookies se establecieron
-        setTimeout(() => {
-          const cookies = document.cookie.split(';');
-          const userRoleCookie = cookies.find(cookie => cookie.trim().startsWith('userRole='));
-          const cookieRole = userRoleCookie ? userRoleCookie.split('=')[1] : null;
-          
-          if (data.role === 'admin') {
-            window.location.href = '/admin/dashboard';
-          }
-        }, 500);
+        // Redirección instantánea para admin
+        if (data.role === 'admin') {
+          window.location.href = '/admin/dashboard';
+        }
       } else {
         console.error('Error en login:', data);
       }

@@ -335,82 +335,80 @@ const DirectChat = ({ chatId, otherUserId }) => {
             if (laterOwnMessages.length === 0) {
               showReadIndicator = true; // Es el último mensaje propio
             }
-          }
-
-          return (
-            <div
-              key={message.id}
-              className={`flex ${isOwn ? 'justify-end' : 'justify-start'} group`}
-            >
-              <div
-                className={`relative max-w-[70%] rounded-2xl p-4 shadow-md mb-2 break-words whitespace-pre-line transition-all duration-200 ${
-                  isOwn
-                    ? 'bg-purple-500 text-white rounded-br-none'
-                    : 'bg-white text-gray-900 rounded-bl-none border border-purple-100'
-                }`}
-              >
-                {/* Icono de información solo en mensajes propios y solo al hacer hover */}
-                {isOwn && editingId !== message.id && (Date.now() - new Date(message.timestamp).getTime() < 15 * 60 * 1000) && (
-                  <button
-                    className="absolute top-2 right-2 text-white/70 hover:text-white transition-colors z-10 opacity-0 group-hover:opacity-100 focus:opacity-100"
-                    onClick={() => setMenuOpenId(menuOpenId === message.id ? null : message.id)}
-                    title="Opciones"
-                  >
-                    <FaInfoCircle />
-                  </button>
-                )}
-                {/* Popover de opciones, sale hacia arriba */}
-                {isOwn && menuOpenId === message.id && editingId !== message.id && (
-                  <div
-                    ref={menuRef}
-                    className="absolute bottom-full right-2 mb-2 bg-white text-gray-800 rounded-xl shadow-lg border border-purple-100 py-2 w-36 animate-fade-in z-20"
-                  >
-                    {(Date.now() - new Date(message.timestamp).getTime() < 15 * 60 * 1000) && (
-                      <button
-                        className="flex items-center w-full px-4 py-2 hover:bg-purple-50 transition-colors gap-2 text-left"
-                        onClick={() => { setMenuOpenId(null); handleEdit(message); }}
-                      >
-                        <FaEdit className="text-purple-500" /> Editar
-                      </button>
-                    )}
+          }          return (
+            <div key={message.id} className="w-full">
+              <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} group`}>
+                <div
+                  className={`relative max-w-[70%] rounded-2xl p-4 shadow-md mb-2 break-words whitespace-pre-line transition-all duration-200 ${
+                    isOwn
+                      ? 'bg-purple-500 text-white rounded-br-none'
+                      : 'bg-white text-gray-900 rounded-bl-none border border-purple-100'
+                  }`}
+                >
+                  {/* Icono de información solo en mensajes propios y solo al hacer hover */}
+                  {isOwn && editingId !== message.id && (Date.now() - new Date(message.timestamp).getTime() < 15 * 60 * 1000) && (
                     <button
-                      className="flex items-center w-full px-4 py-2 hover:bg-red-50 transition-colors gap-2 text-left"
-                      onClick={() => { setMenuOpenId(null); handleDelete(message); }}
-                      disabled={deletingId === message.id}
+                      className="absolute top-2 right-2 text-white/70 hover:text-white transition-colors z-10 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                      onClick={() => setMenuOpenId(menuOpenId === message.id ? null : message.id)}
+                      title="Opciones"
                     >
-                      <FaTrash className="text-red-500" /> Eliminar
+                      <FaInfoCircle />
                     </button>
-                  </div>
-                )}
-                {/* Edición de mensaje */}
-                {editingId === message.id ? (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <input
-                        className="flex-1 p-2 rounded-lg border focus:outline-none text-gray-900"
-                        value={editValue}
-                        onChange={e => { setEditValue(e.target.value); if (editError) setEditError(null); }}
+                  )}
+                  {/* Popover de opciones, sale hacia arriba */}
+                  {isOwn && menuOpenId === message.id && editingId !== message.id && (
+                    <div
+                      ref={menuRef}
+                      className="absolute bottom-full right-2 mb-2 bg-white text-gray-800 rounded-xl shadow-lg border border-purple-100 py-2 w-36 animate-fade-in z-20"
+                    >
+                      {(Date.now() - new Date(message.timestamp).getTime() < 15 * 60 * 1000) && (
+                        <button
+                          className="flex items-center w-full px-4 py-2 hover:bg-purple-50 transition-colors gap-2 text-left"
+                          onClick={() => { setMenuOpenId(null); handleEdit(message); }}
+                        >
+                          <FaEdit className="text-purple-500" /> Editar
+                        </button>
+                      )}
+                      <button
+                        className="flex items-center w-full px-4 py-2 hover:bg-red-50 transition-colors gap-2 text-left"
+                        onClick={() => { setMenuOpenId(null); handleDelete(message); }}
                         disabled={deletingId === message.id}
-                      />
-                      <button onClick={() => handleEditSave(message)} className="text-green-600 hover:text-green-800" disabled={deletingId === message.id || !editValue || !editValue.trim()}><FaCheck /></button>
-                      <button onClick={handleEditCancel} className="text-gray-400 hover:text-gray-600"><FaTimes /></button>
+                      >
+                        <FaTrash className="text-red-500" /> Eliminar
+                      </button>
                     </div>
-                    {editError && <span className="text-xs text-red-500 mt-1">{editError}</span>}
-                  </div>
-                ) : (                  <>
-                    <p className="mb-1 text-base">{message.content} {message.edited && <span className="text-xs italic opacity-70">(editado)</span>}</p>
-                    <span className="text-xs opacity-70 block text-right">
-                      {new Date(message.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                    {/* Indicador de "Leído" */}
-                    {showReadIndicator && (
-                      <span className="text-xs text-gray-400 block text-right mt-1">
-                        Leído.
+                  )}
+                  {/* Edición de mensaje */}
+                  {editingId === message.id ? (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          className="flex-1 p-2 rounded-lg border focus:outline-none text-gray-900"
+                          value={editValue}
+                          onChange={e => { setEditValue(e.target.value); if (editError) setEditError(null); }}
+                          disabled={deletingId === message.id}
+                        />
+                        <button onClick={() => handleEditSave(message)} className="text-green-600 hover:text-green-800" disabled={deletingId === message.id || !editValue || !editValue.trim()}><FaCheck /></button>
+                        <button onClick={handleEditCancel} className="text-gray-400 hover:text-gray-600"><FaTimes /></button>
+                      </div>
+                      {editError && <span className="text-xs text-red-500 mt-1">{editError}</span>}
+                    </div>
+                  ) : (
+                    <>
+                      <p className="mb-1 text-base">{message.content} {message.edited && <span className="text-xs italic opacity-70">(editado)</span>}</p>
+                      <span className="text-xs opacity-70 block text-right">
+                        {new Date(message.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                       </span>
-                    )}
-                  </>
-                )}
+                    </>
+                  )}
+                </div>
               </div>
+              {/* Indicador de "Leído" completamente separado, debajo del mensaje */}
+              {showReadIndicator && !editingId && (
+                <div className={`text-xs text-gray-400 -mt-1 mb-2 px-4 ${isOwn ? 'text-right' : 'text-left'}`}>
+                  Leído.
+                </div>
+              )}
             </div>
           );        })}
         
