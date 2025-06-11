@@ -2,8 +2,6 @@ import React, { useEffect } from 'react';
 import { FaCheckCircle, FaTimesCircle, FaInfoCircle, FaExclamationCircle } from 'react-icons/fa';
 
 const Toast = ({ message, type = 'success', onClose, duration = 3000 }) => {
-  console.log('🔔 Toast: Componente renderizado!', { message, type, duration });
-  
   useEffect(() => {
     if (duration) {
       const timer = setTimeout(() => {

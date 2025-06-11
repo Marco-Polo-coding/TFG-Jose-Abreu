@@ -121,19 +121,11 @@ const EditProductModal = ({ open, onClose, onSave, initialData }) => {
     setPreviewImages(prev => prev.filter((_, i) => i !== index));
   };  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validación del stock antes de enviar
+      // Validación del stock antes de enviar
     if (!formData.stock || parseInt(formData.stock) < 1) {
       alert('La cantidad debe ser al menos 1 unidad');
       return;
     }
-    
-    // 🔍 DEBUG: Logging para investigar el problema
-    console.log('🔍 DEBUG - Datos antes de enviar:');
-    console.log('formData.stock:', formData.stock);
-    console.log('parseInt(formData.stock):', parseInt(formData.stock));
-    console.log('initialData.stock:', initialData?.stock);
-    console.log('formData completo:', formData);
     
     setLoading(true);
     try {
@@ -143,15 +135,8 @@ const EditProductModal = ({ open, onClose, onSave, initialData }) => {
       formDataToSend.append('nombre', formData.nombre);
       formDataToSend.append('descripcion', formData.descripcion);
       formDataToSend.append('precio', formData.precio);
-      formDataToSend.append('stock', formData.stock);
-      formDataToSend.append('categoria', formData.categoria);
+      formDataToSend.append('stock', formData.stock);      formDataToSend.append('categoria', formData.categoria);
       formDataToSend.append('estado', formData.estado);
-      
-      // 🔍 DEBUG: Verificar qué se está enviando
-      console.log('🔍 DEBUG - FormData que se enviará:');
-      for (let pair of formDataToSend.entries()) {
-        console.log(pair[0] + ': ' + pair[1]);
-      }
       
       // Añadir las imágenes nuevas si hay
       if (formData.imagenes && formData.imagenes.length > 0) {
@@ -169,14 +154,7 @@ const EditProductModal = ({ open, onClose, onSave, initialData }) => {
         }
       }      const updatedProduct = await apiManager.put(`/productos/${formData.id}`, formDataToSend, {
         headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      
-      // 🔍 DEBUG: Verificar la respuesta del servidor
-      console.log('🔍 DEBUG - Respuesta del servidor:');
-      console.log('updatedProduct:', updatedProduct);
-      console.log('updatedProduct.stock:', updatedProduct?.stock);
-      
-      onSave(updatedProduct);
+      });      onSave(updatedProduct);
       onClose();
     } catch (error) {
       console.error('Error:', error);

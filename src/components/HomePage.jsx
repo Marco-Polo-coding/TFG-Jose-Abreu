@@ -14,12 +14,10 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
   const [showContent, setShowContent] = useState(false);
   const [imageIndexes, setImageIndexes] = useState({}); // { [productoId]: index }
-  
-  useEffect(() => {
+    useEffect(() => {
     // Check if user is authenticated (authManager handles token expiration internally)
     const user = authManager.getUser();
     if (user && !authManager.isTokenValid()) {
-      console.log('HomePage: Token inválido, cerrando sesión');
       authManager.logout();
       // NO hacer reload inmediatamente, dejar que el flujo normal maneje la redirección
       // window.location.reload();
@@ -35,28 +33,22 @@ const HomePage = () => {
         ]);
         setProductos(productosData);
         setArticulos(articulosData);
-        setLoading(false);
-        setTimeout(() => {
+        setLoading(false);        setTimeout(() => {
           setShowContent(true);
         }, 100);
       } catch (error) {
-        console.error("Error al cargar datos:", error);
         setLoading(false);
       }
     };
 
     fetchData();
   }, []);
-
   const handleNewsletterSubmit = (e) => {
     e.preventDefault();
-    console.log("Email suscrito:", email);
     setEmail("");
   };
-
   // Función de prueba para login directo de admin
   const testAdminLogin = async () => {
-    console.log('Iniciando login de prueba para admin...');
     try {
       const response = await fetch('http://localhost:8000/auth/login', {
         method: 'POST',
@@ -70,22 +62,17 @@ const HomePage = () => {
       });
       
       const data = await response.json();
-      console.log('Respuesta del login:', data);
       
       if (response.ok) {
-        console.log('Login exitoso, estableciendo datos de auth...');
         authManager.setAuthData(data);
         
         // Verificar que las cookies se establecieron
         setTimeout(() => {
-          console.log('Cookies después del login:', document.cookie);
           const cookies = document.cookie.split(';');
           const userRoleCookie = cookies.find(cookie => cookie.trim().startsWith('userRole='));
           const cookieRole = userRoleCookie ? userRoleCookie.split('=')[1] : null;
-          console.log('Rol en cookie:', cookieRole);
           
           if (data.role === 'admin') {
-            console.log('Usuario es admin, redirigiendo...');
             window.location.href = '/admin/dashboard';
           }
         }, 500);

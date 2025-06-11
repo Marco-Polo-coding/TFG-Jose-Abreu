@@ -74,13 +74,8 @@ class AuthManager {
     // En desarrollo no usar Secure para que funcione en HTTP
     const isProduction = window.location.protocol === 'https:';
     const cookieOptions = `Path=/; Expires=${expirationDate.toUTCString()}; SameSite=Strict${isProduction ? '; Secure' : ''}`;
-    
-    document.cookie = `auth_token=${data.idToken}; ${cookieOptions}`;
+      document.cookie = `auth_token=${data.idToken}; ${cookieOptions}`;
     document.cookie = `userRole=${data.role}; ${cookieOptions}`;
-    
-    console.log('AuthManager: Cookies establecidas');
-    console.log('AuthManager: Rol del usuario:', data.role);
-    console.log('AuthManager: Cookies actuales:', document.cookie);
 
     // Disparar evento personalizado para notificar cambios
     window.dispatchEvent(new CustomEvent('authStateChanged', { detail: userData }));
@@ -121,24 +116,19 @@ class AuthManager {
     
     const payload = parseJwt(token);
     const now = Math.floor(Date.now() / 1000);
-    
-    // Si el token expira en menos de 5 minutos, refrescarlo
+      // Si el token expira en menos de 5 minutos, refrescarlo
     if (payload && payload.exp && payload.exp - now < 300) {
-      console.log('Token expirando pronto, intentando refrescar...');
       const refreshToken = this.store.getState().refreshToken;
       
       if (refreshToken) {
         try {
           const newToken = await this.refreshIdToken(refreshToken);
-          console.log('Token refrescado exitosamente');
           token = newToken;
         } catch (e) {
-          console.error('Error al refrescar token:', e);
           this.clearAuthData();
           return null;
         }
       } else {
-        console.error('No se encontró refreshToken');
         this.clearAuthData();
         return null;
       }
@@ -210,10 +200,8 @@ class AuthManager {
   initializeForExistingAuth() {
     // Solo ejecutar si estamos en el navegador
     if (typeof window === 'undefined') return;
-    
-    // Verificar si ya hay un usuario autenticado
+      // Verificar si ya hay un usuario autenticado
     if (this.isAuthenticated() && this.isTokenValid()) {
-      console.log('Usuario ya autenticado detectado, iniciando monitoreo de expiración');
       this.startExpirationMonitoring();
     }
   }
@@ -264,11 +252,8 @@ class AuthManager {
     }
 
     const now = Math.floor(Date.now() / 1000);
-    const timeUntilExpiration = payload.exp - now;
-
-    // Si el token ya expiró, cerrar sesión y redirigir
+    const timeUntilExpiration = payload.exp - now;    // Si el token ya expiró, cerrar sesión y redirigir
     if (timeUntilExpiration <= 0) {
-      console.log('Token expirado, cerrando sesión automáticamente');
       this.handleTokenExpired();
       return;
     }
@@ -333,12 +318,10 @@ class AuthManager {
         // Notificar que la sesión se extendió
         window.dispatchEvent(new CustomEvent('sessionExtended', { 
           detail: { message: 'Sesión extendida exitosamente' }
-        }));
-      } else {
+        }));      } else {
         throw new Error('No se encontró refresh token');
       }
     } catch (error) {
-      console.error('Error al extender sesión:', error);
       this.handleTokenExpired();
     }
   }

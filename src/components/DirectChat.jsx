@@ -31,12 +31,10 @@ const DirectChat = ({ chatId, otherUserId }) => {
   // Cargar información del otro usuario (simulada, ya que no hay acceso directo a Firestore)
   useEffect(() => {
     const loadOtherUser = async () => {
-      try {
-        // Obtener la info real del usuario desde el backend
+      try {        // Obtener la info real del usuario desde el backend
         const userData = await apiManager.getUserByUid(otherUserId);
         setOtherUser({ name: userData.nombre || userData.email || otherUserId });
       } catch (err) {
-        console.error('Error al cargar usuario:', err);
         setOtherUser({ name: otherUserId }); // fallback al UID
       }
     };
@@ -60,11 +58,9 @@ const DirectChat = ({ chatId, otherUserId }) => {
       setError(null);
       // Refrescar el contador de chats sin leer si existe la función global
       if (window && typeof window.refreshUnreadChats === 'function') {
-        window.refreshUnreadChats();
-      }
+        window.refreshUnreadChats();      }
     } catch (err) {
       setError('Error al cargar los mensajes');
-      console.error(err);
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -99,21 +95,16 @@ const DirectChat = ({ chatId, otherUserId }) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [menuOpenId]);
-
   useEffect(() => {
-    console.log('DirectChat MONTADO', chatId); // LOG
     let isMounted = true;
     let token = null;
     const connectWS = async () => {
       token = await authManager.getToken();
-      console.log('DirectChat: Conectando WebSocket', chatId); // LOG
       wsChatManager.connect({ chatId, token });
       wsChatManager.on('message', handleWSMessage);
       wsChatManager.on('typing', handleWSTyping);
       wsChatManager.on('read', handleWSRead);
-    };
-    const handleWSMessage = (data) => {
-      console.log('FRONTEND: Mensaje recibido por WS:', data); // LOG
+    };    const handleWSMessage = (data) => {
       // Recibir mensaje nuevo en tiempo real
       setMessages((prev) => {
         // Evitar duplicados
@@ -121,7 +112,6 @@ const DirectChat = ({ chatId, otherUserId }) => {
         // Añadir el nuevo mensaje al final
         const newMessages = [...prev, data.message];
         // Ordenar por timestamp para asegurar el orden correcto
-        console.log('FRONTEND: Mensajes tras recibir WS:', newMessages); // LOG
         return newMessages.sort((a, b) => a.timestamp - b.timestamp);
       });
       // Scroll al último mensaje
@@ -154,10 +144,8 @@ const DirectChat = ({ chatId, otherUserId }) => {
     };
     if (chatId) {
       connectWS();
-    }
-    return () => {
+    }    return () => {
       isMounted = false;
-      console.log('DirectChat DESMONTADO', chatId); // LOG
       wsChatManager.disconnect();
       wsChatManager.off('message', handleWSMessage);
       wsChatManager.off('typing', handleWSTyping);
@@ -168,16 +156,13 @@ const DirectChat = ({ chatId, otherUserId }) => {
   const handleSend = async (e) => {
     e.preventDefault();
     if (!input.trim() || sendLoading) return;
-    setSendLoading(true);
-    try {
-      console.log('FRONTEND: Enviando mensaje por WS:', input); // LOG
+    setSendLoading(true);    try {
       wsChatManager.sendMessage(input.trim());
       setInput('');
       setError(null);
       wsChatManager.sendStopTyping();
     } catch (err) {
       setError('Error al enviar mensaje');
-      console.error('FRONTEND: Error al enviar mensaje:', err); // LOG
     } finally {
       setSendLoading(false);
     }
@@ -192,11 +177,9 @@ const DirectChat = ({ chatId, otherUserId }) => {
       wsChatManager.sendStopTyping();
     }
   };
-
   // Marcar como leído al cargar mensajes o al recibir nuevos
   useEffect(() => {
     if (chatId && messages.length > 0) {
-      console.log('FRONTEND: Mensajes actuales:', messages); // LOG
       wsChatManager.sendRead();
     }
   }, [chatId, messages.length]);
@@ -224,12 +207,10 @@ const DirectChat = ({ chatId, otherUserId }) => {
     try {
       await directChatManager.editMessage(message.id, editValue.trim());
       setEditingId(null);
-      setEditValue('');
-      await loadMessages();
+      setEditValue('');      await loadMessages();
     } catch (err) {
       setToast({ open: true, message: err.message || 'No se pudo editar el mensaje.', type: 'error' });
       setEditError('No se pudo editar el mensaje.');
-      console.error(err);
     } finally {
       setDeletingId(null);
     }
@@ -251,11 +232,9 @@ const DirectChat = ({ chatId, otherUserId }) => {
     try {
       await directChatManager.deleteMessage(messageToDelete.id);
       setShowDeleteModal(false);
-      setMessageToDelete(null);
-      await loadMessages();
+      setMessageToDelete(null);      await loadMessages();
     } catch (err) {
       setToast({ open: true, message: err.message || 'No se pudo eliminar el mensaje.', type: 'error' });
-      console.error(err);
     } finally {
       setDeletingId(null);
     }

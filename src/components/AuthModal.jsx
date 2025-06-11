@@ -176,17 +176,16 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
       : 'No se pudo completar el registro. Verifica tus datos e inténtalo de nuevo.';
   };  // Centraliza la gestión de sesión para ambos flujos
   const handleAuthSuccess = (data) => {
-    console.log('AuthModal: handleAuthSuccess llamado con data:', data);
-    authManager.setAuthData(data);    onLoginSuccess?.(data.email, data.nombre || data.email, data.uid);
+    authManager.setAuthData(data);
+
+    onLoginSuccess?.(data.email, data.nombre || data.email, data.uid);
     
     // Mostrar spinner de recarga
     setIsReloading(true);
     
     // Si es admin, redirigir directamente al dashboard
     if (data.role === 'admin') {
-      console.log('AuthModal: Usuario admin detectado, redirigiendo al dashboard...');
       setTimeout(() => {
-        console.log('AuthModal: Ejecutando redirección a /admin/dashboard');
         window.location.href = '/admin/dashboard';
       }, 2000);
       return;
@@ -255,11 +254,9 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
 
       const data = await response.json();      if (!response.ok) {
         throw new Error(data.detail || 'Error en la autenticación');
-      }
+      }      handleAuthSuccess(data);
 
-      handleAuthSuccess(data);    } catch (err) {
-      console.error('Error en autenticación:', err);
-      
+    } catch (err) {
       // Asegurar que el spinner de recarga se oculte en caso de error
       setIsReloading(false);
       
@@ -355,10 +352,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
       setIsReloading(true);
       
       setTimeout(() => {
-        window.location.reload();
-      }, 2000);} catch (err) {
-      console.error('Error en reset de contraseña:', err);
-      
+        window.location.reload();      }, 2000);} catch (err) {
       // Asegurar que el spinner de recarga se oculte en caso de error
       setIsReloading(false);
         // Usar la función de manejo de errores amigables
@@ -719,11 +713,8 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                             return;
                           }
                           try {
-                            setIsLoading(true);
-                            const data = await apiManager.post('/auth/google', { id_token });
+                            setIsLoading(true);                            const data = await apiManager.post('/auth/google', { id_token });
                             handleAuthSuccess(data);                          } catch (error) {
-                            console.error('Error en Google Auth:', error);
-                            
                             // Asegurar que el spinner de recarga se oculte en caso de error
                             setIsReloading(false);
                               const userFriendlyError = getErrorMessage(error, false); // false para Google Auth
@@ -731,9 +722,7 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
                           } finally {
                             setIsLoading(false);
                           }
-                        }}
-                        onError={(error) => {
-                          console.error('Google Login Error:', error);
+                        }}                        onError={(error) => {
                           const errorMsg = 'No se pudo conectar con Google. Verifica tu conexión e inténtalo de nuevo.';
                           setError(errorMsg);
                         }}

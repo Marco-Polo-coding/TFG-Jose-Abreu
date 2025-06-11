@@ -25,7 +25,6 @@ const ProductManagement = () => {
       const data = await apiManager.get('/admin/products');
       setProducts(data);
     } catch (err) {
-      console.error('Error fetching products:', err);
       let userFriendlyMessage = 'Error al cargar los productos. Por favor, intenta de nuevo.';
       
       if (err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed to fetch')) {

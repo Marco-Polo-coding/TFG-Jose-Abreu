@@ -71,11 +71,9 @@ const ArticuloDetalle = ({ id }) => {
       setShowToast(true);
     }
   };
-
   const handleSubmitComentario = (e) => {
     e.preventDefault();
     // Aquí iría la lógica para enviar el comentario
-    console.log("Nuevo comentario:", nuevoComentario);
     setNuevoComentario("");
   };
 

@@ -31,11 +31,9 @@ const TiendaPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const data = await apiManager.getProducts();
-        setProductos(data);
+        const data = await apiManager.getProducts();        setProductos(data);
         setLoading(false);
       } catch (error) {
-        console.error("Error al obtener productos:", error);
         setLoading(false);
       }
     };

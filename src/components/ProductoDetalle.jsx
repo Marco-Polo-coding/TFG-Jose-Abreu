@@ -21,8 +21,7 @@ const ProductoDetalle = ({ id }) => {
 
   useEffect(() => {
     const fetchProducto = async () => {
-      try {
-        const data = await apiManager.get(`/productos/${id}`);
+      try {        const data = await apiManager.get(`/productos/${id}`);
         setProducto(data);
       } catch (error) {
         console.error('Error:', error);

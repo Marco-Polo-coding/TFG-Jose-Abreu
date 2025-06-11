@@ -121,12 +121,8 @@ const UploadProductForm = () => {
         }
       });
       const user = authManager.getUser();
-      const userEmail = user?.email;
-      if (userEmail) {
+      const userEmail = user?.email;      if (userEmail) {
         formDataToSend.append('usuario_email', userEmail);
-      }
-      for (let pair of formDataToSend.entries()) {
-        console.log(pair[0]+ ': ' + pair[1]);
       }
 
       const response = await fetch('http://localhost:8000/productos', {
@@ -135,8 +131,7 @@ const UploadProductForm = () => {
       });
 
       if (response.ok) {
-        window.location.href = '/tienda';
-      } else {
+        window.location.href = '/tienda';      } else {
         throw new Error('Error al subir el producto');
       }
     } catch (error) {

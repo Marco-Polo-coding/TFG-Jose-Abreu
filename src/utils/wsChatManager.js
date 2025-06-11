@@ -17,25 +17,19 @@ class WSChatManager {
     this.chatId = chatId;
     this.token = token;
     const wsUrl = `ws://localhost:8000/ws/direct-chats/${chatId}`;
-    this.ws = new WebSocket(wsUrl);
-    this.ws.onopen = () => {
+    this.ws = new WebSocket(wsUrl);    this.ws.onopen = () => {
       this.isConnected = true;
-      console.log('WEBSOCKET ABIERTO', wsUrl);
       this.ws.send(JSON.stringify({ event: 'auth', token }));
       this.emit('open');
-    };
-    this.ws.onmessage = (event) => {
-      console.log('WEBSOCKET MENSAJE RECIBIDO:', event.data);
+    };    this.ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
         this.emit(data.event, data);
       } catch (e) {
-        console.error('ERROR PARSEANDO MENSAJE WS:', e, event.data);
+        // Error parsing WebSocket message
       }
-    };
-    this.ws.onclose = () => {
+    };    this.ws.onclose = () => {
       this.isConnected = false;
-      console.log('WEBSOCKET CERRADO', wsUrl);
       this.emit('close');
       // Intentar reconectar automáticamente
       if (this.chatId && this.token) {
@@ -43,9 +37,7 @@ class WSChatManager {
           this.connect({ chatId: this.chatId, token: this.token });
         }, 2000);
       }
-    };
-    this.ws.onerror = (e) => {
-      console.error('WEBSOCKET ERROR', e);
+    };    this.ws.onerror = (e) => {
       this.emit('error', e);
     };
   }
