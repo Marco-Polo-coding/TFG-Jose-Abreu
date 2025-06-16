@@ -206,6 +206,29 @@ const ProfileCard = () => {
     }
   };
 
+  // Funciones para manejar clicks restrictivos
+  const handleUploadProductClick = (e) => {
+    e.preventDefault();
+    const user = authManager.getUser();
+    if (!user || !authManager.isAuthenticated()) {
+      // Crear un toast simple ya que ProfileCard no tiene sistema de toasts
+      alert('Debes iniciar sesión para subir productos');
+      return;
+    }
+    window.location.href = '/upload_product';
+  };
+
+  const handlePostArticleClick = (e) => {
+    e.preventDefault();
+    const user = authManager.getUser();
+    if (!user || !authManager.isAuthenticated()) {
+      // Crear un toast simple ya que ProfileCard no tiene sistema de toasts
+      alert('Debes iniciar sesión para publicar artículos');
+      return;
+    }
+    window.location.href = '/post_article';
+  };
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -266,7 +289,11 @@ const ProfileCard = () => {
           ) : articles.length === 0 ? (
             <>
               <p className="text-gray-500 text-base mb-4">No has publicado ningún artículo todavía</p>
-              <a href="/post_article" className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow hover:scale-105 hover:from-purple-700 hover:to-indigo-700 transition-all duration-300">
+              <a
+                href="/post_article"
+                onClick={handlePostArticleClick}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow hover:scale-105 hover:from-purple-700 hover:to-indigo-700 transition-all duration-300"
+              >
                 <FaPlus className="w-4 h-4" /> Publicar artículo
               </a>
             </>
@@ -309,7 +336,11 @@ const ProfileCard = () => {
             <div className="text-red-600 py-4">{errorVentas}</div>
           ) : ventas.length === 0 ? (            <>
               <p className="text-gray-500 text-base mb-4">No tienes ventas en curso todavía</p>
-              <a href="/upload_product" className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow hover:scale-105 hover:from-purple-700 hover:to-indigo-700 transition-all duration-300">
+              <a
+                href="/upload_product"
+                onClick={handleUploadProductClick}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow hover:scale-105 hover:from-purple-700 hover:to-indigo-700 transition-all duration-300"
+              >
                 <FaPlus className="w-4 h-4" /> Publicar producto
               </a>
             </>
@@ -510,4 +541,4 @@ const ProfileCard = () => {
   );
 };
 
-export default ProfileCard; 
+export default ProfileCard;

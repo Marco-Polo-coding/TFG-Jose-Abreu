@@ -23,10 +23,22 @@ const TiendaPage = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
   const [imageIndexes, setImageIndexes] = useState({}); // { [productoId]: index }
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState('login');
+  const [showAuthModal, setShowAuthModal] = useState(false);  const [authMode, setAuthMode] = useState('login');
 
   const addItem = useCartStore((state) => state.addItem);
+
+  // Función para manejar el click en "Subir producto" con autenticación
+  const handleUploadProductClick = (e) => {
+    e.preventDefault();
+    const user = authManager.getUser();
+    if (!user || !authManager.isAuthenticated()) {
+      setToastMessage('Debes iniciar sesión para subir productos');
+      setToastType('error');
+      setShowToast(true);
+      return;
+    }
+    window.location.href = '/upload_product';
+  };
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -165,10 +177,10 @@ const TiendaPage = () => {
       <div className="fixed top-4 right-4 z-50 flex items-center gap-8">
         <CartButton onOpenLoginModal={() => { setAuthMode('login'); setShowAuthModal(true); }} />
         <UserButton />
-      </div>
-      {/* Botón flotante para subir producto */}
+      </div>      {/* Botón flotante para subir producto */}
       <a
         href="/upload_product"
+        onClick={handleUploadProductClick}
         className="fixed bottom-8 right-8 z-50 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 group overflow-hidden px-6 py-4 hover:scale-105 hover:shadow-xl"
         title="Subir nuevo producto"
         style={{ boxShadow: '0 4px 24px 0 rgba(80,0,180,0.25)' }}

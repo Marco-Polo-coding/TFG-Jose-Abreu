@@ -17,10 +17,22 @@ const MyArticles = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [articleToDelete, setArticleToDelete] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [articleToEdit, setArticleToEdit] = useState(null);
-  const [showToast, setShowToast] = useState(false);
+  const [articleToEdit, setArticleToEdit] = useState(null);  const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [toastType, setToastType] = useState('success');  useEffect(() => {
+  const [toastType, setToastType] = useState('success');
+
+  // Función para manejar el click en "Publicar artículo" con autenticación
+  const handlePostArticleClick = (e) => {
+    e.preventDefault();
+    const user = authManager.getUser();
+    if (!user || !authManager.isAuthenticated()) {
+      setToastMessage('Debes iniciar sesión para publicar artículos');
+      setToastType('error');
+      setShowToast(true);
+      return;
+    }
+    window.location.href = '/post_article';
+  };useEffect(() => {
     const user = authManager.getUser();
     const userEmail = user?.email;
     if (!userEmail) {
@@ -139,9 +151,9 @@ const MyArticles = () => {
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
             <FaNewspaper className="text-purple-500" />
             Tus artículos
-          </h2>
-          <a
+          </h2>          <a
             href="/post_article"
+            onClick={handlePostArticleClick}
             className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 flex items-center gap-2 font-semibold shadow-lg hover:scale-105"
           >
             <FaPlus />
@@ -160,9 +172,9 @@ const MyArticles = () => {
         ) : articles.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-2xl shadow-xl">
             <FaNewspaper className="mx-auto text-6xl text-gray-300 mb-4" />
-            <p className="text-gray-500 text-lg">No tienes artículos publicados aún.</p>
-            <a 
+            <p className="text-gray-500 text-lg">No tienes artículos publicados aún.</p>            <a 
               href="/post_article"
+              onClick={handlePostArticleClick}
               className="mt-4 text-purple-600 hover:text-purple-700 font-medium"
             >
               ¡Publica tu primer artículo!

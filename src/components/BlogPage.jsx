@@ -15,9 +15,21 @@ const BlogPage = () => {
   const [category, setCategory] = useState("");
   const [dateOrder, setDateOrder] = useState("desc"); // desc, asc
   const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [toastType, setToastType] = useState('success');
+  const [toastMessage, setToastMessage] = useState('');  const [toastType, setToastType] = useState('success');
   const [savedArticles, setSavedArticles] = useState([]);
+
+  // Función para manejar el click en "Publicar artículo" con autenticación
+  const handlePostArticleClick = (e) => {
+    e.preventDefault();
+    const user = authManager.getUser();
+    if (!user || !authManager.isAuthenticated()) {
+      setToastMessage('Debes iniciar sesión para publicar artículos');
+      setToastType('error');
+      setShowToast(true);
+      return;
+    }
+    window.location.href = '/post_article';
+  };
 
   useEffect(() => {
     fetchArticles();
@@ -127,10 +139,10 @@ const BlogPage = () => {
       <div className="fixed top-4 right-4 z-50 flex items-center gap-8">
         <CartButton />
         <UserButton />
-      </div>
-      {/* Botón flotante para crear artículo */}
+      </div>      {/* Botón flotante para crear artículo */}
       <a
         href="/post_article"
+        onClick={handlePostArticleClick}
         className="fixed bottom-8 right-8 z-50 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 group overflow-hidden px-6 py-4 hover:scale-105 hover:shadow-xl"
         title="Crear nuevo artículo"
         style={{ boxShadow: '0 4px 24px 0 rgba(80,0,180,0.25)' }}
