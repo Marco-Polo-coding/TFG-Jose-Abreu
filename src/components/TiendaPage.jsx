@@ -51,11 +51,14 @@ const TiendaPage = () => {
     };
     
     fetchProducts();
-  }, []);
-
-  // Obtener categorías únicas
-  const categoriasSet = new Set(productos.map(p => p.categoria || 'Sin categoría'));
-  const categoriasUnicas = Array.from(categoriasSet);
+  }, []);  // Obtener categorías completas (todas las posibles)
+  const categoriasCompletas = [
+    { value: 'juego', label: 'Juego' },
+    { value: 'consola', label: 'Consola' },
+    { value: 'accesorio', label: 'Accesorio' },
+    { value: 'merchandising', label: 'Merchandising' },
+    { value: 'otros', label: 'Otros' }
+  ];
 
   // Filtrado
   let productosFiltrados = productos
@@ -249,11 +252,10 @@ const TiendaPage = () => {
               <select
                 value={category}
                 onChange={e => setCategory(e.target.value)}
-                className="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white"
-              >
+                className="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white"              >
                 <option value="">Todas</option>
-                {categoriasUnicas.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
+                {categoriasCompletas.map(cat => (
+                  <option key={cat.value} value={cat.value}>{cat.label}</option>
                 ))}
               </select>
             </div>
@@ -307,10 +309,9 @@ const TiendaPage = () => {
               {productosFiltrados.map((producto) => {
                 const imagenes = producto.imagenes && producto.imagenes.length > 0 ? producto.imagenes : ['https://cataas.com/cat'];
                 const currentIndex = imageIndexes[producto.id] || 0;
-                return (
-                  <div
+                return (                  <div
                     key={producto.id}
-                    className="bg-gradient-to-br from-white via-purple-50 to-indigo-100 rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-white/60"
+                    className="bg-gradient-to-br from-white via-purple-50 to-indigo-100 rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-white/60 flex flex-col"
                   >
                     <div className="relative h-48 bg-gray-200 group flex items-center justify-center">
                       <img
@@ -352,14 +353,13 @@ const TiendaPage = () => {
                             <FaHeart className="w-5 h-5" />
                           )}
                         </button>
-                      </div>
-                    </div>
-                    <div className="p-6">
+                      </div>                    </div>
+                    <div className="p-6 flex flex-col flex-grow">
                       <h3 className="text-xl font-bold mb-2 text-gray-900 truncate" title={producto.nombre}>{producto.nombre}</h3>
                       <div className="flex items-center gap-2 mb-2">
                         <span className="inline-block bg-purple-100 text-purple-700 text-xs font-semibold px-3 py-1 rounded-full">{producto.categoria || 'Sin categoría'}</span>
                       </div>
-                      <p className="text-gray-600 mb-4 line-clamp-2">
+                      <p className="text-gray-600 mb-4 line-clamp-2 flex-grow">
                         {producto.descripcion}
                       </p>                      <div className="flex items-center justify-between mb-4">
                         <p className="text-2xl font-extrabold text-purple-700">
@@ -368,20 +368,24 @@ const TiendaPage = () => {
                       </div>
                       
                       {/* Indicadores de stock */}
-                      {producto.stock !== undefined && (
-                        <div className="mb-4">
-                          {producto.stock === 0 ? (
-                            <span className="text-red-600 font-bold text-sm">
-                              Agotado
-                            </span>
-                          ) : producto.stock < 3 ? (
-                            <span className="text-orange-500 font-semibold text-sm animate-bounce">
-                              ¡Queda poco stock!
-                            </span>
-                          ) : null}
-                        </div>
-                      )}
-                        <div className="flex gap-4">
+                      <div className="mb-4 min-h-[20px]">
+                        {producto.stock !== undefined && (
+                          <>
+                            {producto.stock === 0 ? (
+                              <span className="text-red-600 font-bold text-sm">
+                                Agotado
+                              </span>
+                            ) : producto.stock < 3 ? (
+                              <span className="text-orange-500 font-semibold text-sm animate-bounce">
+                                ¡Queda poco stock!
+                              </span>
+                            ) : null}
+                          </>
+                        )}
+                      </div>
+                      
+                      {/* Botones fijos en la parte inferior */}
+                      <div className="flex gap-4 mt-auto">
                         <a
                           href={`/producto/${producto.id}`}
                           className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-center py-3 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 font-semibold shadow"

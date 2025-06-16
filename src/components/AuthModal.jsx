@@ -372,10 +372,10 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
     }
     return errors;
   };
-
   // Utilidad para saber si la foto es válida
-  const userPhoto = (typeof window !== 'undefined') ? localStorage.getItem('userPhoto') : '';
-  const isValidPhoto = userPhoto && !userPhoto.includes('googleusercontent.com') && userPhoto !== '';
+  const user = authManager.getUser();
+  const userPhoto = user?.photo || '';
+  const isValidPhoto = userPhoto && userPhoto !== '';
   if (!isOpen) return null;
 
   return (

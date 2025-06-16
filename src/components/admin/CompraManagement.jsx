@@ -5,6 +5,7 @@ import AdminDeleteModal from './AdminDeleteModal';
 import LoadingSpinner from '../LoadingSpinner';
 import ReactDOM from 'react-dom';
 import { apiManager } from '../../utils/apiManager';
+import { showAdminToast } from './AdminToast';
 
 const columns = [
   { key: 'fecha', label: 'FECHA' },
@@ -118,7 +119,6 @@ const CompraManagement = () => {
       // No bloquea la vista de compras si falla
     }
   };
-
   const handleDelete = async () => {
     if (!compraToDelete) return;
     try {
@@ -126,8 +126,9 @@ const CompraManagement = () => {
       setShowDelete(false);
       setCompraToDelete(null);
       fetchCompras();
+      showAdminToast(`Compra #${compraToDelete.id} eliminada correctamente`, 'success');
     } catch (err) {
-      alert('Error al eliminar compra: ' + err.message);
+      showAdminToast('Error al eliminar compra: ' + err.message, 'error');
     }
   };
 

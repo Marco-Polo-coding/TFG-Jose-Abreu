@@ -5,6 +5,7 @@ import AdminDeleteModal from './AdminDeleteModal';
 import ReactDOM from 'react-dom';
 import { apiManager } from '../../utils/apiManager';
 import { authManager } from '../../utils/authManager';
+import { showAdminToast } from './AdminToast';
 
 const ArticleManagement = () => {
   const [articles, setArticles] = useState([]);
@@ -46,13 +47,13 @@ const ArticleManagement = () => {
   };
   const handleDeleteArticle = (article) => {
     setDeleteArticle(article);
-  };
-  const confirmDeleteArticle = async () => {
+  };  const confirmDeleteArticle = async () => {
     if (!deleteArticle) return;
     try {
       await apiManager.delete(`/admin/articles/${deleteArticle.id}`);
       setArticles(prev => prev.filter(a => a.id !== deleteArticle.id));
       setDeleteArticle(null);
+      showAdminToast(`Artículo "${deleteArticle.titulo}" eliminado correctamente`, 'success');
     } catch (err) {
       console.error('Error deleting article:', err);
       let userFriendlyMessage = 'Error al eliminar el artículo. Por favor, intenta de nuevo.';
@@ -67,7 +68,8 @@ const ArticleManagement = () => {
         userFriendlyMessage = 'El artículo ya no existe o ha sido eliminado.';
       }
       
-      setError(userFriendlyMessage);
+      showAdminToast(userFriendlyMessage, 'error');
+      setDeleteArticle(null);
     }
   };
 
@@ -157,12 +159,12 @@ const ArticleManagement = () => {
       formData.append('categoria', form.categoria);
       formData.append('autor', userName || '');
       formData.append('autor_email', userEmail || '');
-      // No se envía imagen, el backend pone la de gato si no hay
-      const created = await apiManager.post('/articulos', formData);
+      // No se envía imagen, el backend pone la de gato si no hay      const created = await apiManager.post('/articulos', formData);
       setArticles([...articles, created]);
       setShowAdd(false);
+      showAdminToast(`Artículo "${form.titulo}" creado correctamente`, 'success');
     } catch (err) {
-      setError(err.message || 'Error al crear el artículo. Por favor, intenta de nuevo.');
+      showAdminToast(err.message || 'Error al crear el artículo. Por favor, intenta de nuevo.', 'error');
     }
   };
   const handleUpdateArticle = async (form) => {
@@ -172,12 +174,12 @@ const ArticleManagement = () => {
       formData.append('descripcion', form.descripcion);
       formData.append('contenido', form.contenido);
       formData.append('categoria', form.categoria);
-      // No se envía imagen
-      const updated = await apiManager.put(`/articulos/${editArticle.id}`, formData);
+      // No se envía imagen      const updated = await apiManager.put(`/articulos/${editArticle.id}`, formData);
       setArticles(articles.map(a => a.id === editArticle.id ? updated : a));
       setEditArticle(null);
+      showAdminToast(`Artículo "${form.titulo}" actualizado correctamente`, 'success');
     } catch (err) {
-      setError(err.message || 'Error al actualizar el artículo. Por favor, intenta de nuevo.');
+      showAdminToast(err.message || 'Error al actualizar el artículo. Por favor, intenta de nuevo.', 'error');
     }
   };
 

@@ -5,6 +5,7 @@ import AdminDeleteModal from './AdminDeleteModal';
 import ReactDOM from 'react-dom';
 import { authManager } from '../../utils/authManager';
 import { apiManager } from '../../utils/apiManager';
+import { showAdminToast } from './AdminToast';
 
 const ProductManagement = () => {
   const [products, setProducts] = useState([]);
@@ -51,6 +52,7 @@ const ProductManagement = () => {
       await apiManager.delete(`/admin/products/${deleteProduct.id}`);
       setProducts(products.filter(product => product.id !== deleteProduct.id));
       setDeleteProduct(null);
+      showAdminToast(`Producto "${deleteProduct.titulo}" eliminado correctamente`, 'success');
     } catch (err) {
       console.error('Error deleting product:', err);
       let userFriendlyMessage = 'Error al eliminar el producto. Por favor, intenta de nuevo.';
@@ -65,7 +67,8 @@ const ProductManagement = () => {
         userFriendlyMessage = 'El producto ya no existe o ha sido eliminado.';
       }
       
-      setError(userFriendlyMessage);
+      showAdminToast(userFriendlyMessage, 'error');
+      setDeleteProduct(null);
     }
   };
 
@@ -154,10 +157,10 @@ const ProductManagement = () => {
       formData.append('categoria', form.categoria);
       formData.append('estado', form.estado);
       formData.append('usuario_email', userEmail || '');
-      // No se envía imagen, el backend pone la de gato si no hay
-      const created = await apiManager.post('/productos', formData);
+      // No se envía imagen, el backend pone la de gato si no hay      const created = await apiManager.post('/productos', formData);
       setProducts([...products, created]);
       setShowAdd(false);
+      showAdminToast(`Producto "${form.nombre}" creado correctamente`, 'success');
     } catch (err) {
       console.error('Error al crear producto:', err);
       let errorMessage = 'Error al crear el producto. Por favor, inténtalo de nuevo.';
@@ -169,16 +172,17 @@ const ProductManagement = () => {
       } else if (err.message?.includes('403')) {
         errorMessage = 'No tienes permisos para crear productos.';
       } else if (err.message?.includes('409')) {
-        errorMessage = 'Ya existe un producto con ese nombre. Usa un nombre diferente.';
-      } else if (err.message?.includes('422') || err.message?.includes('400')) {
+        errorMessage = 'Ya existe un producto con ese nombre. Usa un nombre diferente.';      } else if (err.message?.includes('422') || err.message?.includes('400')) {
         errorMessage = 'Los datos del producto no son válidos. Revisa todos los campos.';
       } else if (err.message?.includes('500')) {
         errorMessage = 'Error interno del servidor. Contacta al administrador.';
       }
       
-      setError(errorMessage);
+      showAdminToast(errorMessage, 'error');
     }
-  };  const handleUpdateProduct = async (form) => {
+  };
+
+  const handleUpdateProduct = async (form) => {
     try {
       const formData = new FormData();
       formData.append('nombre', form.nombre);
@@ -187,10 +191,10 @@ const ProductManagement = () => {
       formData.append('stock', form.stock);
       formData.append('categoria', form.categoria);
       formData.append('estado', form.estado);
-      // No se envía imagen
-      const updated = await apiManager.put(`/productos/${editProduct.id}`, formData);
+      // No se envía imagen      const updated = await apiManager.put(`/productos/${editProduct.id}`, formData);
       setProducts(products.map(p => p.id === editProduct.id ? updated : p));
       setEditProduct(null);
+      showAdminToast(`Producto "${form.nombre}" actualizado correctamente`, 'success');
     } catch (err) {
       console.error('Error al actualizar producto:', err);
       let errorMessage = 'Error al actualizar el producto. Por favor, inténtalo de nuevo.';
@@ -206,12 +210,11 @@ const ProductManagement = () => {
       } else if (err.message?.includes('409')) {
         errorMessage = 'Ya existe un producto con ese nombre. Usa un nombre diferente.';
       } else if (err.message?.includes('422') || err.message?.includes('400')) {
-        errorMessage = 'Los datos del producto no son válidos. Revisa todos los campos.';
-      } else if (err.message?.includes('500')) {
+        errorMessage = 'Los datos del producto no son válidos. Revisa todos los campos.';      } else if (err.message?.includes('500')) {
         errorMessage = 'Error interno del servidor. Contacta al administrador.';
       }
       
-      setError(errorMessage);
+      showAdminToast(errorMessage, 'error');
     }
   };
 

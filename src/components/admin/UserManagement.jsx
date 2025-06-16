@@ -6,6 +6,8 @@ import AdminDeleteModal from './AdminDeleteModal';
 import ReactDOM from 'react-dom';
 import PasswordRequirements from '../PasswordRequirements';
 import { apiManager } from '../../utils/apiManager';
+import { authManager } from '../../utils/authManager';
+import { showAdminToast } from './AdminToast';
 
 // Generador simple de UID si no hay uuid
 function generateUID() {
@@ -204,17 +206,39 @@ const UserManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
-  const handleDeleteUser = (user) => {
+  };  const handleDeleteUser = (user) => {
+    // Obtener el usuario actual (admin logueado)
+    const currentUser = authManager.getUser();
+    const currentUserId = currentUser?.uid;
+    const targetUserId = user.uid || user.id;
+    
+    // Verificar si está intentando eliminarse a sí mismo
+    if (currentUserId === targetUserId) {
+      showAdminToast('No puedes eliminar tu propia cuenta de administrador mientras tienes una sesión activa', 'error');
+      return;
+    }
+    
     setDeleteUser(user);
-  };
-  const confirmDeleteUser = async () => {
+  };  const confirmDeleteUser = async () => {
     if (!deleteUser) return;
+    
+    // Verificación de seguridad adicional
+    const currentUser = authManager.getUser();
+    const currentUserId = currentUser?.uid;
+    const userId = typeof deleteUser === 'object' ? deleteUser.uid : deleteUser;
+    
+    if (currentUserId === userId) {
+      showAdminToast('Error: No puedes eliminar tu propia cuenta de administrador', 'error');
+      setDeleteUser(null);
+      return;
+    }
+    
     try {
-      const userId = typeof deleteUser === 'object' ? deleteUser.uid : deleteUser;
+      const userName = typeof deleteUser === 'object' ? deleteUser.nombre || deleteUser.email : 'Usuario';
       await apiManager.delete(`/admin/users/${userId}`);
       setUsers(prev => prev.filter(u => u.uid !== userId));
       setDeleteUser(null);
+      showAdminToast(`Usuario "${userName}" eliminado correctamente`, 'success');
     } catch (err) {
       console.error('Error deleting user:', err);
       let userFriendlyMessage = 'Error al eliminar el usuario. Por favor, intenta de nuevo.';
@@ -229,7 +253,8 @@ const UserManagement = () => {
         userFriendlyMessage = 'El usuario ya no existe o ha sido eliminado.';
       }
       
-      setError(userFriendlyMessage);
+      showAdminToast(userFriendlyMessage, 'error');
+      setDeleteUser(null);
     }
   };
 
@@ -240,10 +265,10 @@ const UserManagement = () => {
       const updated = await apiManager.put(`/admin/users/${editUser.uid || editUser.id}`, {
         nombre: form.nombre,
         email: form.email,
-        role: form.role
-      });
+        role: form.role      });
       setUsers(users.map(u => (u.uid || u.id) === (editUser.uid || editUser.id) ? updated : u));
       setEditUser(null);
+      showAdminToast(`Usuario "${form.nombre}" actualizado correctamente`, 'success');
     } catch (err) {
       console.error('Error updating user:', err);
       let userFriendlyMessage = 'Error al actualizar el usuario. Por favor, intenta de nuevo.';
@@ -255,12 +280,11 @@ const UserManagement = () => {
       } else if (err.message.includes('403') || err.message.includes('forbidden')) {
         userFriendlyMessage = 'No tienes permisos para editar usuarios.';
       } else if (err.message.includes('409') || err.message.includes('conflict')) {
-        userFriendlyMessage = 'El email ya está en uso por otro usuario.';
-      } else if (err.message.includes('400') || err.message.includes('bad request')) {
+        userFriendlyMessage = 'El email ya está en uso por otro usuario.';      } else if (err.message.includes('400') || err.message.includes('bad request')) {
         userFriendlyMessage = 'Datos inválidos. Por favor, verifica la información.';
       }
       
-      setErrorModal(userFriendlyMessage);
+      showAdminToast(userFriendlyMessage, 'error');
     }
   };
 
@@ -276,12 +300,12 @@ const UserManagement = () => {
         email: form.email,
         role: form.role,
         password: form.password,
-        uid
-      });
+        uid      });
       setUsers([...users, created]);
       setShowAdd(false);
+      showAdminToast(`Usuario "${form.nombre}" creado correctamente`, 'success');
     } catch (err) {
-      setErrorModal(err.message);
+      showAdminToast(err.message || 'Error al crear el usuario', 'error');
     }
   };
 
@@ -439,8 +463,7 @@ const UserManagement = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-xs text-gray-500">{user.uid || user.id}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2 acciones-btn">
+                </td>                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2 acciones-btn">
                   <button
                     onClick={e => { e.stopPropagation(); setDetalleUsuario(user); }}
                     className="p-2 rounded-full bg-purple-100 hover:bg-purple-200 text-purple-700 transition"
@@ -448,12 +471,24 @@ const UserManagement = () => {
                   >
                     <FaEye />
                   </button>
-                  <button
-                    onClick={() => handleDeleteUser(user)}
-                    className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 mr-4"
-                  >
-                    <FaTrash />
-                  </button>
+                  {(() => {
+                    const currentUser = authManager.getUser();
+                    const isCurrentUser = currentUser?.uid === (user.uid || user.id);
+                    return (
+                      <button
+                        onClick={() => handleDeleteUser(user)}
+                        className={`mr-4 transition ${
+                          isCurrentUser 
+                            ? 'text-gray-400 cursor-not-allowed' 
+                            : 'text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300'
+                        }`}
+                        title={isCurrentUser ? 'No puedes eliminar tu propia cuenta' : 'Eliminar usuario'}
+                        disabled={isCurrentUser}
+                      >
+                        <FaTrash />
+                      </button>
+                    );
+                  })()}
                   <button onClick={() => handleEditUser(user)} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
                     <FaEdit />
                   </button>

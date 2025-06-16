@@ -268,28 +268,42 @@ async def login_with_google(id_token: str = Body(..., embed=True)):
                     detail="Token de Google inválido o expirado"
                 )
 
-            data = response.json()
-            
-            # Obtener datos del usuario
+            data = response.json()            # Obtener datos del usuario
             user_info = {
                 "uid": data.get("localId"),
                 "email": data.get("email"),
                 "nombre": data.get("displayName", ""),
-                "foto": ""  # Ignorar la foto de Google
             }
 
-            # Guardar o actualizar usuario en Firestore
+            # Verificar si el usuario ya existe para preservar su foto personalizada
             user_ref = db.collection("usuarios").document(user_info["uid"])
-            user_ref.set(user_info, merge=True)
-
-            return {
-                "idToken": data.get("idToken"),
-                "refreshToken": data.get("refreshToken"),
-                "email": user_info["email"],
-                "nombre": user_info["nombre"],
-                "uid": user_info["uid"],
-                "foto": user_info["foto"]
-            }
+            existing_user = user_ref.get()
+            
+            if existing_user.exists:
+                # Usuario existente - preservar foto personalizada
+                user_ref.set(user_info, merge=True)
+                # Obtener datos actualizados incluyendo la foto existente
+                updated_user = user_ref.get().to_dict()
+                return {
+                    "idToken": data.get("idToken"),
+                    "refreshToken": data.get("refreshToken"),
+                    "email": updated_user.get("email"),
+                    "nombre": updated_user.get("nombre"),
+                    "uid": updated_user.get("uid"),
+                    "foto": updated_user.get("foto", "")
+                }
+            else:
+                # Usuario nuevo - establecer foto vacía
+                user_info["foto"] = ""
+                user_ref.set(user_info, merge=True)
+                return {
+                    "idToken": data.get("idToken"),
+                    "refreshToken": data.get("refreshToken"),
+                    "email": user_info["email"],
+                    "nombre": user_info["nombre"],
+                    "uid": user_info["uid"],
+                    "foto": user_info["foto"]
+                }
 
     except Exception as e:
         logger.error(f"Error en login con Google: {str(e)}")

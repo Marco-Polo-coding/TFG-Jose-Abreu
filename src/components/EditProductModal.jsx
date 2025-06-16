@@ -8,7 +8,7 @@ const EditProductModal = ({ open, onClose, onSave, initialData }) => {
     descripcion: '',
     precio: '',
     stock: '',
-    categoria: 'juegos',
+    categoria: 'juego',
     estado: 'nuevo',
     imagenes: []
   });
@@ -29,7 +29,7 @@ const EditProductModal = ({ open, onClose, onSave, initialData }) => {
         descripcion: initialData.descripcion || '',
         precio: initialData.precio ?? '',
         stock: initialData.stock ?? '',
-        categoria: initialData.categoria || 'juegos',
+        categoria: initialData.categoria || 'juego',
         estado: initialData.estado || 'nuevo',
         imagenes: []
       });
@@ -270,16 +270,16 @@ const EditProductModal = ({ open, onClose, onSave, initialData }) => {
 
           {/* Categoría */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-            <select
+            <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>            <select
               name="categoria"
               value={formData.categoria}
               onChange={handleChange}
               required
               className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             >
-              <option value="juegos">Juegos</option>
-              <option value="accesorios">Accesorios</option>
+              <option value="juego">Juego</option>
+              <option value="consola">Consola</option>
+              <option value="accesorio">Accesorio</option>
               <option value="merchandising">Merchandising</option>
               <option value="otros">Otros</option>
             </select>

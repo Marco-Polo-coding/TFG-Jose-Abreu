@@ -5,7 +5,7 @@ class DirectChatManager {
     this.baseUrl = 'http://localhost:8000';
   }  async getHeaders() {
     const token = await authManager.getToken();
-    console.log('🎫 Token obtenido:', token ? 'SÍ' : 'NO');
+    // console.log('🎫 Token obtenido:', token ? 'SÍ' : 'NO');
     const headers = {
       'Content-Type': 'application/json',
     };

@@ -181,9 +181,8 @@ const MyArticles = () => {
             </a>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {articles.map(article => (
-              <div key={article.id} className="bg-gradient-to-br from-white via-purple-50 to-indigo-100 rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-white/60 animate-fade-in">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">            {articles.map(article => (
+              <div key={article.id} className="bg-gradient-to-br from-white via-purple-50 to-indigo-100 rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-white/60 animate-fade-in flex flex-col">
                 <div className="aspect-w-16 aspect-h-9 mb-4">
                   <img 
                     src={article.imagen && article.imagen !== '/default-article.jpg' ? article.imagen : 'https://cataas.com/cat'} 
@@ -192,23 +191,25 @@ const MyArticles = () => {
                   />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2 truncate max-w-[180px]">{article.titulo}</h3>
-                <p className="text-gray-600 mb-2 line-clamp-2">{article.contenido?.slice(0, 100)}...</p>
-                <p className="text-purple-700 font-extrabold mb-4 text-lg">{new Date(article.fecha_publicacion).toLocaleDateString()}</p>
-                <div className="flex justify-end gap-2 mt-2">
-                  <button
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    title="Editar artículo"
-                    onClick={() => { setArticleToEdit(article); setEditModalOpen(true); }}
-                  >
-                    <FaEdit />
-                  </button>
-                  <button
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    title="Eliminar artículo"
-                    onClick={() => { setArticleToDelete(article); setModalOpen(true); }}
-                  >
-                    <FaTrash />
-                  </button>
+                <p className="text-gray-600 mb-2 line-clamp-2 flex-grow">{article.contenido?.slice(0, 100)}...</p>
+                <div className="mt-auto">
+                  <p className="text-purple-700 font-extrabold mb-4 text-lg">{new Date(article.fecha_publicacion).toLocaleDateString()}</p>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Editar artículo"
+                      onClick={() => { setArticleToEdit(article); setEditModalOpen(true); }}
+                    >
+                      <FaEdit />
+                    </button>
+                    <button
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Eliminar artículo"
+                      onClick={() => { setArticleToDelete(article); setModalOpen(true); }}
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

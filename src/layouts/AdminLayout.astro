@@ -2,6 +2,7 @@
 import AdminSidebar from '../components/admin/AdminSidebar.jsx';
 import AdminNavbar from '../components/admin/AdminNavbar.jsx';
 import TokenExpirationHandler from '../components/TokenExpirationHandler';
+import AdminToast from '../components/admin/AdminToast.jsx';
 
 const { title } = Astro.props;
 ---
@@ -14,9 +15,9 @@ const { title } = Astro.props;
 		<link rel="icon" type="image/svg+xml" href="/rpg-game.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{title} - Panel de Administración</title>
-  </head>
-  <body class="bg-gray-100 dark:bg-gray-900">
+  </head>  <body class="bg-gray-100 dark:bg-gray-900">
     <TokenExpirationHandler client:load />
+    <AdminToast client:load />
     <div class="min-h-screen flex flex-col">
       <AdminNavbar client:load />
       <div class="flex flex-1 flex-col md:flex-row">

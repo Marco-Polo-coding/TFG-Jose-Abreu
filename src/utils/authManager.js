@@ -26,8 +26,7 @@ const useAuthStore = create(
         token,
         refreshToken: refreshToken || state.refreshToken
       })),
-    }),
-    {
+    }),    {
       name: 'auth-storage', // clave única para el storage
       // Solo persistir si no quieres usar localStorage, comentar la siguiente línea
       // storage: createJSONStorage(() => sessionStorage),

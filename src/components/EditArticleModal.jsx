@@ -145,9 +145,27 @@ const EditArticleModal = ({ open, onClose, onSave, initialData }) => {
                 required
                 maxLength={DESC_LIMIT}
                 rows={3}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"              />
             </div>
+
+            {/* Categoría */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+              <select
+                name="categoria"
+                value={formData.categoria || 'reseña'}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                <option value="reseña">Reseña</option>
+                <option value="analisis">Análisis</option>
+                <option value="noticia">Noticia</option>
+                <option value="guia">Guía</option>
+                <option value="opinion">Opinión</option>
+              </select>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Imagen</label>
               <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">

@@ -7,7 +7,7 @@ const PostProductForm = () => {
     descripcion: '',
     precio: '',
     stock: '',
-    categoria: 'juegos',
+    categoria: 'juego',
     estado: 'nuevo',
     imagen: null
   });
@@ -173,7 +173,7 @@ const PostProductForm = () => {
             required
             className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
           >
-            <option value="juegos">Juegos</option>
+            <option value="juego">Juego</option>
             <option value="accesorios">Accesorios</option>
             <option value="merchandising">Merchandising</option>
             <option value="otros">Otros</option>

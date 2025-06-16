@@ -90,10 +90,14 @@ const BlogPage = () => {
       setShowToast(true);
     }
   };
-
-  // Obtener categorías únicas (incluyendo 'Sin categoría' si aplica)
-  const categoriasSet = new Set(articulos.map(a => a.categoria || 'Sin categoría'));
-  const categoriasUnicas = Array.from(categoriasSet);
+  // Obtener categorías completas (todas las posibles)
+  const categoriasCompletas = [
+    { value: 'reseña', label: 'Reseña' },
+    { value: 'analisis', label: 'Análisis' },
+    { value: 'noticia', label: 'Noticia' },
+    { value: 'guia', label: 'Guía' },
+    { value: 'opinion', label: 'Opinión' }
+  ];
 
   // Filtrado
   let articulosFiltrados = articulos
@@ -213,11 +217,10 @@ const BlogPage = () => {
               <select
                 value={category}
                 onChange={e => setCategory(e.target.value)}
-                className="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white"
-              >
+                className="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white"              >
                 <option value="">Todas</option>
-                {categoriasUnicas.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
+                {categoriasCompletas.map(cat => (
+                  <option key={cat.value} value={cat.value}>{cat.label}</option>
                 ))}
               </select>
             </div>
@@ -252,11 +255,10 @@ const BlogPage = () => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-              {articulosFiltrados.map((articulo) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">              {articulosFiltrados.map((articulo) => (
                 <div
                   key={articulo.id}
-                  className="bg-gradient-to-br from-white via-purple-50 to-indigo-100 rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-white/60"
+                  className="bg-gradient-to-br from-white via-purple-50 to-indigo-100 rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-white/60 flex flex-col"
                 >
                   <div className="relative h-48 bg-gray-200 group">
                     <img
@@ -272,11 +274,10 @@ const BlogPage = () => {
                       >
                         <FaBookmark className="w-5 h-5" />
                       </button>
-                    </div>
-                  </div>
-                  <div className="p-6">
+                    </div>                  </div>
+                  <div className="p-6 flex flex-col flex-grow">
                     <h3 className="text-xl font-bold mb-2 text-gray-900 truncate" title={articulo.titulo}>{articulo.titulo}</h3>
-                    <p className="text-gray-600 mb-2 line-clamp-2">{articulo.descripcion}</p>
+                    <p className="text-gray-600 mb-2 line-clamp-2 flex-grow">{articulo.descripcion}</p>
                     <div className="flex items-center gap-2 mb-2">
                       <span className="inline-block bg-purple-100 text-purple-700 text-xs font-semibold px-3 py-1 rounded-full">{articulo.categoria || 'Sin categoría'}</span>
                     </div>
@@ -287,7 +288,7 @@ const BlogPage = () => {
                     </div>
                     <a
                       href={`/articulo/${articulo.id}`}
-                      className="block w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-center py-3 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105 font-semibold shadow"
+                      className="block w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-center py-3 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105 font-semibold shadow mt-auto"
                     >
                       Leer más
                     </a>

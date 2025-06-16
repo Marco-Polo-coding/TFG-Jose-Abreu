@@ -156,18 +156,15 @@ const EditProfileForm = () => {
         formData.append('password', passwordForm.password);
         if (form.foto) formData.append('foto', form.foto);
         if (form.deletePhoto) formData.append('delete_photo', 'true');
-        
-        const data = await apiManager.put('/auth/update-profile-with-password', formData);
+          const data = await apiManager.put('/auth/update-profile-with-password', formData);
           // Limpiar el formulario de contraseña después del éxito
-        setPasswordForm({ password: '', confirmPassword: '' });
-        setToast({ open: true, message: 'Perfil y contraseña actualizados con éxito', type: 'success' });
-        
-        // Actualizar datos del usuario en Zustand con la respuesta del backend
+        setPasswordForm({ password: '', confirmPassword: '' });        setToast({ open: true, message: 'Perfil y contraseña actualizados con éxito', type: 'success' });        // Actualizar datos del usuario en Zustand con la respuesta del backend
         const updatedUser = {
           ...user,
           name: data.data?.nombre || form.nombre,
           email: data.data?.email || form.email,
           biografia: data.data?.biografia || form.biografia,
+          // Usar directamente la foto devuelta por el backend
           photo: data.data?.foto || (form.deletePhoto ? null : user.photo)
         };
         
@@ -182,16 +179,13 @@ const EditProfileForm = () => {
         formData.append('biografia', form.biografia);
         if (form.foto) formData.append('foto', form.foto);
         if (form.deletePhoto) formData.append('delete_photo', 'true');
-          
-        const data = await apiManager.put('/auth/update-profile', formData);
-        setToast({ open: true, message: 'Perfil actualizado con éxito', type: 'success' });
-        
-        // Actualizar datos del usuario en Zustand con la respuesta del backend
+            const data = await apiManager.put('/auth/update-profile', formData);        setToast({ open: true, message: 'Perfil actualizado con éxito', type: 'success' });        // Actualizar datos del usuario en Zustand con la respuesta del backend
         const updatedUser = {
           ...user,
           name: data.data?.nombre || form.nombre,
           email: data.data?.email || form.email,
           biografia: data.data?.biografia || form.biografia,
+          // Usar directamente la foto devuelta por el backend
           photo: data.data?.foto || (form.deletePhoto ? null : user.photo)
         };
         
