@@ -412,12 +412,11 @@ const ProfileCard = () => {
           {loadingFollowers ? (
             <LoadingSpinner />
           ) : followers.length > 0 ? (
-            <div className="space-y-4">
-              {followers.map((follower) => (
+            <div className="space-y-4">              {followers.map((follower) => (
                 <div key={follower.uid} className="flex items-center gap-3 p-3 bg-white/50 rounded-lg">
-                  <a href={`/user/${follower.email}`} className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold bg-gradient-to-br ${getRandomColor(follower.email)} transition hover:scale-105`}>
+                  <a href={`/user/${follower.email}`} className={`w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center text-white text-lg font-bold bg-gradient-to-br ${getRandomColor(follower.email)} transition hover:scale-105 aspect-square`}>
                     {follower.foto ? (
-                      <img src={follower.foto} alt={follower.nombre} className="w-full h-full object-cover rounded-full" />
+                      <img src={follower.foto} alt={follower.nombre} className="w-full h-full object-cover rounded-full aspect-square" />
                     ) : (
                       getInitials(follower.nombre || follower.email)
                     )}
@@ -449,12 +448,11 @@ const ProfileCard = () => {
           {loadingFollowing ? (
             <LoadingSpinner />
           ) : following.length > 0 ? (
-            <div className="space-y-4">
-              {following.map((followed) => (
+            <div className="space-y-4">              {following.map((followed) => (
                 <div key={followed.uid} className="flex items-center gap-3 p-3 bg-white/50 rounded-lg">
-                  <a href={`/user/${followed.email}`} className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold bg-gradient-to-br ${getRandomColor(followed.email)} transition hover:scale-105`}>
+                  <a href={`/user/${followed.email}`} className={`w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center text-white text-lg font-bold bg-gradient-to-br ${getRandomColor(followed.email)} transition hover:scale-105 aspect-square`}>
                     {followed.foto ? (
-                      <img src={followed.foto} alt={followed.nombre} className="w-full h-full object-cover rounded-full" />
+                      <img src={followed.foto} alt={followed.nombre} className="w-full h-full object-cover rounded-full aspect-square" />
                     ) : (
                       getInitials(followed.nombre || followed.email)
                     )}
