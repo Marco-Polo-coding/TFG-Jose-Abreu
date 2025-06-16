@@ -265,16 +265,31 @@ const BlogPage = () => {
                       src={articulo.imagen && articulo.imagen.startsWith('http') && articulo.imagen !== '/default-article.jpg' ? articulo.imagen : 'https://cataas.com/cat'}
                       alt={articulo.titulo}
                       className="w-full h-full object-cover"
-                    />
-                    <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <button
-                        onClick={() => handleSaveArticle(articulo.id)}
-                        className={`bg-white/90 p-3 rounded-full text-gray-500 hover:text-yellow-500 transition-colors hover:scale-110 shadow ${savedArticles.some(a => a.id === articulo.id) ? 'text-yellow-500' : ''}`}
-                        title={savedArticles.some(a => a.id === articulo.id) ? "Eliminar de guardados" : "Guardar artículo"}
-                      >
-                        <FaBookmark className="w-5 h-5" />
-                      </button>
-                    </div>                  </div>
+                    />                    <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      {(() => {
+                        const user = authManager.getUser();
+                        const userEmail = user?.email;
+                        const isOwnArticle = articulo.autor_email === userEmail;
+                        const isSaved = savedArticles.some(a => a.id === articulo.id);
+                        
+                        return (
+                          <button
+                            onClick={() => handleSaveArticle(articulo.id)}
+                            disabled={isOwnArticle}
+                            className={`p-3 rounded-full transition-colors hover:scale-110 shadow ${
+                              isOwnArticle 
+                                ? 'bg-white/90 text-gray-400 cursor-not-allowed' 
+                                : isSaved
+                                ? 'bg-white/90 text-yellow-500 hover:text-yellow-600'
+                                : 'bg-white/90 text-gray-500 hover:text-yellow-500'
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            title={isOwnArticle ? "No puedes guardar tu propio artículo" : (isSaved ? "Eliminar de guardados" : "Guardar artículo")}
+                          >
+                            <FaBookmark className="w-5 h-5" />
+                          </button>
+                        );
+                      })()}
+                    </div></div>
                   <div className="p-6 flex flex-col flex-grow">
                     <h3 className="text-xl font-bold mb-2 text-gray-900 truncate" title={articulo.titulo}>{articulo.titulo}</h3>
                     <p className="text-gray-600 mb-2 line-clamp-2 flex-grow">{articulo.descripcion}</p>

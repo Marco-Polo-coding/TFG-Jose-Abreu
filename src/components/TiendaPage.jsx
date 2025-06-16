@@ -339,21 +339,32 @@ const TiendaPage = () => {
                             ))}
                           </div>
                         </>
-                      )}
-                      <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <button
-                          onClick={() => handleSaveProduct(producto.id)}
-                          disabled={isSaving[producto.id]}
-                          className="bg-white/90 p-3 rounded-full text-gray-500 hover:text-red-500 transition-colors hover:scale-110 shadow disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Guardar producto"
-                        >
-                          {isSaving[producto.id] ? (
-                            <FaSpinner className="w-5 h-5 animate-spin" />
-                          ) : (
-                            <FaHeart className="w-5 h-5" />
-                          )}
-                        </button>
-                      </div>                    </div>
+                      )}                      <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        {(() => {
+                          const user = authManager.getUser();
+                          const userEmail = user?.email;
+                          const isOwnProduct = producto.usuario_email === userEmail;
+                          
+                          return (
+                            <button
+                              onClick={() => handleSaveProduct(producto.id)}
+                              disabled={isSaving[producto.id] || isOwnProduct}
+                              className={`p-3 rounded-full transition-colors hover:scale-110 shadow ${
+                                isOwnProduct 
+                                  ? 'bg-white/90 text-gray-400 cursor-not-allowed' 
+                                  : 'bg-white/90 text-gray-500 hover:text-red-500'
+                              } disabled:opacity-50 disabled:cursor-not-allowed`}
+                              title={isOwnProduct ? "No puedes guardar tu propio producto" : "Guardar producto"}
+                            >
+                              {isSaving[producto.id] ? (
+                                <FaSpinner className="w-5 h-5 animate-spin" />
+                              ) : (
+                                <FaHeart className="w-5 h-5" />
+                              )}
+                            </button>
+                          );
+                        })()}
+                      </div></div>
                     <div className="p-6 flex flex-col flex-grow">
                       <h3 className="text-xl font-bold mb-2 text-gray-900 truncate" title={producto.nombre}>{producto.nombre}</h3>
                       <div className="flex items-center gap-2 mb-2">

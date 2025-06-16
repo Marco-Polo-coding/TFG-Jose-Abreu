@@ -160,13 +160,18 @@ const ArticuloDetalle = ({ id }) => {
                 src={articulo.imagen && articulo.imagen.startsWith('http') && articulo.imagen !== '/default-article.jpg' ? articulo.imagen : 'https://cataas.com/cat'}
                 alt={articulo.titulo}
                 className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-              />
-              <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              />              <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <button 
                   onClick={handleSaveArticle}
-                  disabled={loading}
-                  className={`bg-gradient-to-r from-purple-600 to-indigo-600 p-3 rounded-full text-white hover:text-yellow-200 transition-colors hover:scale-110 shadow-lg ${isSaved ? 'bg-yellow-500' : ''}`}
-                  title={isSaved ? "Eliminar de guardados" : "Guardar artículo"}
+                  disabled={loading || (articulo.autor_email === authManager.getUser()?.email)}
+                  className={`p-3 rounded-full transition-colors hover:scale-110 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+                    articulo.autor_email === authManager.getUser()?.email
+                      ? 'bg-gray-400 text-gray-200'
+                      : isSaved 
+                      ? 'bg-yellow-500 text-white'
+                      : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:text-yellow-200'
+                  }`}
+                  title={articulo.autor_email === authManager.getUser()?.email ? "No puedes guardar tu propio artículo" : (isSaved ? "Eliminar de guardados" : "Guardar artículo")}
                 >
                   {loading ? (
                     <FaSpinner className="w-6 h-6 animate-spin" />

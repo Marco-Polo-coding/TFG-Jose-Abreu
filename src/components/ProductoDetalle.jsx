@@ -188,18 +188,25 @@ const ProductoDetalle = ({ id }) => {
                   src={imagenes[currentImageIndex]}
                   alt={producto.nombre}
                   className="w-full h-full object-cover rounded-xl"
-                />
-                <button
+                />                <button
                   onClick={handleSaveProduct}
-                  disabled={isSaving}
-                  className="absolute top-4 right-4 w-12 h-12 flex items-center justify-center rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 shadow-lg z-20 transition-colors hover:scale-110 text-white disabled:opacity-50 disabled:cursor-not-allowed group"
-                  title="Guardar producto"
+                  disabled={isSaving || (producto.usuario_email === authManager.getUser()?.email)}
+                  className={`absolute top-4 right-4 w-12 h-12 flex items-center justify-center rounded-full shadow-lg z-20 transition-colors hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed group ${
+                    producto.usuario_email === authManager.getUser()?.email
+                      ? 'bg-gray-400' 
+                      : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
+                  }`}
+                  title={producto.usuario_email === authManager.getUser()?.email ? "No puedes guardar tu propio producto" : "Guardar producto"}
                   style={{ boxShadow: '0 4px 24px 0 rgba(80,0,180,0.15)' }}
                 >
                   {isSaving ? (
                     <FaSpinner className="w-6 h-6 text-white animate-spin" />
                   ) : (
-                    <FaHeart className="w-6 h-6 text-white transition-colors duration-200 group-hover:text-yellow-200" />
+                    <FaHeart className={`w-6 h-6 transition-colors duration-200 ${
+                      producto.usuario_email === authManager.getUser()?.email
+                        ? 'text-gray-200'
+                        : 'text-white group-hover:text-yellow-200'
+                    }`} />
                   )}
                 </button>
 
