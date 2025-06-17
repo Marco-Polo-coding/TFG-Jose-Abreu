@@ -38,9 +38,15 @@ const Comments = ({ articuloId }) => {
     setToastType(type);
     setShowToast(true);
   };
-
   const handleSubmitComentario = async (e) => {
     e.preventDefault();
+    
+    // Verificar si el usuario está autenticado PRIMERO
+    const user = authManager.getUser();
+    if (!user || !authManager.isAuthenticated()) {
+      showNotification('Debes iniciar sesión para publicar comentarios', 'error');
+      return;
+    }
     
     if (!nuevoComentario.trim()) {
       showNotification('El comentario no puede estar vacío', 'warning');
@@ -48,12 +54,7 @@ const Comments = ({ articuloId }) => {
     }
 
     try {
-      const user = authManager.getUser();
-      const userEmail = user?.email;
-      if (!userEmail) {
-        showNotification('Debes iniciar sesión para comentar', 'error');
-        return;
-      }
+      const userEmail = user.email;
 
       const formData = new FormData();
       formData.append('usuario', userEmail);
@@ -76,18 +77,20 @@ const Comments = ({ articuloId }) => {
   };  const handleSubmitRespuesta = async (e) => {
     e.preventDefault();
 
+    // Verificar si el usuario está autenticado PRIMERO
+    const user = authManager.getUser();
+    if (!user || !authManager.isAuthenticated()) {
+      showNotification('Debes iniciar sesión para responder comentarios', 'error');
+      return;
+    }
+
     if (!respuestaComentario.trim()) {
       showNotification('La respuesta no puede estar vacía', 'warning');
       return;
     }
 
     try {
-      const user = authManager.getUser();
-      const userEmail = user?.email;
-      if (!userEmail) {
-        showNotification('Debes iniciar sesión para responder', 'error');
-        return;
-      }
+      const userEmail = user.email;
 
       const formData = new FormData();
       formData.append('usuario', userEmail);
@@ -159,9 +162,7 @@ const Comments = ({ articuloId }) => {
       <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
         <FaComment className="w-6 h-6 text-purple-600" />
         Comentarios
-      </h2>
-
-      {/* Formulario de nuevo comentario */}
+      </h2>      {/* Formulario de nuevo comentario */}
       <form onSubmit={handleSubmitComentario} className="mb-8">
         <textarea
           value={nuevoComentario}
@@ -173,13 +174,20 @@ const Comments = ({ articuloId }) => {
         <div className="flex items-center gap-4 mb-4">
           <ImageUpload
             value={imagenComentario}
-            onImageSelect={(file) => setImagenComentario(file)}
+            onImageSelect={(file) => {
+              const user = authManager.getUser();
+              if (!user || !authManager.isAuthenticated()) {
+                showNotification('Debes iniciar sesión para añadir imágenes', 'error');
+                return;
+              }
+              setImagenComentario(file);
+            }}
             onImageRemove={() => setImagenComentario(null)}
           />
         </div>
         <button
           type="submit"
-          className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-3 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105 font-semibold shadow-lg"
+          className="px-8 py-3 rounded-full transition-all duration-300 font-semibold shadow-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 hover:scale-105"
         >
           Publicar Comentario
         </button>
@@ -218,18 +226,21 @@ const Comments = ({ articuloId }) => {
                   className="max-h-64 rounded-lg object-contain"
                 />
               </div>
-            )}
-            
-            {/* Botón de responder */}
+            )}            {/* Botón de responder */}
             <button
-              onClick={() => setComentarioRespondiendo(comentario)}
-              className="mt-2 text-purple-600 hover:text-purple-700 flex items-center gap-1"
+              onClick={() => {
+                const user = authManager.getUser();
+                if (!user || !authManager.isAuthenticated()) {
+                  showNotification('Debes iniciar sesión para responder comentarios', 'error');
+                  return;
+                }
+                setComentarioRespondiendo(comentario);
+              }}
+              className="mt-2 text-purple-600 hover:text-purple-700 flex items-center gap-1 transition-colors cursor-pointer"
             >
               <FaReply className="w-4 h-4" />
               Responder
-            </button>
-
-            {/* Formulario de respuesta */}
+            </button>            {/* Formulario de respuesta */}
             {comentarioRespondiendo?.id === comentario.id && (
               <form onSubmit={handleSubmitRespuesta} className="mt-4">
                 <textarea
@@ -242,7 +253,14 @@ const Comments = ({ articuloId }) => {
                 <div className="flex items-center gap-4 mb-4">
                   <ImageUpload
                     value={imagenRespuesta}
-                    onImageSelect={(file) => setImagenRespuesta(file)}
+                    onImageSelect={(file) => {
+                      const user = authManager.getUser();
+                      if (!user || !authManager.isAuthenticated()) {
+                        showNotification('Debes iniciar sesión para añadir imágenes', 'error');
+                        return;
+                      }
+                      setImagenRespuesta(file);
+                    }}
                     onImageRemove={() => setImagenRespuesta(null)}
                   />
                 </div>
