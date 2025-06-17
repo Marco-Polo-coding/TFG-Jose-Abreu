@@ -207,14 +207,15 @@ async def login_user(user: UserLogin) -> Dict[str, str]:
             
             # Obtener el usuario de Firebase
             user_record = auth.get_user_by_email(user.email)
-            # Obtener la foto de perfil y rol desde Firestore
-            user_doc = db.collection("usuarios").document(user_record.uid).get()
+            # Obtener la foto de perfil y rol desde Firestore            user_doc = db.collection("usuarios").document(user_record.uid).get()
             foto_url = ""
             role = "user"
+            biografia = ""
             if user_doc.exists:
                 user_data = user_doc.to_dict()
                 foto_url = user_data.get("foto", "") or ""
                 role = user_data.get("role", "user")
+                biografia = user_data.get("biografia", "") or ""
                 logger.info(f"Rol del usuario: {role}")  # Log del rol
             
             response_data = {
@@ -224,7 +225,8 @@ async def login_user(user: UserLogin) -> Dict[str, str]:
                 "nombre": user_record.display_name or "",
                 "uid": user_record.uid,
                 "foto": foto_url,
-                "role": role
+                "role": role,
+                "biografia": biografia
             }
             logger.info(f"Datos de respuesta: {sanitize_log_data(response_data)}")  # Log de la respuesta completa
             return response_data
@@ -283,18 +285,20 @@ async def login_with_google(id_token: str = Body(..., embed=True)):
                 # Usuario existente - preservar foto personalizada
                 user_ref.set(user_info, merge=True)
                 # Obtener datos actualizados incluyendo la foto existente
-                updated_user = user_ref.get().to_dict()
-                return {
+                updated_user = user_ref.get().to_dict()                return {
                     "idToken": data.get("idToken"),
                     "refreshToken": data.get("refreshToken"),
                     "email": updated_user.get("email"),
                     "nombre": updated_user.get("nombre"),
                     "uid": updated_user.get("uid"),
-                    "foto": updated_user.get("foto", "")
+                    "foto": updated_user.get("foto", ""),
+                    "biografia": updated_user.get("biografia", ""),
+                    "role": updated_user.get("role", "user")
                 }
-            else:
-                # Usuario nuevo - establecer foto vacía
+            else:                # Usuario nuevo - establecer campos iniciales
                 user_info["foto"] = ""
+                user_info["biografia"] = ""
+                user_info["role"] = "user"
                 user_ref.set(user_info, merge=True)
                 return {
                     "idToken": data.get("idToken"),
@@ -302,7 +306,9 @@ async def login_with_google(id_token: str = Body(..., embed=True)):
                     "email": user_info["email"],
                     "nombre": user_info["nombre"],
                     "uid": user_info["uid"],
-                    "foto": user_info["foto"]
+                    "foto": user_info["foto"],
+                    "biografia": user_info["biografia"],
+                    "role": user_info["role"]
                 }
 
     except Exception as e:

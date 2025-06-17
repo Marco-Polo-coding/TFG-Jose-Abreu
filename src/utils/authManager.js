@@ -64,6 +64,7 @@ class AuthManager {
       photo: data.foto,
       role: data.role,
       uid: data.uid,
+      biografia: data.biografia || '',
     };
     
     this.store.getState().setAuth(userData, data.idToken, data.refreshToken);    // Configurar cookies con expiración de 7 días
