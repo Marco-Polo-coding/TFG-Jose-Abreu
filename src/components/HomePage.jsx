@@ -295,7 +295,7 @@ const HomePage = () => {
       <footer className={`bg-gray-900 text-white relative overflow-hidden transition-all duration-1000 delay-1000 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5"></div>
         <div className="container mx-auto px-4 py-16 relative">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             {/* Columna 1 - Logo y Descripción */}
             <div className="space-y-4">
               <div className="flex items-center gap-2">
@@ -305,9 +305,7 @@ const HomePage = () => {
               <p className="text-gray-400">
                 Tu comunidad de videojuegos clásicos. Descubre, comparte y disfruta de los mejores CRPGs.
               </p>
-            </div>
-
-            {/* Columna 2 - Enlaces Rápidos */}
+            </div>            {/* Columna 2 - Enlaces Rápidos */}
             <div>
               <h3 className="text-lg font-semibold mb-4 text-purple-400">Enlaces Rápidos</h3>
               <ul className="space-y-2">
@@ -321,31 +319,49 @@ const HomePage = () => {
                   <a href="/profile" className="text-gray-400 hover:text-purple-400 transition-colors">Mi Perfil</a>
                 </li>
                 <li>
-                  <a href="/favorite_products" className="text-gray-400 hover:text-purple-400 transition-colors">Favoritos</a>
+                  <a href="/chat" className="text-gray-400 hover:text-purple-400 transition-colors">Mensajes</a>
+                </li>
+                <li>
+                  <a href="/my_products" className="text-gray-400 hover:text-purple-400 transition-colors">Mis Productos</a>
                 </li>
               </ul>
-            </div>
-
-            {/* Columna 3 - Categorías */}
+            </div>{/* Columna 3 - Categorías */}
             <div>
               <h3 className="text-lg font-semibold mb-4 text-purple-400">Categorías</h3>
               <ul className="space-y-2">
                 <li>
-                  <a href="/tienda?categoria=rpg" className="text-gray-400 hover:text-purple-400 transition-colors">RPG</a>
+                  <a href="/tienda?categoria=juego" className="text-gray-400 hover:text-purple-400 transition-colors">Juego</a>
                 </li>
                 <li>
-                  <a href="/tienda?categoria=estrategia" className="text-gray-400 hover:text-purple-400 transition-colors">Estrategia</a>
+                  <a href="/tienda?categoria=consola" className="text-gray-400 hover:text-purple-400 transition-colors">Consola</a>
                 </li>
                 <li>
-                  <a href="/tienda?categoria=aventura" className="text-gray-400 hover:text-purple-400 transition-colors">Aventura</a>
+                  <a href="/tienda?categoria=accesorio" className="text-gray-400 hover:text-purple-400 transition-colors">Accesorio</a>
                 </li>
                 <li>
-                  <a href="/tienda?categoria=retro" className="text-gray-400 hover:text-purple-400 transition-colors">Retro</a>
+                  <a href="/tienda?categoria=merchandising" className="text-gray-400 hover:text-purple-400 transition-colors">Merchandising</a>
+                </li>
+              </ul>
+            </div>            {/* Columna 4 - Categorías Blog */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-purple-400">Categorías Blog</h3>
+              <ul className="space-y-2">
+                <li>
+                  <a href="/blog?categoria=reseña" className="text-gray-400 hover:text-purple-400 transition-colors">Reseñas</a>
+                </li>
+                <li>
+                  <a href="/blog?categoria=analisis" className="text-gray-400 hover:text-purple-400 transition-colors">Análisis</a>
+                </li>
+                <li>
+                  <a href="/blog?categoria=noticia" className="text-gray-400 hover:text-purple-400 transition-colors">Noticias</a>
+                </li>
+                <li>
+                  <a href="/blog?categoria=guia" className="text-gray-400 hover:text-purple-400 transition-colors">Guías</a>
                 </li>
               </ul>
             </div>
-
-            {/* Columna 4 - Contacto */}
+            
+            {/* Columna 5 - Contacto */}
             <div>
               <h3 className="text-lg font-semibold mb-4 text-purple-400">Contacto</h3>
               <ul className="space-y-2">
