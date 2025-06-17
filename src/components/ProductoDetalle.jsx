@@ -60,16 +60,15 @@ const ProductoDetalle = ({ id }) => {
       const isFavorite = favoriteProducts.some(product => product.id === producto.id);
       
       if (isFavorite) {
-        // Eliminar de favoritos
-        await apiManager.removeFavoriteProduct(userEmail, producto.id);
-        setFavoriteProducts(prev => prev.filter(product => product.id !== producto.id));
-        showNotification('Producto eliminado de favoritos', 'success');
-      } else {
-        // Añadir a favoritos
-        await apiManager.addFavoriteProduct(userEmail, producto.id);
-        setFavoriteProducts(prev => [...prev, producto]);
-        showNotification('Producto guardado en favoritos', 'success');
+        // No hacer nada si ya está en favoritos
+        showNotification('Este producto ya está en tus favoritos', 'info');
+        return;
       }
+      
+      // Añadir a favoritos
+      await apiManager.addFavoriteProduct(userEmail, producto.id);
+      setFavoriteProducts(prev => [...prev, producto]);
+      showNotification('Producto guardado en favoritos', 'success');
     } catch (error) {
       if (error.message && error.message.includes('ya está en favoritos')) {
         showNotification('Este producto ya está en tus favoritos', 'warning');
@@ -217,12 +216,10 @@ const ProductoDetalle = ({ id }) => {
                   // Determinamos si el producto está en favoritos fuera del JSX para mayor claridad
                   const isFavorite = favoriteProducts.some(product => product.id === producto.id);
                   const isOwnProduct = producto.usuario_email === authManager.getUser()?.email;
-                  
-                  return (
-                    <button
+                    return (                    <button
                       onClick={handleSaveProduct}
-                      disabled={isSaving || isOwnProduct}
-                      className={`absolute top-4 right-4 w-12 h-12 flex items-center justify-center rounded-full shadow-lg z-20 transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed ${
+                      disabled={isSaving || isOwnProduct || isFavorite}
+                      className={`absolute top-4 right-4 w-12 h-12 flex items-center justify-center rounded-full shadow-lg z-20 transition-all duration-300 hover:scale-110 disabled:cursor-not-allowed ${
                         isFavorite ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                       } ${
                         isOwnProduct
@@ -235,7 +232,7 @@ const ProductoDetalle = ({ id }) => {
                         isOwnProduct 
                           ? "No puedes guardar tu propio producto" 
                           : isFavorite 
-                          ? "Eliminar de favoritos"
+                          ? "Ya está en tus favoritos"
                           : "Guardar en favoritos"
                       }
                       style={{ boxShadow: '0 4px 24px 0 rgba(80,0,180,0.15)' }}

@@ -56,8 +56,7 @@ const BlogPage = () => {
     } catch (error) {
       console.error('Error fetching saved articles:', error);
     }
-  };
-  const handleSaveArticle = async (articleId) => {
+  };  const handleSaveArticle = async (articleId) => {
     const user = authManager.getUser();
     const userEmail = user?.email;
     const uid = user?.uid;
@@ -68,22 +67,26 @@ const BlogPage = () => {
       setShowToast(true);
       return;
     }
-      try {
-      const isSaved = savedArticles.some(article => article.id === articleId);
-      if (isSaved) {
-        await apiManager.removeSavedArticle(userEmail, articleId);
-        setSavedArticles(prev => prev.filter(article => article.id !== articleId));
-        setToastMessage('Artículo eliminado de guardados');
-        setToastType('success');
-        setShowToast(true);
-      } else {
-        await apiManager.addSavedArticle(userEmail, articleId);
-        const article = articulos.find(a => a.id === articleId);
-        setSavedArticles(prev => [...prev, article]);
-        setToastMessage('Artículo guardado correctamente');
-        setToastType('success');
-        setShowToast(true);
-      }
+    
+    // Verificar si ya está en guardados
+    const isSaved = savedArticles.some(article => article.id === articleId);
+    
+    if (isSaved) {
+      // No hacer nada si ya está guardado
+      setToastMessage('Este artículo ya está en tus guardados');
+      setToastType('info');
+      setShowToast(true);
+      return;
+    }
+    
+    try {
+      // Añadir a guardados
+      await apiManager.addSavedArticle(userEmail, articleId);
+      const article = articulos.find(a => a.id === articleId);
+      setSavedArticles(prev => [...prev, article]);
+      setToastMessage('Artículo guardado correctamente');
+      setToastType('success');
+      setShowToast(true);
     } catch (error) {
       setToastMessage(error.response?.data?.detail || 'Error al guardar el artículo');
       setToastType('error');
@@ -284,19 +287,17 @@ const BlogPage = () => {
                         const userEmail = user?.email;
                         const isOwnArticle = articulo.autor_email === userEmail;
                         const isSaved = savedArticles.some(a => a.id === articulo.id);
-                        
-                        return (
-                          <button
+                          return (                          <button
                             onClick={() => handleSaveArticle(articulo.id)}
-                            disabled={isOwnArticle}
+                            disabled={isOwnArticle || isSaved}
                             className={`p-3 rounded-full transition-colors hover:scale-110 shadow ${
                               isOwnArticle 
                                 ? 'bg-white/90 text-gray-400 cursor-not-allowed' 
                                 : isSaved
-                                ? 'bg-white/90 text-yellow-500 hover:text-yellow-600'
+                                ? 'bg-white/90 text-yellow-500'
                                 : 'bg-white/90 text-gray-500 hover:text-yellow-500'
-                            } disabled:opacity-50 disabled:cursor-not-allowed`}
-                            title={isOwnArticle ? "No puedes guardar tu propio artículo" : (isSaved ? "Eliminar de guardados" : "Guardar artículo")}
+                            } disabled:cursor-not-allowed`}
+                            title={isOwnArticle ? "No puedes guardar tu propio artículo" : (isSaved ? "Ya está en tus guardados" : "Guardar artículo")}
                           >
                             <FaBookmark className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
                           </button>

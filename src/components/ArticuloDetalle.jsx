@@ -56,20 +56,21 @@ const ArticuloDetalle = ({ id }) => {  const [articulo, setArticulo] = useState(
       const isSaved = savedArticles.some(article => article.id === articulo.id);
       
       if (isSaved) {
-        await apiManager.removeSavedArticle(userEmail, id);
-        setSavedArticles(prev => prev.filter(article => article.id !== articulo.id));
-        showNotification('Artículo eliminado de guardados', 'success');
-      } else {
-        await apiManager.addSavedArticle(userEmail, id);
-        setSavedArticles(prev => [...prev, articulo]);
-        showNotification('Artículo guardado correctamente', 'success');
+        // No hacer nada si ya está guardado
+        showNotification('Este artículo ya está en tus guardados', 'info');
+        return;
       }
+      
+      // Añadir a guardados
+      await apiManager.addSavedArticle(userEmail, id);
+      setSavedArticles(prev => [...prev, articulo]);
+      showNotification('Artículo guardado correctamente', 'success');
     } catch (error) {
       showNotification('Error al guardar el artículo', 'error');
     } finally {
       setIsSaving(false);
     }
-  };  const handleSubmitComentario = (e) => {
+  };const handleSubmitComentario = (e) => {
     e.preventDefault();
     // Aquí iría la lógica para enviar el comentario
     setNuevoComentario("");
@@ -168,13 +169,10 @@ const ArticuloDetalle = ({ id }) => {  const [articulo, setArticulo] = useState(
                 {(() => {
                   // Determinamos si el artículo está en guardados fuera del JSX para mayor claridad
                   const isSaved = savedArticles.some(article => article.id === articulo.id);
-                  const isOwnArticle = articulo.autor_email === authManager.getUser()?.email;
-                  
-                  return (
-                    <button
+                  const isOwnArticle = articulo.autor_email === authManager.getUser()?.email;                  return (                    <button
                       onClick={handleSaveArticle}
-                      disabled={isSaving || isOwnArticle}
-                      className={`absolute top-4 right-4 w-12 h-12 flex items-center justify-center rounded-full shadow-lg z-20 transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed ${
+                      disabled={isSaving || isOwnArticle || isSaved}
+                      className={`absolute top-4 right-4 w-12 h-12 flex items-center justify-center rounded-full shadow-lg z-20 transition-all duration-300 hover:scale-110 disabled:cursor-not-allowed ${
                         isSaved ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                       } ${
                         isOwnArticle
@@ -187,7 +185,7 @@ const ArticuloDetalle = ({ id }) => {  const [articulo, setArticulo] = useState(
                         isOwnArticle 
                           ? "No puedes guardar tu propio artículo" 
                           : isSaved 
-                          ? "Eliminar de guardados" 
+                          ? "Ya está en tus guardados" 
                           : "Guardar artículo"
                       }
                       style={{ boxShadow: '0 4px 24px 0 rgba(80,0,180,0.15)' }}
