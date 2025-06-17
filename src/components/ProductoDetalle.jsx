@@ -15,8 +15,9 @@ const ProductoDetalle = ({ id }) => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const addItem = useCartStore(state => state.addItem);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);  const addItem = useCartStore(state => state.addItem);
+  const isInCart = useCartStore(state => state.isInCart);
+  const cartItems = useCartStore(state => state.items);
   const [addingToCart, setAddingToCart] = useState(false);
 
   useEffect(() => {
@@ -336,16 +337,19 @@ const ProductoDetalle = ({ id }) => {
                   const user = authManager.getUser();
                   const userEmail = user?.email;
                   const isOwnProduct = producto.usuario_email === userEmail;
+                  const inCart = isInCart(producto.id);
                   
                   return (
                     <button
                       onClick={handleAddToCart}
-                      disabled={addingToCart || producto.stock === 0 || isOwnProduct}
+                      disabled={addingToCart || producto.stock === 0 || isOwnProduct || inCart}
                       className={`px-8 py-3 rounded-full transition-all duration-300 flex items-center gap-2 font-semibold shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
                         producto.stock === 0 
                           ? 'bg-gray-400 text-white cursor-not-allowed' 
                           : isOwnProduct
                           ? 'bg-blue-400 text-white cursor-not-allowed'
+                          : inCart
+                          ? 'bg-green-500 text-white cursor-not-allowed'
                           : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700'
                       }`}
                     >
@@ -356,7 +360,8 @@ const ProductoDetalle = ({ id }) => {
                       )}
                       {addingToCart ? 'Añadiendo...' : 
                        producto.stock === 0 ? 'Producto agotado' :
-                       isOwnProduct ? 'Tu producto' : 'Añadir al carrito'}
+                       isOwnProduct ? 'Tu producto' :
+                       inCart ? 'Ya en carrito' : 'Añadir al carrito'}
                     </button>
                   );
                 })()}

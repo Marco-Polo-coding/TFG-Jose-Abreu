@@ -11,8 +11,7 @@ const useCartStore = create(
       
       setLoading: (loading) => set({ loading }),
       setError: (error) => set({ error }),
-      
-      addItem: (item) => {
+        addItem: (item) => {
         const user = authManager.getUser();
         const userEmail = user?.email;
         const uid = user?.uid;
@@ -30,12 +29,8 @@ const useCartStore = create(
           // Verificar si el item ya existe en el carrito
           const existingItem = state.items.find(i => i.id === item.id);
           if (existingItem) {
-            // Si existe, actualizar la cantidad
-            return {
-              items: state.items.map(i =>
-                i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
-              )
-            };
+            // Si ya existe, lanzar error
+            throw new Error('Este producto ya está en tu carrito');
           }
           // Si no existe, añadir nuevo item
           return {
@@ -53,8 +48,13 @@ const useCartStore = create(
           item.id === itemId ? { ...item, quantity } : item
         )
       })),
-      
-      clearCart: () => set({ items: [] }),
+        clearCart: () => set({ items: [] }),
+
+      // Función para verificar si un producto ya está en el carrito
+      isInCart: (productId) => {
+        const state = useCartStore.getState();
+        return state.items.some(item => item.id === productId);
+      },
 
       // Función para limpiar el carrito cuando el usuario cierra sesión
       clearCartOnLogout: () => {

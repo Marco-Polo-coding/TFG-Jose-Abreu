@@ -26,6 +26,8 @@ const TiendaPage = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);  const [authMode, setAuthMode] = useState('login');
 
   const addItem = useCartStore((state) => state.addItem);
+  const isInCart = useCartStore((state) => state.isInCart);
+  const cartItems = useCartStore((state) => state.items);
 
   // Función para manejar el click en "Subir producto" con autenticación
   const handleUploadProductClick = (e) => {
@@ -399,21 +401,23 @@ const TiendaPage = () => {
                           className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-center py-3 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 font-semibold shadow"
                         >
                           Ver más <FaArrowRight className="w-4 h-4" />
-                        </a>
-                        {(() => {
+                        </a>                        {(() => {
                           const user = authManager.getUser();
                           const userEmail = user?.email;
                           const isOwnProduct = producto.usuario_email === userEmail;
+                          const inCart = isInCart(producto.id);
                           
                           return (
                             <button
                               onClick={() => handleAddToCart(producto)}
-                              disabled={producto.stock === 0 || isOwnProduct}
+                              disabled={producto.stock === 0 || isOwnProduct || inCart}
                               className={`p-3 rounded-full transition-all duration-300 hover:scale-110 shadow ${
                                 producto.stock === 0 
                                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
                                   : isOwnProduct
                                   ? 'bg-blue-100 text-blue-400 cursor-not-allowed'
+                                  : inCart
+                                  ? 'bg-green-100 text-green-500 cursor-not-allowed'
                                   : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
                               }`}
                               title={
@@ -421,6 +425,8 @@ const TiendaPage = () => {
                                   ? 'Producto agotado' 
                                   : isOwnProduct 
                                   ? 'No puedes comprar tu propio producto'
+                                  : inCart
+                                  ? 'Ya está en tu carrito'
                                   : 'Añadir al carrito'
                               }
                             >
