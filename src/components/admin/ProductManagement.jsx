@@ -180,10 +180,11 @@ const ProductManagement = () => {
       
       showAdminToast(errorMessage, 'error');
     }
-  };
-
-  const handleUpdateProduct = async (form) => {
+  };  const handleUpdateProduct = async (form) => {
     try {
+      console.log("Actualizando producto:", editProduct.id);
+      console.log("Datos del formulario:", form);
+      
       const formData = new FormData();
       formData.append('nombre', form.nombre);
       formData.append('descripcion', form.descripcion);
@@ -191,7 +192,31 @@ const ProductManagement = () => {
       formData.append('stock', form.stock);
       formData.append('categoria', form.categoria);
       formData.append('estado', form.estado);
-      // No se envía imagen      const updated = await apiManager.put(`/productos/${editProduct.id}`, formData);
+      
+      // Conservar el usuario_email original
+      if (editProduct.usuario_email) {
+        formData.append('usuario_email', editProduct.usuario_email);
+      }
+      
+      // Conservar imágenes existentes - CORREGIDO
+      if (editProduct.imagenes && Array.isArray(editProduct.imagenes) && editProduct.imagenes.length > 0) {
+        console.log("Enviando imágenes existentes (array):", editProduct.imagenes);
+        editProduct.imagenes.forEach(url => {
+          formData.append('imagenes_existentes', url);
+        });
+      } else if (editProduct.imagen && typeof editProduct.imagen === 'string') {
+        console.log("Enviando imagen existente (string):", editProduct.imagen);
+        formData.append('imagenes_existentes', editProduct.imagen);
+      }
+      
+      // Depuración para ver qué se está enviando al servidor
+      for (let pair of formData.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+      }
+      
+      const updated = await apiManager.put(`/productos/${editProduct.id}`, formData);
+      console.log("Respuesta del servidor:", updated);
+      
       setProducts(products.map(p => p.id === editProduct.id ? updated : p));
       setEditProduct(null);
       showAdminToast(`Producto "${form.nombre}" actualizado correctamente`, 'success');
@@ -427,13 +452,40 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData, mode }) => {
     const { name, value } = e.target;
     setForm(f => ({ ...f, [name]: value }));
   };
-
   const handleSubmit = async e => {
     e.preventDefault();
-    if (!form.nombre || !form.descripcion || !form.precio || !form.stock || !form.categoria || !form.estado) {
-      setError('Todos los campos son obligatorios');
+    
+    // Validación mejorada
+    if (!form.nombre || form.nombre.trim() === '') {
+      setError('El nombre del producto es obligatorio');
       return;
     }
+    
+    if (!form.descripcion || form.descripcion.trim() === '') {
+      setError('La descripción es obligatoria');
+      return;
+    }
+    
+    if (!form.precio || isNaN(parseFloat(form.precio))) {
+      setError('El precio debe ser un número válido');
+      return;
+    }
+    
+    if (!form.stock || isNaN(parseInt(form.stock))) {
+      setError('El stock debe ser un número válido');
+      return;
+    }
+    
+    if (!form.categoria) {
+      setError('Debes seleccionar una categoría');
+      return;
+    }
+    
+    if (!form.estado) {
+      setError('Debes seleccionar un estado');
+      return;
+    }
+    
     setError('');
     await onSubmit({
       ...form,

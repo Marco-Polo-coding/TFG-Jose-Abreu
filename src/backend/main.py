@@ -211,14 +211,20 @@ async def actualizar_producto(
     categoria: Optional[str] = Form(None),
     estado: Optional[str] = Form(None),
     imagenes: List[UploadFile] = File(None),
-    imagenes_existentes: List[str] = Form(None)
+    imagenes_existentes: List[str] = Form(None),
+    usuario_email: Optional[str] = Form(None)
 ):
     try:
+        logger.info(f"Actualizando producto {producto_id}")
+        logger.info(f"Datos recibidos: nombre={nombre}, precio={precio}, stock={stock}, categoria={categoria}")
+        logger.info(f"Imágenes existentes recibidas: {imagenes_existentes}")
+        
         producto_ref = db.collection("productos").document(producto_id)
         producto = producto_ref.get()
         if not producto.exists:
+            logger.warning(f"Producto no encontrado: {producto_id}")
             raise HTTPException(status_code=404, detail="Producto no encontrado")
-
+            
         data = {}
         if nombre is not None: data["nombre"] = nombre
         if descripcion is not None: data["descripcion"] = descripcion
@@ -226,13 +232,15 @@ async def actualizar_producto(
         if stock is not None: data["stock"] = stock
         if categoria is not None: data["categoria"] = categoria
         if estado is not None: data["estado"] = estado
+        if usuario_email is not None: data["usuario_email"] = usuario_email
 
         # Manejar imágenes
         urls_imagenes = []
         
         # Si hay imágenes nuevas, procesarlas
         if imagenes:
-            for imagen in imagenes:
+            logger.info(f"Procesando {len(imagenes)} nuevas imágenes para el producto {producto_id}")
+            for i, imagen in enumerate(imagenes):
                 if hasattr(imagen, 'filename') and imagen.filename and hasattr(imagen, 'content_type') and imagen.content_type and imagen.content_type.startswith("image/"):
                     contents = await imagen.read()
                     result = cloudinary.uploader.upload(
@@ -241,32 +249,41 @@ async def actualizar_producto(
                         resource_type="auto"
                     )
                     urls_imagenes.append(result["secure_url"])
+                    logger.info(f"Imagen {i+1} subida a Cloudinary: {result['secure_url']}")
         
         # Si hay imágenes existentes, añadirlas
         if imagenes_existentes:
+            logger.info(f"Añadiendo {len(imagenes_existentes)} imágenes existentes al producto {producto_id}")
             urls_imagenes.extend(imagenes_existentes)
         
         # Si no hay imágenes nuevas ni existentes, mantener las actuales
         if not urls_imagenes:
             producto_data = producto.to_dict()
-            if "imagenes" in producto_data:
-                urls_imagenes = producto_data["imagenes"]
+            if "imagenes" in producto_data:                urls_imagenes = producto_data["imagenes"]
             elif "imagen" in producto_data:
                 urls_imagenes = [producto_data["imagen"]]
             else:
                 urls_imagenes = ["https://cataas.com/cat"]
-
+                
         data["imagenes"] = urls_imagenes
+        logger.info(f"Datos finales para actualizar en producto {producto_id}: {data}")
 
         if not data:
+            logger.warning(f"No se proporcionaron datos para actualizar el producto {producto_id}")
             raise HTTPException(status_code=400, detail="No se proporcionaron datos para actualizar")
         
         producto_ref.update(data)
+        logger.info(f"Producto {producto_id} actualizado correctamente en la base de datos")
+        
         producto_actualizado = producto_ref.get().to_dict()
         producto_actualizado["id"] = producto_id
         
         return producto_actualizado
+    except HTTPException:
+        # Re-lanzar HTTPExceptions para preservar status_code y detail
+        raise
     except Exception as e:
+        logger.error(f"Error al actualizar producto {producto_id}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/productos/{producto_id}")
@@ -573,10 +590,16 @@ async def actualizar_articulo(
     contenido: Optional[str] = Form(None),
     categoria: Optional[str] = Form(None),
     imagen: Optional[UploadFile] = File(None),
+    imagen_existente: Optional[str] = Form(None),
     autor: Optional[str] = Form(None),
-    autor_email: Optional[str] = Form(None)
+    autor_email: Optional[str] = Form(None),
+    fecha_publicacion: Optional[str] = Form(None),
+    likes: Optional[int] = Form(None)
 ):
     try:
+        print(f"Actualizando artículo {articulo_id}")
+        print(f"Datos recibidos: titulo={titulo}, descripcion={descripcion}, categoria={categoria}, imagen_existente={imagen_existente}")
+        
         articulo_ref = db.collection("articulos").document(articulo_id)
         articulo = articulo_ref.get()
         if not articulo.exists:
@@ -589,7 +612,9 @@ async def actualizar_articulo(
         if categoria is not None: data["categoria"] = categoria
         if autor is not None: data["autor"] = autor
         if autor_email is not None: data["autor_email"] = autor_email
-
+        if fecha_publicacion is not None: data["fecha_publicacion"] = fecha_publicacion
+        if likes is not None: data["likes"] = int(likes)
+        
         # Si hay imagen nueva, súbela a Cloudinary
         if imagen is not None and hasattr(imagen, 'filename') and imagen.filename and hasattr(imagen, 'content_type') and imagen.content_type and imagen.content_type.startswith("image/"):
             contents = await imagen.read();
@@ -599,7 +624,12 @@ async def actualizar_articulo(
                 resource_type="auto"
             )
             data["imagen"] = result["secure_url"]
-
+        # Si se proporcionó una imagen existente, úsala
+        elif imagen_existente:
+            data["imagen"] = imagen_existente
+        
+        print(f"Datos a actualizar: {data}")
+        
         if not data:
             raise HTTPException(status_code=400, detail="No se proporcionaron datos para actualizar")
 

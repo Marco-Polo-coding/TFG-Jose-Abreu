@@ -166,20 +166,70 @@ const ArticleManagement = () => {
     } catch (err) {
       showAdminToast(err.message || 'Error al crear el artículo. Por favor, intenta de nuevo.', 'error');
     }
-  };
-  const handleUpdateArticle = async (form) => {
+  };  const handleUpdateArticle = async (form) => {
     try {
+      console.log("Actualizando artículo:", editArticle.id);
+      console.log("Datos del formulario:", form);
+      
       const formData = new FormData();
       formData.append('titulo', form.titulo);
       formData.append('descripcion', form.descripcion);
       formData.append('contenido', form.contenido);
       formData.append('categoria', form.categoria);
-      // No se envía imagen      const updated = await apiManager.put(`/articulos/${editArticle.id}`, formData);
+      
+      // Mantener autor y autor_email - CORREGIDO
+      if (editArticle.autor) {
+        formData.append('autor', editArticle.autor);
+      }
+      
+      if (editArticle.autor_email) {
+        formData.append('autor_email', editArticle.autor_email);
+      }
+      
+      // Conservar la imagen existente - CORREGIDO
+      if (editArticle.imagen && typeof editArticle.imagen === 'string') {
+        console.log("Enviando imagen existente:", editArticle.imagen);
+        formData.append('imagen_existente', editArticle.imagen);
+      }
+      
+      // Mantener otros campos importantes
+      if (editArticle.fecha_publicacion) {
+        formData.append('fecha_publicacion', editArticle.fecha_publicacion);
+      }
+      
+      if (typeof editArticle.likes !== 'undefined') {
+        formData.append('likes', editArticle.likes);
+      }
+      
+      // Depuración para ver qué se está enviando al servidor
+      for (let pair of formData.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+      }
+      
+      console.log("Enviando petición PUT a /articulos/" + editArticle.id);
+      const updated = await apiManager.put(`/articulos/${editArticle.id}`, formData);
+      console.log("Respuesta del servidor:", updated);
+      
       setArticles(articles.map(a => a.id === editArticle.id ? updated : a));
       setEditArticle(null);
       showAdminToast(`Artículo "${form.titulo}" actualizado correctamente`, 'success');
     } catch (err) {
-      showAdminToast(err.message || 'Error al actualizar el artículo. Por favor, intenta de nuevo.', 'error');
+      console.error("Error al actualizar artículo:", err);
+      let errorMessage = 'Error al actualizar el artículo. Por favor, intenta de nuevo.';
+      
+      if (err.message?.includes('Network Error') || err.message?.includes('fetch')) {
+        errorMessage = 'Error de conexión. Verifica tu conexión a internet e inténtalo de nuevo.';
+      } else if (err.message?.includes('401')) {
+        errorMessage = 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.';
+      } else if (err.message?.includes('403')) {
+        errorMessage = 'No tienes permisos para editar este artículo.';
+      } else if (err.message?.includes('404')) {
+        errorMessage = 'El artículo que intentas editar ya no existe.';
+      } else if (err.message?.includes('500')) {
+        errorMessage = 'Error interno del servidor. Contacta al administrador.';
+      }
+      
+      showAdminToast(errorMessage, 'error');
     }
   };
 
@@ -364,29 +414,50 @@ const ArticleFormModal = ({ isOpen, onClose, onSubmit, initialData, mode }) => {
     categoria: initialData?.categoria || '',
   });
   const [error, setError] = React.useState('');
-
+    // Asegurarse de que el formulario se restablezca correctamente cuando cambia el initialData o se abre el modal
   React.useEffect(() => {
-    setForm({
-      titulo: initialData?.titulo || '',
-      descripcion: initialData?.descripcion || '',
-      contenido: initialData?.contenido || '',
-      categoria: initialData?.categoria || '',
-    });
-    setError('');
+    if (isOpen) {
+      setForm({
+        titulo: initialData?.titulo || '',
+        descripcion: initialData?.descripcion || '',
+        contenido: initialData?.contenido || '',
+        categoria: initialData?.categoria || '',
+      });
+      setError('');
+      console.log("Formulario inicializado con:", initialData);
+    }
   }, [isOpen, initialData]);
 
   const handleChange = e => {
     const { name, value } = e.target;
     setForm(f => ({ ...f, [name]: value }));
   };
-
   const handleSubmit = async e => {
     e.preventDefault();
-    if (!form.titulo || !form.descripcion || !form.contenido || !form.categoria) {
-      setError('Todos los campos son obligatorios');
+    
+    // Validación mejorada
+    if (!form.titulo || form.titulo.trim() === '') {
+      setError('El título del artículo es obligatorio');
       return;
     }
+    
+    if (!form.descripcion || form.descripcion.trim() === '') {
+      setError('La descripción es obligatoria');
+      return;
+    }
+    
+    if (!form.contenido || form.contenido.trim() === '') {
+      setError('El contenido del artículo es obligatorio');
+      return;
+    }
+    
+    if (!form.categoria) {
+      setError('Debes seleccionar una categoría');
+      return;
+    }
+    
     setError('');
+    console.log("Enviando formulario validado:", form);
     await onSubmit(form);
   };
 
