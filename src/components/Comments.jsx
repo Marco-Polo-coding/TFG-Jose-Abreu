@@ -323,13 +323,12 @@ const Comments = ({ articuloId }) => {
             ))}
           </div>
         ))}
-      </div>
-
-      {/* Toast de notificación */}
+      </div>      {/* Toast de notificación - Portal al final del DOM */}
       {showToast && (
         <Toast
           message={toastMessage}
           type={toastType}
+          duration={3000}
           onClose={() => setShowToast(false)}
         />
       )}

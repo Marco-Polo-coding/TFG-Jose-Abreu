@@ -97,12 +97,24 @@ const BlogPage = () => {
     { value: 'noticia', label: 'Noticia' },
     { value: 'guia', label: 'Guía' },
     { value: 'opinion', label: 'Opinión' }
-  ];
+  ];  // Función para normalizar texto (eliminar acentos, diacríticos y pasar a minúsculas)
+  const normalizeText = (text) => {
+    return text
+      .toLowerCase()
+      .normalize("NFD") // Normalización Unicode
+      .replace(/[\u0300-\u036f]/g, "") // Eliminar diacríticos
+      .trim();
+  };
+  
   // Filtrado
   let articulosFiltrados = articulos
     .filter(a => {
-      const texto = ((a.titulo || '') + " " + (a.autor || '')).toLowerCase();
-      return texto.includes(search.toLowerCase());
+      if (!search.trim()) return true; // Devuelve todos los artículos si la búsqueda está vacía
+      
+      const textoArticulo = normalizeText((a.titulo || '') + " " + (a.autor || '') + " " + (a.contenido || ''));
+      const busqueda = normalizeText(search);
+      
+      return textoArticulo.includes(busqueda);
     })
     .filter(a => (category ? a.categoria === category : true));
 

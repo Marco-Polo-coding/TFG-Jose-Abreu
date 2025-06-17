@@ -73,12 +73,29 @@ const TiendaPage = () => {
     { value: 'accesorio', label: 'Accesorio' },
     { value: 'merchandising', label: 'Merchandising' },
     { value: 'otros', label: 'Otros' }
-  ];
+  ];  // Función para normalizar texto (eliminar acentos, diacríticos y pasar a minúsculas)
+  const normalizeText = (text) => {
+    return text
+      .toLowerCase()
+      .normalize("NFD") // Normalización Unicode
+      .replace(/[\u0300-\u036f]/g, "") // Eliminar diacríticos
+      .trim();
+  };
+  
   // Filtrado
   let productosFiltrados = productos
     .filter(p => {
-      const texto = (p.nombre || '').toLowerCase();
-      return texto.includes(search.toLowerCase());
+      if (!search.trim()) return true; // Devuelve todos los productos si la búsqueda está vacía
+      
+      const textoProducto = normalizeText(
+        (p.nombre || '') + " " + 
+        (p.descripcion || '') + " " + 
+        (p.categoria || '') + " " +
+        (p.estado || '')
+      );
+      const busqueda = normalizeText(search);
+      
+      return textoProducto.includes(busqueda);
     })
     .filter(p => (category ? p.categoria === category : true))
     .filter(p => (estado ? p.estado === estado : true));
