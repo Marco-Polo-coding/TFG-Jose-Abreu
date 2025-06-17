@@ -16,9 +16,8 @@ const CompraDetalleModal = ({ isOpen, onClose, compra }) => {
   return (
     <div className="fixed inset-0 z-[300] overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-        {/* Fondo oscuro con gradiente */}
-        <div 
-          className="fixed inset-0 bg-gradient-to-br from-purple-900/80 via-indigo-900/70 to-black/80 transition-opacity"
+        {/* Fondo oscuro con gradiente */}        <div 
+          className="fixed inset-0 bg-gradient-to-br from-gray-900/90 via-gray-800/85 to-black/80 transition-opacity"
           onClick={onClose}
         />
         {/* Modal */}

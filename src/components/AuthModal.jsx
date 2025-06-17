@@ -381,9 +381,8 @@ const AuthModal = ({ isOpen, onClose, mode, onLoginSuccess }) => {
   return (
     <>
       <div className="fixed inset-0 z-[100] overflow-y-auto">
-        <div className="flex min-h-screen items-center justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-          <div 
-            className="fixed inset-0 bg-gradient-to-br from-purple-900/80 via-indigo-900/70 to-black/80 backdrop-blur-sm transition-opacity"
+        <div className="flex min-h-screen items-center justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">          <div 
+            className="fixed inset-0 bg-gradient-to-br from-gray-900/90 via-gray-800/85 to-black/80 backdrop-blur-sm transition-opacity"
             onClick={onClose}
           />
 
