@@ -491,7 +491,7 @@ const UserManagement = () => {
                       ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
                       : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
                   }`}>
-                    {user.role || 'usuario'}
+                    {user.role || 'user'}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
