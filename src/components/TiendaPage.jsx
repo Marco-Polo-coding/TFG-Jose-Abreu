@@ -59,25 +59,23 @@ const TiendaPage = () => {
     { value: 'merchandising', label: 'Merchandising' },
     { value: 'otros', label: 'Otros' }
   ];
-
   // Filtrado
   let productosFiltrados = productos
     .filter(p => {
-      const texto = (p.nombre).toLowerCase();
+      const texto = (p.nombre || '').toLowerCase();
       return texto.includes(search.toLowerCase());
     })
-    .filter(p => (category ? (category === 'Sin categoría' ? !p.categoria : p.categoria === category) : true))
+    .filter(p => (category ? p.categoria === category : true))
     .filter(p => (estado ? p.estado === estado : true));
-
   // Ordenado
-  if (order === "az") {
-    productosFiltrados = productosFiltrados.sort((a, b) => a.nombre.localeCompare(b.nombre));
-  } else if (order === "za") {
-    productosFiltrados = productosFiltrados.sort((a, b) => b.nombre.localeCompare(a.nombre));
-  } else if (priceOrder === "asc") {
+  if (priceOrder === "asc") {
     productosFiltrados = productosFiltrados.sort((a, b) => a.precio - b.precio);
   } else if (priceOrder === "desc") {
     productosFiltrados = productosFiltrados.sort((a, b) => b.precio - a.precio);
+  } else if (order === "az") {
+    productosFiltrados = productosFiltrados.sort((a, b) => a.nombre.localeCompare(b.nombre));
+  } else if (order === "za") {
+    productosFiltrados = productosFiltrados.sort((a, b) => b.nombre.localeCompare(a.nombre));
   }
 
   // Reset filtros
@@ -270,8 +268,7 @@ const TiendaPage = () => {
                 <option value="asc">Menor precio</option>
                 <option value="desc">Mayor precio</option>
               </select>
-            </div>
-            <div className="flex flex-col gap-2">
+            </div>            <div className="flex flex-col gap-2">
               <label className="text-sm font-semibold text-gray-700 flex items-center gap-2"><FaFilter /> Estado</label>
               <select
                 value={estado}
@@ -280,7 +277,7 @@ const TiendaPage = () => {
               >
                 <option value="">Todos</option>
                 <option value="nuevo">Nuevo</option>
-                <option value="como nuevo">Como nuevo</option>
+                <option value="como_nuevo">Como nuevo</option>
                 <option value="bueno">Bueno</option>
                 <option value="aceptable">Aceptable</option>
               </select>

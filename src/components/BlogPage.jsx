@@ -98,21 +98,16 @@ const BlogPage = () => {
     { value: 'guia', label: 'Guía' },
     { value: 'opinion', label: 'Opinión' }
   ];
-
   // Filtrado
   let articulosFiltrados = articulos
     .filter(a => {
-      const texto = (a.titulo + " " + a.autor).toLowerCase();
+      const texto = ((a.titulo || '') + " " + (a.autor || '')).toLowerCase();
       return texto.includes(search.toLowerCase());
     })
-    .filter(a => (category ? (category === 'Sin categoría' ? !a.categoria : a.categoria === category) : true));
+    .filter(a => (category ? a.categoria === category : true));
 
   // Ordenado
-  if (order === "az") {
-    articulosFiltrados = articulosFiltrados.sort((a, b) => a.titulo.localeCompare(b.titulo));
-  } else if (order === "za") {
-    articulosFiltrados = articulosFiltrados.sort((a, b) => b.titulo.localeCompare(a.titulo));
-  } else if (dateOrder === "desc") {
+  if (dateOrder === "desc") {
     articulosFiltrados = articulosFiltrados.sort((a, b) => {
       const da = new Date(a.fecha_publicacion);
       const db = new Date(b.fecha_publicacion);
@@ -124,6 +119,10 @@ const BlogPage = () => {
       const db = new Date(b.fecha_publicacion);
       return da - db;
     });
+  } else if (order === "az") {
+    articulosFiltrados = articulosFiltrados.sort((a, b) => (a.titulo || '').localeCompare(b.titulo || ''));
+  } else if (order === "za") {
+    articulosFiltrados = articulosFiltrados.sort((a, b) => (b.titulo || '').localeCompare(a.titulo || ''));
   }
 
   // Reset filtros
