@@ -206,8 +206,8 @@ async def login_user(user: UserLogin) -> Dict[str, str]:
             logger.info(f"Login exitoso para usuario: {user.email}")
             
             # Obtener el usuario de Firebase
-            user_record = auth.get_user_by_email(user.email)
-            # Obtener la foto de perfil y rol desde Firestore            user_doc = db.collection("usuarios").document(user_record.uid).get()
+            user_record = auth.get_user_by_email(user.email)            # Obtener la foto de perfil y rol desde Firestore
+            user_doc = db.collection("usuarios").document(user_record.uid).get()
             foto_url = ""
             role = "user"
             biografia = ""
@@ -267,10 +267,11 @@ async def login_with_google(id_token: str = Body(..., embed=True)):
                 logger.error(f"Error al verificar token con Firebase: {response.text}")
                 raise HTTPException(
                     status_code=401,
-                    detail="Token de Google inválido o expirado"
-                )
-
-            data = response.json()            # Obtener datos del usuario
+                    detail="Token de Google inválido o expirado"                )
+                
+            data = response.json()
+            
+            # Obtener datos del usuario
             user_info = {
                 "uid": data.get("localId"),
                 "email": data.get("email"),
@@ -283,9 +284,9 @@ async def login_with_google(id_token: str = Body(..., embed=True)):
             
             if existing_user.exists:
                 # Usuario existente - preservar foto personalizada
-                user_ref.set(user_info, merge=True)
-                # Obtener datos actualizados incluyendo la foto existente
-                updated_user = user_ref.get().to_dict()                return {
+                user_ref.set(user_info, merge=True)                # Obtener datos actualizados incluyendo la foto existente
+                updated_user = user_ref.get().to_dict()
+                return {
                     "idToken": data.get("idToken"),
                     "refreshToken": data.get("refreshToken"),
                     "email": updated_user.get("email"),
@@ -434,12 +435,12 @@ async def update_profile(
                 firestore_data["foto"] = result["secure_url"]
             except Exception as img_err:
                 logger.error(f"Error subiendo imagen a Cloudinary: {str(img_err)}")
-                raise HTTPException(status_code=400, detail="Error al subir la imagen")
-
-        # Actualizar en Firebase Auth
+                raise HTTPException(status_code=400, detail="Error al subir la imagen")        # Actualizar en Firebase Auth
         if update_data:
             auth.update_user(uid, **update_data)
-            logger.info(f"Updated Firebase Auth for user {uid}")        # Actualizar en Firestore
+            logger.info(f"Updated Firebase Auth for user {uid}")
+        
+        # Actualizar en Firestore
         if firestore_data:
             # Obtener el documento actual para preservar datos no actualizados
             current_doc = db.collection("usuarios").document(uid).get()
@@ -531,11 +532,11 @@ async def update_profile_with_password(
                 logger.error(f"Error subiendo imagen a Cloudinary: {str(img_err)}")
                 raise HTTPException(status_code=400, detail="Error al subir la imagen")
 
-        # Actualizar en Firebase Auth (email, nombre y contraseña en una sola operación)
-        if update_data:
+        # Actualizar en Firebase Auth (email, nombre y contraseña en una sola operación)        if update_data:
             auth.update_user(uid, **update_data)
             logger.info(f"Updated Firebase Auth for user {uid}")
-              # Actualizar en Firestore
+        
+        # Actualizar en Firestore
         if firestore_data:
             # Obtener el documento actual para preservar datos no actualizados
             current_doc = db.collection("usuarios").document(uid).get()
