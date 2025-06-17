@@ -158,41 +158,109 @@ async def delete_compra(compra_id: str, admin: Dict = Depends(verify_admin)):
 @router.post("/users")
 async def create_user(data: Dict = Body(...), admin: Dict = Depends(verify_admin)):
     try:
-        uid = data.get("uid")
         nombre = data.get("nombre")
         email = data.get("email")
         role = data.get("role", "user")
-        if not uid or not nombre or not email:
-            raise HTTPException(status_code=400, detail="Faltan campos obligatorios")
+        password = data.get("password")
+        
+        if not nombre or not email or not password:
+            raise HTTPException(status_code=400, detail="Faltan campos obligatorios: nombre, email y password")
+        
+        # Verificar si el email ya existe
+        try:
+            existing_user = auth.get_user_by_email(email)
+            raise HTTPException(status_code=409, detail="El email ya está registrado")
+        except auth.UserNotFoundError:
+            # El usuario no existe, podemos continuar
+            pass
+        
+        # Crear usuario en Firebase Auth
+        user_record = auth.create_user(
+            email=email,
+            password=password,
+            display_name=nombre
+        )
+        
+        # Crear datos del usuario en Firestore
         user_data = {
-            "uid": uid,
+            "uid": user_record.uid,
             "nombre": nombre,
             "email": email,
-            "role": role
+            "role": role,
+            "biografia": "",
+            "foto": "",
+            "seguidores": [],
+            "seguidos": []
         }
-        db.collection("usuarios").document(uid).set(user_data)
+        
+        db.collection("usuarios").document(user_record.uid).set(user_data)
+        
         return user_data
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Error al crear usuario: {str(e)}")
 
 @router.put("/users/{user_id}")
 async def update_user(user_id: str, data: Dict = Body(...), admin: Dict = Depends(verify_admin)):
     try:
+        # Verificar que el usuario existe en Firestore
         user_ref = db.collection("usuarios").document(user_id)
-        if not user_ref.get().exists:
+        user_doc = user_ref.get()
+        if not user_doc.exists:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+        current_data = user_doc.to_dict()
         update_data = {}
-        if "nombre" in data:
+        auth_update_data = {}
+        
+        # Validar y preparar datos para actualizar
+        if "nombre" in data and data["nombre"]:
             update_data["nombre"] = data["nombre"]
-        if "email" in data:
-            update_data["email"] = data["email"]
+            auth_update_data["display_name"] = data["nombre"]
+            
+        if "email" in data and data["email"]:
+            new_email = data["email"]
+            current_email = current_data.get("email")
+            
+            # Solo actualizar si el email cambió
+            if new_email != current_email:
+                # Verificar si el nuevo email ya existe
+                try:
+                    existing_user = auth.get_user_by_email(new_email)
+                    if existing_user.uid != user_id:
+                        raise HTTPException(status_code=409, detail="El email ya está en uso por otro usuario")
+                except auth.UserNotFoundError:
+                    # El email no existe, podemos usarlo
+                    pass
+                
+                update_data["email"] = new_email
+                auth_update_data["email"] = new_email
+                
         if "role" in data:
             update_data["role"] = data["role"]
+        
         if not update_data:
-            raise HTTPException(status_code=400, detail="No hay datos para actualizar")
+            raise HTTPException(status_code=400, detail="No hay datos válidos para actualizar")
+        
+        # Actualizar en Firebase Auth si hay cambios
+        if auth_update_data:
+            try:
+                auth.update_user(user_id, **auth_update_data)
+            except auth.UserNotFoundError:
+                # El usuario no existe en Auth, solo actualizar Firestore
+                pass
+        
+        # Actualizar en Firestore
         user_ref.update(update_data)
+        
+        # Retornar datos actualizados
         updated_user = user_ref.get().to_dict()
         updated_user["uid"] = user_id
         return updated_user
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
+        raise HTTPException(status_code=500, detail=f"Error al actualizar usuario: {str(e)}")

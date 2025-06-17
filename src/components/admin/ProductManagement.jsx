@@ -451,8 +451,7 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData, mode }) => {
   const handleChange = e => {
     const { name, value } = e.target;
     setForm(f => ({ ...f, [name]: value }));
-  };
-  const handleSubmit = async e => {
+  };  const handleSubmit = async e => {
     e.preventDefault();
     
     // Validación mejorada
@@ -466,27 +465,32 @@ const ProductFormModal = ({ isOpen, onClose, onSubmit, initialData, mode }) => {
       return;
     }
     
-    if (!form.precio || isNaN(parseFloat(form.precio))) {
-      setError('El precio debe ser un número válido');
+    if (!form.precio || isNaN(parseFloat(form.precio)) || parseFloat(form.precio) <= 0) {
+      setError('El precio debe ser un número válido mayor que 0');
       return;
     }
     
-    if (!form.stock || isNaN(parseInt(form.stock))) {
-      setError('El stock debe ser un número válido');
+    if (!form.stock || isNaN(parseInt(form.stock)) || parseInt(form.stock) < 0) {
+      setError('El stock debe ser un número válido mayor o igual a 0');
       return;
     }
     
-    if (!form.categoria) {
+    if (!form.categoria || form.categoria.trim() === '') {
       setError('Debes seleccionar una categoría');
       return;
     }
     
-    if (!form.estado) {
+    if (!form.estado || form.estado.trim() === '') {
       setError('Debes seleccionar un estado');
       return;
     }
     
     setError('');
+    console.log("Enviando formulario validado:", {
+      ...form,
+      precio: parseFloat(form.precio),
+      stock: parseInt(form.stock, 10)
+    });
     await onSubmit({
       ...form,
       precio: parseFloat(form.precio),

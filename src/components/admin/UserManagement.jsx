@@ -9,11 +9,6 @@ import { apiManager } from '../../utils/apiManager';
 import { authManager } from '../../utils/authManager';
 import { showAdminToast } from './AdminToast';
 
-// Generador simple de UID si no hay uuid
-function generateUID() {
-  return Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
-}
-
 const UserFormModal = ({ isOpen, onClose, onSubmit, initialData, mode }) => {
   const [form, setForm] = React.useState({
     nombre: initialData?.nombre || '',
@@ -39,13 +34,39 @@ const UserFormModal = ({ isOpen, onClose, onSubmit, initialData, mode }) => {
     const { name, value } = e.target;
     setForm(f => ({ ...f, [name]: value }));
   };
-
   const handleSubmit = async e => {
     e.preventDefault();
-    if (!form.nombre || !form.email || !form.role || (mode === 'add' && !form.password)) {
-      setError('Todos los campos son obligatorios');
+    
+    // Validación mejorada
+    if (!form.nombre || form.nombre.trim() === '') {
+      setError('El nombre es obligatorio');
       return;
     }
+    
+    if (!form.email || form.email.trim() === '') {
+      setError('El email es obligatorio');
+      return;
+    }
+    
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email)) {
+      setError('El formato del email no es válido');
+      return;
+    }
+    
+    if (!form.role) {
+      setError('Debes seleccionar un rol');
+      return;
+    }
+    
+    if (mode === 'add') {
+      if (!form.password || form.password.length < 6) {
+        setError('La contraseña debe tener al menos 6 caracteres');
+        return;
+      }
+    }
+    
     setError('');
     await onSubmit(form);
   };
@@ -291,21 +312,33 @@ const UserManagement = () => {
   const handleAddUser = () => {
     setShowAdd(true);
   };
-
   const handleCreateUser = async (form) => {
     try {
-      const uid = generateUID();
       const created = await apiManager.post('/admin/users', {
         nombre: form.nombre,
         email: form.email,
         role: form.role,
-        password: form.password,
-        uid      });
+        password: form.password
+      });
       setUsers([...users, created]);
       setShowAdd(false);
       showAdminToast(`Usuario "${form.nombre}" creado correctamente`, 'success');
     } catch (err) {
-      showAdminToast(err.message || 'Error al crear el usuario', 'error');
+      console.error('Error creating user:', err);
+      let userFriendlyMessage = 'Error al crear el usuario. Por favor, intenta de nuevo.';
+      
+      if (err.message.includes('fetch') || err.message.includes('network')) {
+        userFriendlyMessage = 'Error de conexión. Verifica tu conexión a internet.';
+      } else if (err.message.includes('401') || err.message.includes('unauthorized')) {
+        userFriendlyMessage = 'Sesión expirada. Por favor, inicia sesión de nuevo.';
+      } else if (err.message.includes('403') || err.message.includes('forbidden')) {
+        userFriendlyMessage = 'No tienes permisos para crear usuarios.';      } else if (err.message.includes('409') || err.message.includes('conflict')) {
+        userFriendlyMessage = 'El email ya está registrado por otro usuario.';
+      } else if (err.message.includes('400') || err.message.includes('bad request')) {
+        userFriendlyMessage = 'Datos inválidos. Verifica que todos los campos estén completos.';
+      }
+      
+      showAdminToast(userFriendlyMessage, 'error');
     }
   };
 
