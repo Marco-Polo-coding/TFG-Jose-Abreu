@@ -8,14 +8,14 @@ import Toast from './Toast';
 import { apiManager } from '../utils/apiManager';
 import { authManager } from '../utils/authManager';
 
-const ArticuloDetalle = ({ id }) => {
-  const [articulo, setArticulo] = useState(null);
+const ArticuloDetalle = ({ id }) => {  const [articulo, setArticulo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [nuevoComentario, setNuevoComentario] = useState("");
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
-  const [isSaved, setIsSaved] = useState(false);
+  const [savedArticles, setSavedArticles] = useState([]);
 
   useEffect(() => {
     const fetchArticulo = async () => {
@@ -27,54 +27,58 @@ const ArticuloDetalle = ({ id }) => {
         console.error("Error al obtener el artículo:", error);
         setLoading(false);
       }
-    };
-    
+    };    
     fetchArticulo();
-    checkIfArticleIsSaved();
-  }, [id]);  const checkIfArticleIsSaved = async () => {
+    fetchSavedArticles();
+  }, [id]);  const fetchSavedArticles = async () => {
     try {
       const user = authManager.getUser();
       const userEmail = user?.email;
       if (!userEmail) return;
 
       const data = await apiManager.getSavedArticles(userEmail);
-      setIsSaved(data.some(article => article.id === id));
+      setSavedArticles(data);
     } catch (error) {
-      console.error('Error checking if article is saved:', error);
+      console.error('Error fetching saved articles:', error);
     }
-  };
-  const handleSaveArticle = async () => {
+  };  const handleSaveArticle = async () => {
     try {
+      setIsSaving(true);
       const user = authManager.getUser();
       const userEmail = user?.email;
-      const uid = user?.uid;
       
-      if (!userEmail && !uid) {
-        setToastMessage('Debes iniciar sesión para guardar artículos');
-        setToastType('error');
-        setShowToast(true);
+      if (!userEmail) {
+        showNotification('Debes iniciar sesión para guardar artículos', 'error');
         return;
-      }      if (isSaved) {
+      }
+
+      // Verificar si ya está en guardados
+      const isSaved = savedArticles.some(article => article.id === articulo.id);
+      
+      if (isSaved) {
         await apiManager.removeSavedArticle(userEmail, id);
-        setIsSaved(false);
-        setToastMessage('Artículo eliminado de guardados');
+        setSavedArticles(prev => prev.filter(article => article.id !== articulo.id));
+        showNotification('Artículo eliminado de guardados', 'success');
       } else {
         await apiManager.addSavedArticle(userEmail, id);
-        setIsSaved(true);
-        setToastMessage('Artículo guardado correctamente');
+        setSavedArticles(prev => [...prev, articulo]);
+        showNotification('Artículo guardado correctamente', 'success');
       }
-      setToastType('success');
-      setShowToast(true);
     } catch (error) {
-      setToastMessage('Error al guardar el artículo');
-      setToastType('error');
-      setShowToast(true);
+      showNotification('Error al guardar el artículo', 'error');
+    } finally {
+      setIsSaving(false);
     }
-  };
-  const handleSubmitComentario = (e) => {
+  };  const handleSubmitComentario = (e) => {
     e.preventDefault();
     // Aquí iría la lógica para enviar el comentario
     setNuevoComentario("");
+  };
+  
+  const showNotification = (message, type = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
   };
 
   if (loading) {
@@ -154,31 +158,54 @@ const ArticuloDetalle = ({ id }) => {
       <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Imagen del Artículo */}
-            <div className="bg-gradient-to-br from-white via-purple-50 to-indigo-100 rounded-2xl shadow-2xl overflow-hidden transition-all duration-500 hover:shadow-3xl hover:-translate-y-1 group animate-fade-in">
-              <img
-                src={articulo.imagen && articulo.imagen.startsWith('http') && articulo.imagen !== '/default-article.jpg' ? articulo.imagen : 'https://cataas.com/cat'}
-                alt={articulo.titulo}
-                className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-              />              <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <button 
-                  onClick={handleSaveArticle}
-                  disabled={loading || (articulo.autor_email === authManager.getUser()?.email)}
-                  className={`p-3 rounded-full transition-colors hover:scale-110 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${
-                    articulo.autor_email === authManager.getUser()?.email
-                      ? 'bg-gray-400 text-gray-200'
-                      : isSaved 
-                      ? 'bg-yellow-500 text-white'
-                      : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:text-yellow-200'
-                  }`}
-                  title={articulo.autor_email === authManager.getUser()?.email ? "No puedes guardar tu propio artículo" : (isSaved ? "Eliminar de guardados" : "Guardar artículo")}
-                >
-                  {loading ? (
-                    <FaSpinner className="w-6 h-6 animate-spin" />
-                  ) : (
-                    <FaBookmark className="w-6 h-6" />
-                  )}
-                </button>
+            {/* Imagen del Artículo */}            <div className="bg-gradient-to-br from-white via-purple-50 to-indigo-100 rounded-2xl shadow-2xl overflow-hidden transition-all duration-500 hover:shadow-3xl hover:-translate-y-1 animate-fade-in">
+              <div className="relative group">
+                <img
+                  src={articulo.imagen && articulo.imagen.startsWith('http') && articulo.imagen !== '/default-article.jpg' ? articulo.imagen : 'https://cataas.com/cat'}
+                  alt={articulo.titulo}
+                  className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                />              
+                {(() => {
+                  // Determinamos si el artículo está en guardados fuera del JSX para mayor claridad
+                  const isSaved = savedArticles.some(article => article.id === articulo.id);
+                  const isOwnArticle = articulo.autor_email === authManager.getUser()?.email;
+                  
+                  return (
+                    <button
+                      onClick={handleSaveArticle}
+                      disabled={isSaving || isOwnArticle}
+                      className={`absolute top-4 right-4 w-12 h-12 flex items-center justify-center rounded-full shadow-lg z-20 transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed ${
+                        isSaved ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                      } ${
+                        isOwnArticle
+                          ? 'bg-gray-400' 
+                          : isSaved
+                          ? 'bg-gradient-to-r from-yellow-500 to-amber-500 text-white'
+                          : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
+                      }`}
+                      title={
+                        isOwnArticle 
+                          ? "No puedes guardar tu propio artículo" 
+                          : isSaved 
+                          ? "Eliminar de guardados" 
+                          : "Guardar artículo"
+                      }
+                      style={{ boxShadow: '0 4px 24px 0 rgba(80,0,180,0.15)' }}
+                    >
+                      {isSaving ? (
+                        <FaSpinner className="w-6 h-6 text-white animate-spin" />
+                      ) : (
+                        <FaBookmark className={`w-6 h-6 transition-colors duration-200 ${
+                          isOwnArticle
+                            ? 'text-gray-200'
+                            : isSaved
+                            ? 'text-white fill-current'
+                            : 'text-white group-hover:text-yellow-200'
+                        }`} />
+                      )}
+                    </button>
+                  );
+                })()}
               </div>
             </div>
 

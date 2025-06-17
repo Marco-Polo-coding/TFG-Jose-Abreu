@@ -264,7 +264,9 @@ const BlogPage = () => {
                       src={articulo.imagen && articulo.imagen.startsWith('http') && articulo.imagen !== '/default-article.jpg' ? articulo.imagen : 'https://cataas.com/cat'}
                       alt={articulo.titulo}
                       className="w-full h-full object-cover"
-                    />                    <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    />                    <div className={`absolute top-4 right-4 flex gap-2 transition-opacity duration-300 ${
+                      savedArticles.some(a => a.id === articulo.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                    }`}>
                       {(() => {
                         const user = authManager.getUser();
                         const userEmail = user?.email;
@@ -284,7 +286,7 @@ const BlogPage = () => {
                             } disabled:opacity-50 disabled:cursor-not-allowed`}
                             title={isOwnArticle ? "No puedes guardar tu propio artículo" : (isSaved ? "Eliminar de guardados" : "Guardar artículo")}
                           >
-                            <FaBookmark className="w-5 h-5" />
+                            <FaBookmark className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
                           </button>
                         );
                       })()}

@@ -21,9 +21,9 @@ const TiendaPage = () => {
   const [isSaving, setIsSaving] = useState({});
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [toastType, setToastType] = useState('success');
-  const [imageIndexes, setImageIndexes] = useState({}); // { [productoId]: index }
+  const [toastType, setToastType] = useState('success');  const [imageIndexes, setImageIndexes] = useState({}); // { [productoId]: index }
   const [showAuthModal, setShowAuthModal] = useState(false);  const [authMode, setAuthMode] = useState('login');
+  const [favoriteProducts, setFavoriteProducts] = useState([]);
 
   const addItem = useCartStore((state) => state.addItem);
   const isInCart = useCartStore((state) => state.isInCart);
@@ -41,7 +41,6 @@ const TiendaPage = () => {
     }
     window.location.href = '/upload_product';
   };
-
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -52,8 +51,22 @@ const TiendaPage = () => {
       }
     };
     
+    const fetchFavoriteProducts = async () => {
+      try {
+        const user = authManager.getUser();
+        const userEmail = user?.email;
+        if (!userEmail) return;
+
+        const data = await apiManager.getFavoriteProducts(userEmail);
+        setFavoriteProducts(data);
+      } catch (error) {
+        console.error('Error fetching favorite products:', error);
+      }
+    };
+    
     fetchProducts();
-  }, []);  // Obtener categorías completas (todas las posibles)
+    fetchFavoriteProducts();
+  }, []);// Obtener categorías completas (todas las posibles)
   const categoriasCompletas = [
     { value: 'juego', label: 'Juego' },
     { value: 'consola', label: 'Consola' },
@@ -93,8 +106,7 @@ const TiendaPage = () => {
     setToastMessage(message);
     setToastType(type);
     setShowToast(true);
-  };
-  const handleSaveProduct = async (productoId) => {
+  };  const handleSaveProduct = async (productoId) => {
     const user = authManager.getUser();
     const userEmail = user?.email;
     const uid = user?.uid;
@@ -106,8 +118,22 @@ const TiendaPage = () => {
     
     try {
       setIsSaving(prev => ({ ...prev, [productoId]: true }));
-      await apiManager.addFavoriteProduct(userEmail, productoId);
-      showNotification('Producto guardado correctamente', 'success');
+      
+      // Verificar si ya está en favoritos
+      const isFavorite = favoriteProducts.some(product => product.id === productoId);
+      
+      if (isFavorite) {
+        // Eliminar de favoritos
+        await apiManager.removeFavoriteProduct(userEmail, productoId);
+        setFavoriteProducts(prev => prev.filter(product => product.id !== productoId));
+        showNotification('Producto eliminado de favoritos', 'success');
+      } else {
+        // Añadir a favoritos
+        await apiManager.addFavoriteProduct(userEmail, productoId);
+        const product = productos.find(p => p.id === productoId);
+        setFavoriteProducts(prev => [...prev, product]);
+        showNotification('Producto guardado en favoritos', 'success');
+      }
     } catch (error) {
       if (error.response?.status === 400) {
         showNotification('Este producto ya está en tus favoritos', 'warning');
@@ -338,27 +364,38 @@ const TiendaPage = () => {
                             ))}
                           </div>
                         </>
-                      )}                      <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      )}                      <div className={`absolute top-4 right-4 flex gap-2 transition-opacity duration-300 ${
+                        favoriteProducts.some(product => product.id === producto.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                      }`}>
                         {(() => {
                           const user = authManager.getUser();
                           const userEmail = user?.email;
                           const isOwnProduct = producto.usuario_email === userEmail;
+                          const isFavorite = favoriteProducts.some(product => product.id === producto.id);
                           
                           return (
                             <button
                               onClick={() => handleSaveProduct(producto.id)}
                               disabled={isSaving[producto.id] || isOwnProduct}
-                              className={`p-3 rounded-full transition-colors hover:scale-110 shadow ${
+                              className={`p-3 rounded-full transition-colors hover:scale-110 shadow disabled:opacity-50 disabled:cursor-not-allowed ${
                                 isOwnProduct 
                                   ? 'bg-white/90 text-gray-400 cursor-not-allowed' 
+                                  : isFavorite
+                                  ? 'bg-white/90 text-red-500 hover:text-red-600'
                                   : 'bg-white/90 text-gray-500 hover:text-red-500'
-                              } disabled:opacity-50 disabled:cursor-not-allowed`}
-                              title={isOwnProduct ? "No puedes guardar tu propio producto" : "Guardar producto"}
+                              }`}
+                              title={
+                                isOwnProduct 
+                                  ? "No puedes guardar tu propio producto" 
+                                  : isFavorite 
+                                  ? "Eliminar de favoritos"
+                                  : "Guardar en favoritos"
+                              }
                             >
                               {isSaving[producto.id] ? (
                                 <FaSpinner className="w-5 h-5 animate-spin" />
                               ) : (
-                                <FaHeart className="w-5 h-5" />
+                                <FaHeart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
                               )}
                             </button>
                           );

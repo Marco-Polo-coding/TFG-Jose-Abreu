@@ -14,12 +14,11 @@ const ProductoDetalle = ({ id }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [toastType, setToastType] = useState('success');
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);  const addItem = useCartStore(state => state.addItem);
+  const [toastType, setToastType] = useState('success');  const [currentImageIndex, setCurrentImageIndex] = useState(0);  const addItem = useCartStore(state => state.addItem);
   const isInCart = useCartStore(state => state.isInCart);
   const cartItems = useCartStore(state => state.items);
   const [addingToCart, setAddingToCart] = useState(false);
-
+  const [favoriteProducts, setFavoriteProducts] = useState([]);
   useEffect(() => {
     const fetchProducto = async () => {
       try {        const data = await apiManager.get(`/productos/${id}`);
@@ -31,7 +30,21 @@ const ProductoDetalle = ({ id }) => {
       }
     };
 
+    const fetchFavoriteProducts = async () => {
+      try {
+        const user = authManager.getUser();
+        const userEmail = user?.email;
+        if (!userEmail) return;
+
+        const data = await apiManager.getFavoriteProducts(userEmail);
+        setFavoriteProducts(data);
+      } catch (error) {
+        console.error('Error fetching favorite products:', error);
+      }
+    };
+
     fetchProducto();
+    fetchFavoriteProducts();
   }, [id]);  const handleSaveProduct = async () => {
     try {
       setIsSaving(true);
@@ -43,8 +56,20 @@ const ProductoDetalle = ({ id }) => {
         return;
       }
 
-      await apiManager.addFavoriteProduct(userEmail, producto.id);
-      showNotification('Producto guardado correctamente', 'success');
+      // Verificar si ya está en favoritos
+      const isFavorite = favoriteProducts.some(product => product.id === producto.id);
+      
+      if (isFavorite) {
+        // Eliminar de favoritos
+        await apiManager.removeFavoriteProduct(userEmail, producto.id);
+        setFavoriteProducts(prev => prev.filter(product => product.id !== producto.id));
+        showNotification('Producto eliminado de favoritos', 'success');
+      } else {
+        // Añadir a favoritos
+        await apiManager.addFavoriteProduct(userEmail, producto.id);
+        setFavoriteProducts(prev => [...prev, producto]);
+        showNotification('Producto guardado en favoritos', 'success');
+      }
     } catch (error) {
       if (error.message && error.message.includes('ya está en favoritos')) {
         showNotification('Este producto ya está en tus favoritos', 'warning');
@@ -54,7 +79,7 @@ const ProductoDetalle = ({ id }) => {
     } finally {
       setIsSaving(false);
     }
-  };  const handleAddToCart = async () => {
+  };const handleAddToCart = async () => {
     if (!producto) return;
     
     // Verificar si el usuario es el vendedor del producto
@@ -183,33 +208,52 @@ const ProductoDetalle = ({ id }) => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Galería de Imágenes */}
-            <div className="bg-white rounded-2xl shadow-2xl p-6 transition-all duration-500 hover:shadow-3xl hover:-translate-y-1 animate-fade-in">
-              <div className="relative aspect-w-4 aspect-h-3 mb-4">
+            <div className="bg-white rounded-2xl shadow-2xl p-6 transition-all duration-500 hover:shadow-3xl hover:-translate-y-1 animate-fade-in">              <div className="relative aspect-w-4 aspect-h-3 mb-4 group">
                 <img
                   src={imagenes[currentImageIndex]}
                   alt={producto.nombre}
                   className="w-full h-full object-cover rounded-xl"
-                />                <button
-                  onClick={handleSaveProduct}
-                  disabled={isSaving || (producto.usuario_email === authManager.getUser()?.email)}
-                  className={`absolute top-4 right-4 w-12 h-12 flex items-center justify-center rounded-full shadow-lg z-20 transition-colors hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed group ${
-                    producto.usuario_email === authManager.getUser()?.email
-                      ? 'bg-gray-400' 
-                      : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
-                  }`}
-                  title={producto.usuario_email === authManager.getUser()?.email ? "No puedes guardar tu propio producto" : "Guardar producto"}
-                  style={{ boxShadow: '0 4px 24px 0 rgba(80,0,180,0.15)' }}
-                >
-                  {isSaving ? (
-                    <FaSpinner className="w-6 h-6 text-white animate-spin" />
-                  ) : (
-                    <FaHeart className={`w-6 h-6 transition-colors duration-200 ${
-                      producto.usuario_email === authManager.getUser()?.email
-                        ? 'text-gray-200'
-                        : 'text-white group-hover:text-yellow-200'
-                    }`} />
-                  )}
-                </button>
+                />                {(() => {
+                  // Determinamos si el producto está en favoritos fuera del JSX para mayor claridad
+                  const isFavorite = favoriteProducts.some(product => product.id === producto.id);
+                  const isOwnProduct = producto.usuario_email === authManager.getUser()?.email;
+                  
+                  return (
+                    <button
+                      onClick={handleSaveProduct}
+                      disabled={isSaving || isOwnProduct}
+                      className={`absolute top-4 right-4 w-12 h-12 flex items-center justify-center rounded-full shadow-lg z-20 transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed ${
+                        isFavorite ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                      } ${
+                        isOwnProduct
+                          ? 'bg-gray-400' 
+                          : isFavorite
+                          ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white'
+                          : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
+                      }`}
+                      title={
+                        isOwnProduct 
+                          ? "No puedes guardar tu propio producto" 
+                          : isFavorite 
+                          ? "Eliminar de favoritos"
+                          : "Guardar en favoritos"
+                      }
+                      style={{ boxShadow: '0 4px 24px 0 rgba(80,0,180,0.15)' }}
+                    >
+                      {isSaving ? (
+                        <FaSpinner className="w-6 h-6 text-white animate-spin" />
+                      ) : (
+                        <FaHeart className={`w-6 h-6 transition-colors duration-200 ${
+                          isOwnProduct
+                            ? 'text-gray-200'
+                            : isFavorite
+                            ? 'text-white fill-current'
+                            : 'text-white group-hover:text-yellow-200'
+                        }`} />
+                      )}
+                    </button>
+                  );
+                })()}
 
                 {imagenes.length > 1 && (
                   <>
